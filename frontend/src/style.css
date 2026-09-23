@@ -119,3 +119,17 @@ tbody tr:hover { background: var(--bg); }
 .ap-head.off { border-color: color-mix(in srgb, var(--bad) 50%, var(--border)); }
 .tabs { flex-wrap: wrap; }
 .tabs .status { display: inline-block; margin-right: 2px; }
+
+/* v0.3: Internet, DNS, siti per dispositivo */
+.internet { display: grid; gap: 12px; }
+.internet .section-head { margin-bottom: 0; }
+.kpis.inner .kpi { background: var(--bg); border: none; }
+.badge { font-size: 12px; font-weight: 600; border-radius: 99px; padding: 2px 10px; }
+.badge.ok { background: color-mix(in srgb, var(--good) 15%, transparent); color: var(--good); }
+.badge.ko { background: color-mix(in srgb, var(--bad) 15%, transparent); color: var(--bad); }
+.clickable-row { cursor: pointer; }
+.clickable-row.open td { border-bottom-color: transparent; background: var(--bg); }
+.detail-row td { background: var(--bg); padding-top: 0; }
+.site-list { margin: 8px 0 4px; padding-left: 20px; columns: 2 220px; column-gap: 32px; }
+.site-list li { break-inside: avoid; padding: 2px 0; }
+.site-list li span:first-child { margin-right: 8px; }

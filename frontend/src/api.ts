@@ -19,6 +19,12 @@ export interface TrafficPoint { ts: number; down_bps: number | null; up_bps: num
 export interface Traffic { step: number; series: Record<string, TrafficPoint[]> }
 export interface Usage { hours: number; per_ap: Record<string, { down: number; up: number }> }
 export interface Sites { available: boolean; items: { site: string; queries: number }[] }
+export interface Gateway { name: string; online: boolean; status: string; delay: string; loss: string; monitor: string }
+export interface Internet {
+  available: boolean; gateways: Gateway[]; period: { down: number; up: number }; series: TrafficPoint[]
+  dns: null | { total: number; blocked: number; blocked_pct: number; since: number;
+    top_blocked: { domain: string; queries: number; list: string }[] }
+}
 export interface Health { version: string; author: string; name: string }
 
 const TOKEN_KEY = 'zm_token'
@@ -54,8 +60,9 @@ export const api = {
   clients: () => req<Client[]>('/clients'),
   events: (limit = 200, ap?: string) =>
     req<Event[]>(`/events?limit=${limit}${ap ? `&ap=${encodeURIComponent(ap)}` : ''}`),
-  sites: (hours: number, ap?: string) =>
-    req<Sites>(`/sites?hours=${hours}&limit=10${ap ? `&ap=${encodeURIComponent(ap)}` : ''}`),
+  sites: (hours: number, ap?: string, ip?: string) =>
+    req<Sites>(`/sites?hours=${hours}&limit=10${ap ? `&ap=${encodeURIComponent(ap)}` : ''}${ip ? `&ip=${encodeURIComponent(ip)}` : ''}`),
+  internet: (hours: number) => req<Internet>(`/internet?hours=${hours}`),
   usage: (hours: number) => req<Usage>(`/usage?hours=${hours}`),
   traffic: (hours: number) => req<Traffic>(`/traffic?hours=${hours}`),
   setAlias: (mac: string, name: string) =>

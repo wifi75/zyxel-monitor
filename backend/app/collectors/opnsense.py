@@ -3,6 +3,9 @@
 Endpoint verificati su OPNsense 26.7:
   /api/kea/leases4/search            MAC → IP, hostname
   /api/unbound/overview/searchQueries ultime 1000 query DNS con client e dominio
+  /api/unbound/overview/totals/N     totali DNS e domini più bloccati
+  /api/routes/gateway/status         stato della linea (latenza, perdita)
+  /api/diagnostics/traffic/interface contatori byte delle interfacce
 """
 import asyncio
 import json
@@ -52,3 +55,37 @@ async def dns_queries() -> list[dict]:
          "action": r.get("action") or ""}
         for r in data.get("rows", []) if r.get("time") and r.get("domain")
     ]
+
+
+async def dns_totals(top: int = 10) -> dict:
+    """Totali DNS di Unbound: richieste, bloccate, domini più bloccati."""
+    d = await asyncio.to_thread(_get, f"unbound/overview/totals/{top}")
+    return {
+        "total": int(d.get("total") or 0),
+        "blocked": int((d.get("blocked") or {}).get("total") or 0),
+        "blocked_pct": float((d.get("blocked") or {}).get("pcnt") or 0),
+        "since": int(d.get("start_time") or 0),
+        "top_blocked": [
+            {"domain": k.rstrip("."), "queries": int(v.get("total") or 0), "list": v.get("blocklist")}
+            for k, v in (d.get("top_blocked") or {}).items()
+        ],
+    }
+
+
+async def gateways() -> list[dict]:
+    d = await asyncio.to_thread(_get, "routes/gateway/status")
+    return [
+        {"name": g.get("name"), "online": (g.get("status_translated") or "").lower() == "online",
+         "status": g.get("status_translated"), "delay": g.get("delay"), "loss": g.get("loss"),
+         "monitor": g.get("monitor")}
+        for g in d.get("items", [])
+    ]
+
+
+async def interface_bytes(name: str) -> tuple[int, int] | None:
+    """(byte ricevuti, byte trasmessi) dell'interfaccia OPNsense `name` (es. "wan", "opt1")."""
+    d = await asyncio.to_thread(_get, "diagnostics/traffic/interface")
+    i = (d.get("interfaces") or {}).get(name)
+    if not i:
+        return None
+    return int(i.get("bytes received") or 0), int(i.get("bytes transmitted") or 0)

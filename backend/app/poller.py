@@ -47,6 +47,7 @@ async def poll_once() -> None:
     ]
     if opnsense.enabled():
         await store_dns(leases)
+        await store_internet(now)
 
     with connect() as db:
         aliases = {row["mac"]: row["name"] for row in db.execute("SELECT mac, name FROM aliases")}
@@ -174,6 +175,31 @@ async def store_dns(leases: dict[str, tuple[str, str | None]]) -> None:
             if site:
                 batch.append((r["time"], client, site))
         db.executemany("INSERT INTO dns(ts, client_ip, site) VALUES (?,?,?)", batch)
+
+
+# ultimo stato letto da OPNsense (linea, DNS): servito direttamente dall'API
+internet_state: dict = {}
+
+
+async def store_internet(now: int) -> None:
+    """Stato della linea e contatori WAN (salvati come campioni dell'AP fittizio "_internet")."""
+    try:
+        gws, wan, dns = await asyncio.gather(
+            opnsense.gateways(), opnsense.interface_bytes(get_settings().opnsense_wan_if), opnsense.dns_totals()
+        )
+    except Exception as exc:
+        log.warning("OPNsense stato linea non disponibile: %s", exc)
+        return
+    internet_state.update({"gateways": gws, "dns": dns, "updated": now})
+    if wan:
+        with connect() as db:
+            db.execute(
+                "INSERT INTO samples(ts, ap, iface, in_bytes, out_bytes) VALUES (?,?,?,?,?)",
+                (now, INTERNET, "wan", wan[0], wan[1]),
+            )
+
+
+INTERNET = "_internet"
 
 
 def prune() -> None:

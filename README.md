@@ -9,7 +9,7 @@
 [![Database](https://img.shields.io/badge/DB-SQLite-003B57?logo=sqlite&logoColor=white)](https://www.sqlite.org)
 [![Docker](https://img.shields.io/badge/Deploy-Docker-2496ED?logo=docker&logoColor=white)](docker-compose.yml)
 [![Fonti](https://img.shields.io/badge/Fonti-SNMP%20%7C%20SSH%20%7C%20OPNsense-5A6B7B)](#come-legge-i-dati)
-[![API](https://img.shields.io/badge/API-11%20endpoint-0A7EA4)](backend/app/api.py)
+[![API](https://img.shields.io/badge/API-12%20endpoint-0A7EA4)](backend/app/api.py)
 [![SemVer](https://img.shields.io/badge/SemVer-2.0.0-blue)](https://semver.org/lang/it/)
 [![Keep a Changelog](https://img.shields.io/badge/Changelog-Keep%20a%20Changelog-E05735)](CHANGELOG.md)
 [![Mantenuto](https://img.shields.io/badge/Mantenuto-s%C3%AC%20(2026)-brightgreen)](https://github.com/wifi75/zyxel-monitor/commits)
@@ -25,7 +25,8 @@ Cosa mostra la dashboard, in generale e per ogni singolo AP:
 - client connessi con nome, tipologia, banda, segnale, velocità e durata della connessione;
 - grafici di download, upload e numero di client nel tempo;
 - torte: **siti più visitati** dai dispositivi Wi-Fi, dispositivi per tipologia, traffico e client per AP;
-- storico di connessioni, disconnessioni, roaming e AP offline.
+- storico di connessioni, disconnessioni, roaming e AP offline;
+- con OPNsense: stato della linea Internet, velocità e GB della WAN, pubblicità e tracker bloccati, siti contattati da ogni dispositivo.
 
 ## Come legge i dati
 
@@ -33,7 +34,7 @@ Cosa mostra la dashboard, in generale e per ogni singolo AP:
 |---|---|---|
 | **SNMP v2c** (MIB Zyxel `1.3.6.1.4.1.890.1.15.3`) | client (MAC, SSID, RSSI, ora connessione), radio, traffico per SSID, uptime | WAC6103D-I, NWA1123-AC PRO |
 | **SSH** (CLI `show wireless-hal station info`) | client con IP, banda, RSSI, velocità, standard Wi-Fi | NWA50AX PRO: in Nebula l'agente SNMP resta `active: no` |
-| **OPNsense API** (facoltativa) | nomi dai lease Kea DHCP, query DNS di Unbound → siti visitati | solo chiamate GET |
+| **OPNsense API** (facoltativa) | nomi dai lease Kea DHCP, siti visitati e bloccati (Unbound), stato gateway, contatori WAN | solo chiamate GET |
 | DNS inverso / tabella ARP | nomi e IP di riserva | quando OPNsense non è configurato |
 
 I nomi dei dispositivi si possono sovrascrivere dalla dashboard (*Rinomina*).
@@ -92,6 +93,7 @@ NODE_EXTRA_CA_CERTS=/tmp/ca.pem npm install
 | `OPNSENSE_URL` | — | es. `https://opnsense.example.lan` (usare il nome host se c'è un reverse proxy) |
 | `OPNSENSE_KEY` / `OPNSENSE_SECRET` | — | chiave API di OPNsense |
 | `OPNSENSE_VERIFY_TLS` | `true` | `false` solo per certificati autofirmati |
+| `OPNSENSE_WAN_IF` | `wan` | interfaccia verso Internet (es. `opt1` se la linea è su una VLAN) |
 | `LOCAL_DOMAIN` | — | dominio della LAN, escluso dai "siti visitati" |
 | `POLL_INTERVAL` | `60` | secondi tra due letture |
 | `RETENTION_DAYS` | `30` | giorni di storico |

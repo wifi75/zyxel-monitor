@@ -7,4 +7,4 @@
 - [ ] Deploy sul server Docker e accesso remoto via VPN (Tailscale/WireGuard).
 
 ## Non fattibili con Nebula Base (verificato: API 403)
-- Avviso "firmware disponibile", impostazioni Wi-Fi e stato porte dall'OpenAPI di Nebula: riservati alla licenza Pro.
+- Tutti gli endpoint di sito dell'OpenAPI (firmware, online-status, wlan-settings, band-mode, rate-limit, reporting) rispondono 403 anche con il siteId corretto: riservati alla licenza Pro.

@@ -29,6 +29,7 @@ class Settings(BaseSettings):
     opnsense_key: str = ""
     opnsense_secret: str = ""
     opnsense_verify_tls: bool = True
+    opnsense_wan_if: str = "wan"   # interfaccia verso Internet (es. "opt1" per una VLAN del provider)
     # domini da non contare tra i "siti visitati" (rete locale, reverse DNS)
     local_domain: str = ""
 

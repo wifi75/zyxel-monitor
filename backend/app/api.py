@@ -12,6 +12,7 @@ from .core.security import (
 )
 from .core.version import APP_AUTHOR, APP_NAME, APP_VERSION
 from .devices import device_type
+from .poller import INTERNET, internet_state
 
 router = APIRouter(prefix="/api")
 
@@ -128,7 +129,8 @@ def usage(hours: float = 24):
     with connect() as db:
         rows = db.execute(
             """SELECT ts, ap, iface, in_bytes, out_bytes FROM samples
-               WHERE ts >= ? AND iface LIKE 'wlan-%' ORDER BY ap, iface, ts""",
+               WHERE ts >= ? AND iface LIKE 'wlan-%' AND ap <> '_internet'
+               ORDER BY ap, iface, ts""",
             (since,),
         ).fetchall()
     per_ap: dict[str, dict[str, int]] = defaultdict(lambda: {"down": 0, "up": 0})
@@ -147,14 +149,22 @@ def usage(hours: float = 24):
 
 
 @router.get("/sites", dependencies=[Depends(current_user)])
-def sites(hours: float = 24, ap: str | None = None, limit: int = 10):
+def sites(hours: float = 24, ap: str | None = None, ip: str | None = None, limit: int = 10):
     """Siti più richiesti dai client Wi-Fi (query DNS da OPNsense).
     Si contano solo i dispositivi connessi ora agli AP (esclusi server e PC via cavo);
-    con `ap` solo quelli di quell'AP."""
+    con `ap` solo quelli di quell'AP, con `ip` solo quel dispositivo."""
     since = int(time.time() - max(0.25, min(hours, 24 * 30)) * 3600)
     limit = max(1, min(limit, 50))
     ap = ap or None
     with connect() as db:
+        if ip:
+            rows = db.execute(
+                """SELECT site, COUNT(*) AS n FROM dns WHERE ts >= ? AND client_ip = ?
+                   GROUP BY site ORDER BY n DESC LIMIT ?""",
+                (since, ip, limit),
+            ).fetchall()
+            total = db.execute("SELECT COUNT(*) FROM dns").fetchone()[0]
+            return {"available": total > 0, "items": [{"site": r["site"], "queries": r["n"]} for r in rows]}
         rows = db.execute(
             """SELECT site, COUNT(*) AS n FROM dns
                WHERE ts >= ? AND client_ip IN
@@ -178,7 +188,7 @@ def traffic(hours: float = 6, points: int = 120):
     with connect() as db:
         rows = db.execute(
             """SELECT ts, ap, iface, in_bytes, out_bytes FROM samples
-               WHERE ts >= ? ORDER BY ap, iface, ts""",
+               WHERE ts >= ? AND ap <> '_internet' ORDER BY ap, iface, ts""",
             (since - step,),
         ).fetchall()
 
@@ -221,3 +231,41 @@ def traffic(hours: float = 6, points: int = 120):
             })
         series[ap] = pts
     return {"step": step, "series": series}
+
+
+@router.get("/internet", dependencies=[Depends(current_user)])
+def internet(hours: float = 6, points: int = 120):
+    """Linea Internet da OPNsense: stato gateway, protezione DNS, velocità WAN nel tempo e GB del periodo."""
+    hours = max(0.25, min(hours, 24 * 30))
+    points = max(10, min(points, 500))
+    now = int(time.time())
+    since = now - int(hours * 3600)
+    step = max(60, int(hours * 3600 / points))
+    with connect() as db:
+        rows = db.execute(
+            "SELECT ts, in_bytes, out_bytes FROM samples WHERE ap = ? AND iface = 'wan' AND ts >= ? ORDER BY ts",
+            (INTERNET, since - step),
+        ).fetchall()
+    buckets: dict[int, list[int]] = defaultdict(lambda: [0, 0])
+    down = up = 0
+    for prev, cur in zip(rows, rows[1:], strict=False):
+        d_in, d_out = cur["in_bytes"] - prev["in_bytes"], cur["out_bytes"] - prev["out_bytes"]
+        if d_in < 0 or d_out < 0 or cur["ts"] < since:
+            continue
+        b = (cur["ts"] - since) // step * step + since
+        buckets[b][0] += d_in
+        buckets[b][1] += d_out
+        down += d_in
+        up += d_out
+    series = [
+        {"ts": b, "down_bps": round(buckets[b][0] * 8 / step) if b in buckets else None,
+         "up_bps": round(buckets[b][1] * 8 / step) if b in buckets else None, "clients": None}
+        for b in range(since, now + 1, step)
+    ]
+    return {
+        "available": bool(internet_state),
+        "gateways": internet_state.get("gateways", []),
+        "dns": internet_state.get("dns"),
+        "period": {"down": down, "up": up},
+        "series": series,
+    }

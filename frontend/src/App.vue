@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import {
-  api, auth, Unauthorized, type Ap, type Client, type Event, type Health, type Sites, type Traffic, type Usage,
+  api, auth, Unauthorized, type Ap, type Client, type Event, type Health, type Internet, type Sites, type Traffic, type TrafficPoint, type Usage,
 } from './api'
 import ClientsTable from './components/ClientsTable.vue'
 import EventsTable from './components/EventsTable.vue'
@@ -24,6 +24,7 @@ const events = ref<Event[]>([])
 const traffic = ref<Traffic | null>(null)
 const usage = ref<Usage | null>(null)
 const sites = ref<Sites | null>(null)
+const internet = ref<Internet | null>(null)
 const hours = ref(6)
 const metric = ref<'down_bps' | 'up_bps' | 'clients'>('down_bps')
 const loadError = ref('')
@@ -38,6 +39,7 @@ async function load() {
     ])
     aps.value = a; clients.value = c; events.value = e; traffic.value = t; usage.value = u
     await loadSites()
+    internet.value = await api.internet(hours.value).catch(() => internet.value)
     loadError.value = ''
     lastUpdate.value = new Date()
   } catch (err) {
@@ -115,6 +117,19 @@ const gbByAp = computed(() =>
     .map(([label, v]) => ({ label, value: v.down + v.up }))
     .filter(i => i.value > 0)
     .sort((a, b) => b.value - a.value))
+
+const gateway = computed(() => internet.value?.gateways[0] ?? null)
+const internetSeries = computed(() => {
+  const out: Record<string, TrafficPoint[]> = {}
+  if (internet.value?.available) out.Internet = internet.value.series
+  return out
+})
+const internetNow = computed(() => {
+  const p = [...(internet.value?.series ?? [])].reverse().find(x => x.down_bps != null)
+  return p ?? null
+})
+const blockedItems = computed(() =>
+  (internet.value?.dns?.top_blocked ?? []).map(i => ({ label: i.domain, value: i.queries })))
 
 const siteItems = computed(() => (sites.value?.items ?? []).map(i => ({ label: i.site, value: i.queries })))
 
@@ -233,6 +248,23 @@ async function changePassword() {
         <p v-if="!aps.length" class="muted">In attesa della prima lettura degli access point…</p>
       </section>
 
+      <section v-if="!currentAp && internet?.available" class="card internet">
+        <div class="section-head">
+          <h2>Internet <span class="muted small">{{ gateway?.name }}</span></h2>
+          <span v-if="gateway" class="badge" :class="gateway.online ? 'ok' : 'ko'">{{ gateway.online ? 'Online' : gateway.status }}</span>
+        </div>
+        <div class="kpis inner">
+          <div class="kpi"><span>Latenza</span><strong>{{ gateway?.delay || '—' }}</strong></div>
+          <div class="kpi"><span>Pacchetti persi</span><strong>{{ gateway?.loss || '—' }}</strong></div>
+          <div class="kpi"><span>Download ora</span><strong>{{ bps(internetNow?.down_bps) }}</strong></div>
+          <div class="kpi"><span>Upload ora</span><strong>{{ bps(internetNow?.up_bps) }}</strong></div>
+          <div class="kpi"><span>Scaricati {{ periodLabel }}</span><strong>{{ bytes(internet.period.down) }}</strong></div>
+          <div class="kpi"><span>Inviati {{ periodLabel }}</span><strong>{{ bytes(internet.period.up) }}</strong></div>
+        </div>
+        <TrafficChart v-if="internet.series.some(p => p.down_bps != null)" :series="internetSeries" :metric="metric === 'up_bps' ? 'up_bps' : 'down_bps'" />
+        <p v-else class="muted small">Il grafico della linea si popola dopo qualche minuto.</p>
+      </section>
+
       <section class="pies">
         <div class="card">
           <h2>Siti più visitati <span class="muted small">({{ periodLabel }}, richieste DNS)</span></h2>
@@ -252,6 +284,14 @@ async function changePassword() {
           <h2>Traffico per access point <span class="muted small">({{ periodLabel }})</span></h2>
           <PieChart v-if="gbByAp.length" :items="gbByAp" :format="bytes" />
           <p v-else class="muted">Dati in raccolta: servono alcuni minuti. Gli AP letti via SSH non forniscono il traffico.</p>
+        </div>
+        <div class="card" v-if="!currentAp && internet?.dns">
+          <h2>Pubblicità e tracker bloccati</h2>
+          <p class="muted small">
+            {{ internet.dns.blocked.toLocaleString('it-IT') }} richieste bloccate su {{ internet.dns.total.toLocaleString('it-IT') }}
+            ({{ internet.dns.blocked_pct }}%) dal {{ new Date(internet.dns.since * 1000).toLocaleDateString('it-IT') }}
+          </p>
+          <PieChart v-if="blockedItems.length" :items="blockedItems" />
         </div>
         <div class="card" v-if="!currentAp">
           <h2>Client per access point</h2>
@@ -282,7 +322,8 @@ async function changePassword() {
 
       <section class="card">
         <h2 class="mb">{{ currentAp ? `Client connessi a ${currentAp.ap}` : 'Tutti i client connessi' }}</h2>
-        <ClientsTable :clients="scopedClients" :show-ap="!currentAp" @rename="rename" />
+        <p class="muted small mb">Clicca un dispositivo per vedere i siti che contatta.</p>
+        <ClientsTable :clients="scopedClients" :show-ap="!currentAp" :hours="hours" @rename="rename" />
       </section>
 
       <section v-if="currentAp" class="card">
