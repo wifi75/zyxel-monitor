@@ -25,4 +25,6 @@
 - iOS usa MAC privati: il nome giusto arriva dal lease DHCP (`iphone`), non dal vecchio record DNS.
 
 ## Stato
+- v0.2.0 rilasciata il 2026-09-23 (prima versione pubblica su GitHub).
+- Controlli prima di ogni commit: `ruff check backend`, `pytest backend/tests`, `npm run build` (include vue-tsc).
 Vedi [TODO.md](TODO.md).

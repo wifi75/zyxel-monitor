@@ -2,7 +2,7 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) — versioni: [SemVer](https://semver.org/lang/it/).
 
-## [Non rilasciato]
+## [0.2.0] - 2026-09-23
 ### Aggiunto
 - Integrazione OPNsense (solo lettura): nomi dei dispositivi dai lease Kea DHCP e siti visitati dalle query DNS di Unbound.
 - Torta "Siti più visitati" (generale e per AP), limitata ai dispositivi Wi-Fi.
@@ -10,6 +10,7 @@ Formato: [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) — versioni: 
 - Torte: dispositivi per tipologia, traffico (GB) e client per AP, client per banda.
 - Classificazione dei dispositivi dal nome (`devices.py`), endpoint `/api/usage` e `/api/sites`.
 - Licenza MIT.
+- Test automatici dei parser (pytest) e configurazione ruff.
 
 ### Modificato
 - Uptime degli AP SNMP da `hrSystemUptime` (quello dell'agente ripartiva a ogni configurazione di Nebula).
