@@ -29,8 +29,8 @@
 - iOS usa MAC privati: il nome giusto arriva dal lease DHCP (`iphone`), non dal vecchio record DNS.
 
 ## Stato
-- v0.2.0 rilasciata il 2026-09-23 (prima versione pubblica: github.com/wifi75/zyxel-monitor).
-- Dopo la 0.2.0, solo in locale: sezione Internet, DNS bloccati, siti per dispositivo (vedi CHANGELOG "Non rilasciato").
+- v0.2.0 (2026-09-23): prima versione pubblica su github.com/wifi75/zyxel-monitor.
+- v0.3.0 (2026-09-23): sezione Internet, DNS bloccati, siti per dispositivo. Nulla in sospeso in locale.
 - In locale il server gira sul Mac (192.168.1.232:8000), avviato a mano con uvicorn: non è un servizio.
 - Controlli prima di ogni commit: `ruff check backend`, `pytest backend/tests`, `npm run build` (include vue-tsc).
 Vedi [TODO.md](TODO.md).
