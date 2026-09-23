@@ -10,6 +10,8 @@
 [![Docker](https://img.shields.io/badge/Deploy-Docker-2496ED?logo=docker&logoColor=white)](docker-compose.yml)
 [![Fonti](https://img.shields.io/badge/Fonti-SNMP%20%7C%20SSH%20%7C%20OPNsense-5A6B7B)](#come-legge-i-dati)
 [![API](https://img.shields.io/badge/API-12%20endpoint-0A7EA4)](backend/app/api.py)
+[![Test](https://img.shields.io/badge/Test-3%20pytest-0A9EDC?logo=pytest&logoColor=white)](backend/tests)
+[![Lint](https://img.shields.io/badge/Lint-ruff-D7FF64?logo=ruff&logoColor=black)](ruff.toml)
 [![SemVer](https://img.shields.io/badge/SemVer-2.0.0-blue)](https://semver.org/lang/it/)
 [![Keep a Changelog](https://img.shields.io/badge/Changelog-Keep%20a%20Changelog-E05735)](CHANGELOG.md)
 [![Mantenuto](https://img.shields.io/badge/Mantenuto-s%C3%AC%20(2026)-brightgreen)](https://github.com/wifi75/zyxel-monitor/commits)
@@ -83,6 +85,15 @@ security find-certificate -a -p /Library/Keychains/System.keychain /System/Libra
 NODE_EXTRA_CA_CERTS=/tmp/ca.pem npm install
 ```
 
+## Controlli di qualità
+
+Da eseguire prima di ogni commit (dalla cartella principale):
+```bash
+.venv/bin/ruff check backend                               # linter Python (regole in ruff.toml)
+(cd backend && ../.venv/bin/python -m pytest -q tests)     # test dei parser
+(cd frontend && npm run build)                             # build + controllo dei tipi (vue-tsc)
+```
+
 ## Configurazione (`.env`)
 
 | Variabile | Default | Descrizione |
@@ -111,8 +122,9 @@ backend/app/
   devices.py           tipologia del dispositivo dal nome
   collectors/          snmp.py · ssh.py · opnsense.py · names.py (ARP/DNS)
   core/                config.py · db.py (schema SQLite) · security.py (login) · version.py
+backend/tests/         test pytest dei parser (SSH, siti DNS, tipologia dispositivi)
 frontend/src/
-  App.vue              panoramica, schede per AP, eventi
+  App.vue              panoramica (AP, Internet, torte), schede per AP, eventi
   components/          grafici (linee, torte), tabelle client ed eventi, login
 ```
 

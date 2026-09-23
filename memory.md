@@ -12,6 +12,9 @@
 - Siti visitati = query DNS di Unbound (OPNsense), filtrate sui soli client Wi-Fi presenti nella tabella `clients`.
 - Nomi: lease Kea DHCP > DNS inverso > IP; gli alias manuali hanno la precedenza su tutto.
 - Licenza MIT.
+- Linea Internet: contatori WAN salvati nella tabella `samples` come AP fittizio `_internet` (esclusi da `/api/traffic` e `/api/usage`); stato gateway e totali DNS tenuti in memoria (`poller.internet_state`), non nel DB.
+- La WAN di casa è la VLAN Fastweb `opt1` (`OPNSENSE_WAN_IF=opt1` nel `.env`), non `wan`.
+- Commit senza trailer né riferimenti all'assistente.
 
 ## Scoperte (verificate il 2026-09-23)
 - Nebula "Permit access… from designated IP" su *Deny all* bloccava tutto: aggiunto il range LAN.
@@ -19,12 +22,15 @@
 - CLI SSH: niente comandi in riga (`% session is not found`), serve una shell interattiva.
 - Troppi login SSH falliti → l'AP rifiuta anche la password giusta; il riavvio da Nebula lo sblocca.
 - SNMP a volte non risponde al primo colpo → `-t 3 -r 2`. `sysUpTime` è dell'agente: usare `hrSystemUptime`.
-- Nebula OpenAPI su Base: 200 solo su `/organizations` e `/trial/status`; siti, dispositivi, firmware → 403.
+- Nebula OpenAPI su Base: 200 solo su `/organizations` e `/trial/status`; tutto il resto → 403, anche gli endpoint di sito con il siteId corretto (lo si legge nell'URL del portale Nebula).
+- NetFlow di OPNsense spento (`/api/diagnostics/netflow/status` → inactive): serve per i GB per dispositivo.
 - OPNsense risponde solo sul nome host (reverse proxy): con l'IP torna "Host non configurato".
 - Python di macOS non usa il portachiavi → `truststore`. npm: `NODE_EXTRA_CA_CERTS` con i certificati esportati.
 - iOS usa MAC privati: il nome giusto arriva dal lease DHCP (`iphone`), non dal vecchio record DNS.
 
 ## Stato
-- v0.2.0 rilasciata il 2026-09-23 (prima versione pubblica su GitHub).
+- v0.2.0 rilasciata il 2026-09-23 (prima versione pubblica: github.com/wifi75/zyxel-monitor).
+- Dopo la 0.2.0, solo in locale: sezione Internet, DNS bloccati, siti per dispositivo (vedi CHANGELOG "Non rilasciato").
+- In locale il server gira sul Mac (192.168.1.232:8000), avviato a mano con uvicorn: non è un servizio.
 - Controlli prima di ogni commit: `ruff check backend`, `pytest backend/tests`, `npm run build` (include vue-tsc).
 Vedi [TODO.md](TODO.md).
