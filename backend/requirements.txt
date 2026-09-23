@@ -1,0 +1,5 @@
+fastapi==0.141.1
+uvicorn[standard]==0.53.0
+asyncssh==2.24.0
+pydantic-settings==2.15.0
+truststore==0.10.4

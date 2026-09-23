@@ -1,0 +1,12 @@
+services:
+  zyxel-monitor:
+    build: .
+    container_name: zyxel-monitor
+    restart: unless-stopped
+    # rete host: il container raggiunge gli AP in LAN e legge la tabella ARP del server
+    network_mode: host
+    env_file: .env
+    environment:
+      TZ: Europe/Rome          # gli AP riportano orari locali
+    volumes:
+      - ./data:/data
