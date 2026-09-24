@@ -1,5 +1,5 @@
 # Stack Portainer da repository Git: "Pull and redeploy" ricompila dal codice aggiornato.
-# Le variabili del .env vanno nella sezione "Environment variables" dello stack (Portainer le scrive in stack.env).
+# I valori del .env vanno nella sezione "Environment variables" dello stack: arrivano qui come ${...}.
 services:
   zyxel-monitor:
     build: .
@@ -9,9 +9,21 @@ services:
     restart: unless-stopped
     # rete host: il container raggiunge gli AP in LAN e legge la tabella ARP del server
     network_mode: host
-    env_file: stack.env
     environment:
       TZ: Europe/Rome          # gli AP riportano orari locali
+      APS: ${APS}
+      SNMP_COMMUNITY: ${SNMP_COMMUNITY:-public}
+      SSH_USER: ${SSH_USER:-admin}
+      SSH_PASSWORD: ${SSH_PASSWORD:-}
+      OPNSENSE_URL: ${OPNSENSE_URL:-}
+      OPNSENSE_KEY: ${OPNSENSE_KEY:-}
+      OPNSENSE_SECRET: ${OPNSENSE_SECRET:-}
+      OPNSENSE_VERIFY_TLS: ${OPNSENSE_VERIFY_TLS:-true}
+      OPNSENSE_WAN_IF: ${OPNSENSE_WAN_IF:-wan}
+      LOCAL_DOMAIN: ${LOCAL_DOMAIN:-}
+      POLL_INTERVAL: ${POLL_INTERVAL:-60}
+      RETENTION_DAYS: ${RETENTION_DAYS:-30}
+      SECRET_KEY: ${SECRET_KEY:-cambia-questa-chiave}
     command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "${PORT:-8000}"]
     volumes:
       - dati:/data
