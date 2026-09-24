@@ -2,6 +2,10 @@ import { addEn } from './index'
 
 // traduzioni inglesi: chiave = testo italiano esatto usato in t()
 addEn({
+  'Monitoraggio': 'Monitoring',
+  'Gestione': 'Management',
+  'Sistema': 'System',
+  'Menu': 'Menu',
   // App.vue — barra, banner, password
   'È disponibile una nuova versione: la pagina si aggiorna tra pochi secondi…': 'A new version is available: the page will reload in a few seconds…',
   'Aggiorna ora': 'Reload now',

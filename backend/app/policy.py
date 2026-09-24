@@ -104,7 +104,7 @@ async def apply_ap(ap: store.ApConfig, only_changed: bool = False, reason: str =
         if want is not None and not (only_changed and have == want):
             commands += ssh.power_commands(band, want)
             shown = "massima" if want >= 30 else f"{want} dBm"
-            changes.append(f"{label} potenza {shown}" + (f" (era {have})" if have is not None else ""))
+            changes.append(f"{label} potenza {shown}")
         ch, _ = effective(rules, ap.id, band, "channel")
         width, _ = effective(rules, ap.id, band, "width")
         if (ch or width) and not only_changed:

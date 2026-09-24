@@ -2,6 +2,14 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) — versioni: [SemVer](https://semver.org/lang/it/).
 
+## [0.9.0] - 2026-09-24
+### Aggiunto
+- Interfaccia in italiano e inglese: bandierina per cambiare lingua, scelta automatica (italiano se il browser è in italiano, altrimenti inglese).
+- Menu laterale per categorie (Monitoraggio, Gestione, Sistema) con icone e colori; barra superiore con titolo della pagina; su telefono il menu si apre con ☰.
+
+### Modificato
+- I messaggi della configurazione riportano solo il valore impostato.
+
 ## [0.8.0] - 2026-09-24
 ### Aggiunto
 - Configurazione centralizzata di canale (automatico o fisso, compresi i canali DFS 100-140 della 5 GHz) e larghezza del canale, nel profilo del sito e per singolo AP. Il nome del profilo radio di ogni AP si legge dalla sua configurazione.

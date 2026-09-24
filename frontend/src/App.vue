@@ -32,6 +32,12 @@ const view = ref('')
 /** modalità "Personalizza dashboard" */
 const editing = ref(false)
 const isDashboard = computed(() => !view.value.startsWith('#'))
+/** menu laterale aperto (solo su schermi stretti) */
+const navOpen = ref(false)
+const pageTitle = computed(() => ({
+  '': t('Panoramica'), '#devices': t('Dispositivi'), '#events': t('Eventi'), '#aps': t('Gestione AP'),
+  '#config': t('Configurazione'), '#settings': t('Impostazioni'),
+} as Record<string, string>)[view.value] ?? view.value)
 
 const aps = ref<Ap[]>([])
 const clients = ref<Client[]>([])
@@ -250,32 +256,66 @@ const SSH_NA = "La CLI SSH di questo AP non fornisce ancora il dato: in Impostaz
 
   <LoginView v-if="!logged" @done="afterLogin" />
 
-  <div v-else class="shell">
-    <header class="topbar">
+  <div v-else class="layout" :class="{ 'nav-open': navOpen }">
+    <aside class="sidebar" @click="navOpen = false">
       <div class="brand"><span class="dot" />Zyxel Monitor</div>
-      <nav class="tabs">
-        <button :class="{ active: view === '' }" @click="view = ''">{{ t('Panoramica') }} <span class="pill">{{ clients.length }}</span></button>
-        <button v-for="a in aps" :key="a.ap" :class="{ active: view === a.ap }" @click="view = a.ap">
-          <span class="status" :class="a.online ? 'on' : 'off'" /> {{ a.ap }} <span class="pill">{{ a.clients ?? 0 }}</span>
+
+      <div class="nav-group tone-blue">
+        <div class="nav-title">{{ t('Monitoraggio') }}</div>
+        <button class="nav-item" :class="{ active: view === '' }" @click="view = ''">
+          <span class="nav-ico"><Icon name="home" :size="17" /></span><span class="grow">{{ t('Panoramica') }}</span><span class="pill">{{ clients.length }}</span>
         </button>
-        <button :class="{ active: view === '#aps' }" @click="view = '#aps'">{{ t('Gestione AP') }}</button>
-        <button :class="{ active: view === '#config' }" @click="view = '#config'">{{ t('Configurazione') }}</button>
-        <button :class="{ active: view === '#devices' }" @click="view = '#devices'">
-          {{ t('Dispositivi') }} <span v-if="newDevices.length" class="pill alert" :title="t('Dispositivi nuovi da riconoscere')">{{ newDevices.length }}</span>
+        <button v-for="a in aps" :key="a.ap" class="nav-item sub" :class="{ active: view === a.ap }" @click="view = a.ap">
+          <span class="status" :class="a.online ? 'on' : 'off'" /><span class="grow">{{ a.ap }}</span><span class="pill">{{ a.clients ?? 0 }}</span>
         </button>
-        <button :class="{ active: view === '#events' }" @click="view = '#events'">{{ t('Eventi') }}</button>
-      </nav>
+        <button class="nav-item" :class="{ active: view === '#devices' }" @click="view = '#devices'">
+          <span class="nav-ico"><Icon name="users" :size="17" /></span><span class="grow">{{ t('Dispositivi') }}</span>
+          <span v-if="newDevices.length" class="pill alert" :title="t('Dispositivi nuovi da riconoscere')">{{ newDevices.length }}</span>
+        </button>
+        <button class="nav-item" :class="{ active: view === '#events' }" @click="view = '#events'">
+          <span class="nav-ico"><Icon name="activity" :size="17" /></span><span class="grow">{{ t('Eventi') }}</span>
+        </button>
+      </div>
+
+      <div class="nav-group tone-violet">
+        <div class="nav-title">{{ t('Gestione') }}</div>
+        <button class="nav-item" :class="{ active: view === '#aps' }" @click="view = '#aps'">
+          <span class="nav-ico"><Icon name="router" :size="17" /></span><span class="grow">{{ t('Gestione AP') }}</span>
+        </button>
+        <button class="nav-item" :class="{ active: view === '#config' }" @click="view = '#config'">
+          <span class="nav-ico"><Icon name="sliders" :size="17" /></span><span class="grow">{{ t('Configurazione') }}</span>
+        </button>
+      </div>
+
+      <div class="nav-group tone-teal">
+        <div class="nav-title">{{ t('Sistema') }}</div>
+        <button class="nav-item" :class="{ active: view === '#settings' }" @click="view = '#settings'">
+          <span class="nav-ico"><Icon name="gear" :size="17" /></span><span class="grow">{{ t('Impostazioni') }}</span>
+        </button>
+        <button class="nav-item" :class="{ active: showPwd }" @click="showPwd = !showPwd">
+          <span class="nav-ico"><Icon name="key" :size="17" /></span><span class="grow">{{ t('Cambia password') }}</span>
+        </button>
+      </div>
+
+      <div class="nav-foot">
+        <LangSwitch />
+        <button class="icon-btn" :title="t('Esci')" @click="logout"><Icon name="logout" /></button>
+        <span v-if="health" class="muted small nav-version">v{{ health.version }}</span>
+      </div>
+    </aside>
+    <div class="nav-backdrop" @click="navOpen = false" />
+
+    <div class="shell">
+    <header class="topbar">
+      <button class="icon-btn nav-toggle" :title="t('Menu')" @click="navOpen = !navOpen"><Icon name="menu" /></button>
+      <h1 class="page-title">{{ pageTitle }}</h1>
       <div class="top-actions">
-        <select v-model.number="hours" :title="t('Periodo')">
+        <select v-if="isDashboard" v-model.number="hours" :title="t('Periodo')">
           <option :value="1">{{ t('1 ora') }}</option><option :value="6">{{ t('6 ore') }}</option>
           <option :value="24">{{ t('24 ore') }}</option><option :value="168">{{ t('7 giorni') }}</option>
         </select>
         <span class="muted small updated" v-if="lastUpdate" :title="t('Ultimo aggiornamento')">{{ lastUpdate.toLocaleTimeString(locale()) }}</span>
         <button v-if="isDashboard" class="icon-btn" :class="{ active: editing }" :title="t('Personalizza dashboard')" @click="editing = !editing"><Icon name="grid" /></button>
-        <LangSwitch />
-        <button class="icon-btn" :class="{ active: view === '#settings' }" :title="t('Impostazioni')" @click="view = '#settings'"><Icon name="sliders" /></button>
-        <button class="icon-btn" :class="{ active: showPwd }" :title="t('Cambia password')" @click="showPwd = !showPwd"><Icon name="key" /></button>
-        <button class="icon-btn" :title="t('Esci')" @click="logout"><Icon name="logout" /></button>
       </div>
     </header>
 
@@ -554,7 +594,8 @@ const SSH_NA = "La CLI SSH di questo AP non fornisce ancora il dato: in Impostaz
         </template>
       </Dashboard>
     </main>
+    </div>
   </div>
 
-  <footer class="footer" v-if="health">v{{ health.version }} — {{ t('Ideato e sviluppato da {author}', { author: health.author }) }}</footer>
+  <footer v-if="health && !logged" class="footer">v{{ health.version }} — {{ t('Ideato e sviluppato da {author}', { author: health.author }) }}</footer>
 </template>
