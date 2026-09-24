@@ -7,3 +7,7 @@ select = ["E", "F", "W", "B"]
 [lint.flake8-bugbear]
 # Depends() nei default è l'idioma documentato di FastAPI
 extend-immutable-calls = ["fastapi.Depends"]
+
+[lint.per-file-ignores]
+# i test contengono output reali della CLI degli AP: righe lunghe per natura
+"backend/tests/*" = ["E501"]

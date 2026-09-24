@@ -122,6 +122,48 @@ def parse_traffic(text: str) -> dict[str, tuple[int, int]]:
     return out
 
 
+HAL_SLOT = re.compile(r"^\s*Slot:\s*(\d+)\s*$")
+HAL_BYTES = re.compile(r"^\s*wlan(Received|Transmitted)Byte:\s*(\d+)")
+
+
+def parse_hal_statistic(text: str) -> dict[str, tuple[int, int]]:
+    """`show wireless-hal statistic` (NWA50AX PRO, firmware 7.12): contatori per radio.
+    Slot N diventa "wlan-N-1", come le interfacce SSID lette via SNMP; (ricevuti, trasmessi) dalla radio."""
+    out: dict[str, tuple[int, int]] = {}
+    slot: str | None = None
+    rx = tx = None
+    for line in text.splitlines():
+        if line.rstrip().endswith(">") or line.startswith("Router>"):
+            slot = None
+        if m := HAL_SLOT.match(line):
+            slot, rx, tx = m.group(1), None, None
+            continue
+        if slot and (m := HAL_BYTES.match(line)):
+            if m.group(1) == "Received":
+                rx = int(m.group(2))
+            else:
+                tx = int(m.group(2))
+            if rx is not None and tx is not None:
+                out[f"wlan-{slot}-1"] = (rx, tx)
+    return out
+
+
+def parse_port_status(text: str) -> dict[str, tuple[int, int]]:
+    """`show port status`: le ultime due colonne sono TxBytes e RxBytes della porta cablata (uplink)."""
+    header = None
+    for line in text.splitlines():
+        cols = line.split()
+        if "TxBytes" in cols and "RxBytes" in cols:
+            header = cols
+        elif header and cols and cols[0] == "1" and len(cols) >= 3:
+            try:
+                tx, rx = int(cols[-2]), int(cols[-1])
+            except ValueError:
+                return {}
+            return {"eth0": (rx, tx)}
+    return {}
+
+
 def parse_version(text: str) -> tuple[str | None, str | None, int | None]:
     """Estrae modello, firmware e uptime da `show version` (formato variabile: parsing tollerante)."""
     model = fw = None
@@ -172,6 +214,7 @@ async def collect(host: str, user: str, password: str, port: int = 22) -> ApRead
     for c in clients:
         radios[c.band or "?"] = radios.get(c.band or "?", 0) + 1
     return ApReading(
-        online=True, model=model, firmware=fw, uptime_s=uptime, clients=clients, traffic=parse_traffic(text),
+        online=True, model=model, firmware=fw, uptime_s=uptime, clients=clients,
+        traffic={**parse_traffic(text), **parse_port_status(text), **parse_hal_statistic(text)},
         radios=[Radio(band=b, channel=None, clients=n) for b, n in sorted(radios.items())],
     )

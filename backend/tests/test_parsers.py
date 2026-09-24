@@ -1,4 +1,6 @@
-from app.collectors.ssh import parse_stations, parse_traffic, parse_version
+from app.collectors.ssh import (
+    parse_hal_statistic, parse_port_status, parse_stations, parse_traffic, parse_version,
+)
 from app.devices import device_type
 from app.poller import site_of
 
@@ -68,3 +70,28 @@ def test_parse_traffic_detail_echo():
     )
     assert parse_traffic(text) == {"wlan-1-1": (11, 22), "wlan-2-1": (3, 4)}
     assert parse_version("system uptime: 1 days 14:09:23")[2] == 86400 + 14 * 3600 + 9 * 60 + 23
+
+
+HAL = """Router> show wireless-hal statistic
+Slot: 1
+  ReceivedPktCount: 30882186
+  TransmittedPktCount: 18826673
+  wlanReceivedByte: 22887452952
+  wlanTransmittedByte: 2483682712
+  RetryCount: 0
+  Channel Utilization: 10
+Slot: 2
+  ReceivedPktCount: 3335106
+  wlanReceivedByte: 554871106
+  wlanTransmittedByte: 1672752884
+Router> show port status
+Port Status       TxPkts     RxPkts     TxBcast    RxBcast    Colli.  TxB/s      RxB/s      Up Time      PVID       TxBytes              RxBytes
+=================================================================================================
+1    2500M/Full   25486082   17272144   0          0          0       115314     12806      38:19:30     1          21918515539          2851259939
+Router> exit
+"""
+
+
+def test_parse_hal_statistic_and_port():
+    assert parse_hal_statistic(HAL) == {"wlan-1-1": (22887452952, 2483682712), "wlan-2-1": (554871106, 1672752884)}
+    assert parse_port_status(HAL) == {"eth0": (2851259939, 21918515539)}
