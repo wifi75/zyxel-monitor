@@ -102,12 +102,14 @@ async def netflow_active() -> bool:
     return str(d.get("status") or "").lower() == "active"
 
 
-async def bytes_per_address(since: int, until: int) -> dict[str, int]:
-    """Byte per indirizzo sorgente da Insight (NetFlow con "Capture local").
-    Formato di risposta da confermare sulla prima installazione con NetFlow attivo: parsing tollerante."""
-    d = await asyncio.to_thread(
-        fetch, f"diagnostics/networkinsight/top/FlowSourceAddrTotals/{since}/{until}/src_addr/octets/%20/200"
-    )
+INSIGHT_TOP = "diagnostics/networkinsight/top/FlowSourceAddrTotals/{since}/{until}/src_addr/octets/%20/200"
+
+
+async def bytes_per_address(since: int, until: int) -> tuple[dict[str, int], dict]:
+    """Byte per indirizzo sorgente da Insight (NetFlow con "Capture local"), più un estratto della risposta
+    grezza: il formato non è ancora confermato, l'estratto permette di adattare il parsing al caso reale."""
+    path = INSIGHT_TOP.format(since=since, until=until)
+    d = await asyncio.to_thread(fetch, path)
     rows = d if isinstance(d, list) else (d.get("rows") or d.get("items") or [])
     out: dict[str, int] = {}
     for r in rows:
@@ -117,4 +119,5 @@ async def bytes_per_address(since: int, until: int) -> dict[str, int]:
         total = r.get("total") or r.get("octets") or 0
         if addr:
             out[str(addr)] = out.get(str(addr), 0) + int(float(total))
-    return out
+    sample = json.dumps(d if isinstance(d, list) else d, ensure_ascii=False)[:3000]
+    return out, {"path": path, "rows": len(rows) if isinstance(rows, list) else 0, "sample": sample}

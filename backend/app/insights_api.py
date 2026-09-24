@@ -173,7 +173,7 @@ async def usage_devices(hours: float = 24):
     try:
         if not await opnsense.netflow_active():
             return {"available": False, "reason": "netflow"}
-        per_ip = await opnsense.bytes_per_address(since, int(time.time()))
+        per_ip, raw = await opnsense.bytes_per_address(since, int(time.time()))
     except Exception as exc:
         return {"available": False, "reason": "error", "message": str(exc)}
     with connect() as db:
@@ -194,8 +194,11 @@ async def usage_devices(hours: float = 24):
     result = {
         "available": True, "items": items[:15],
         "by_type": [{"type": k, "bytes": v} for k, v in by_type.most_common()],
+        # quando non si riconosce nulla, il pannello mostra cosa ha risposto OPNsense
+        "debug": None if items else {**raw, "addresses": len(per_ip), "sample_addresses": sorted(per_ip)[:10]},
     }
-    _usage_cache[hours] = (time.time(), result)
+    if items:   # un risultato vuoto non si tiene in cache: i dati di Insight possono arrivare da un momento all'altro
+        _usage_cache[hours] = (time.time(), result)
     return result
 
 

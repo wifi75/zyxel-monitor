@@ -181,6 +181,14 @@ const kpis = computed(() => {
   return list
 })
 
+const usageCopied = ref(false)
+async function copyUsageDebug() {
+  const d = deviceUsage.value?.debug
+  if (!d) return
+  await navigator.clipboard?.writeText(`${d.path}\n${d.sample}`).catch(() => {})
+  usageCopied.value = true
+}
+
 /** classe colore per banda radio */
 const bandClass = (band: string) => (band.startsWith('2') ? 'b24' : band.startsWith('5') ? 'b5' : band.startsWith('6') ? 'b6' : '')
 
@@ -467,7 +475,24 @@ const SSH_NA = "La CLI SSH di questo AP non fornisce ancora il dato: in Impostaz
           <!-- consumo per dispositivo -->
           <template v-else-if="id === 'usage_devices'">
             <h2>Consumo per dispositivo <span class="muted small">({{ periodLabel }})</span></h2>
-            <div v-if="deviceUsage?.available" class="split">
+            <div v-if="deviceUsage?.available && deviceUsage.debug" class="usage-debug">
+              <p>
+                OPNsense ha risposto con <strong>{{ deviceUsage.debug.rows }}</strong> righe e
+                <strong>{{ deviceUsage.debug.addresses }}</strong> indirizzi, ma nessuno corrisponde ai dispositivi Wi-Fi.
+              </p>
+              <p class="muted small">
+                Se sono appena passati pochi minuti dall'attivazione di NetFlow è normale: Insight aggrega i dati ogni
+                10-15 minuti. Se resta così, copia la risposta qui sotto e mandala.
+              </p>
+              <p v-if="deviceUsage.debug.sample_addresses.length" class="muted small mono">
+                Indirizzi ricevuti: {{ deviceUsage.debug.sample_addresses.join(', ') }}
+              </p>
+              <div class="actions">
+                <button class="ghost small" @click="copyUsageDebug">{{ usageCopied ? 'Copiato' : 'Copia risposta' }}</button>
+              </div>
+              <pre class="raw">{{ deviceUsage.debug.path }}&#10;{{ deviceUsage.debug.sample }}</pre>
+            </div>
+            <div v-else-if="deviceUsage?.available" class="split">
               <div><h3 class="small sub">Dispositivi</h3><BarList :items="usageItems" :format="bytes" /></div>
               <div><h3 class="small sub">Per tipologia</h3><BarList :items="usageTypes" :format="bytes" /></div>
             </div>

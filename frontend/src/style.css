@@ -328,3 +328,7 @@ body { background: radial-gradient(1200px 500px at 0 -10%, color-mix(in srgb, va
 .ap-bands .radio { display: flex; align-items: center; justify-content: space-between; gap: 6px; height: 28px;
                    padding: 0 10px; border-radius: 8px; white-space: nowrap; overflow: hidden; font-size: 12px; }
 .ap-bands .radio span { font-variant-numeric: tabular-nums; }
+
+.usage-debug { display: grid; gap: 8px; }
+.usage-debug p { margin: 0; }
+.usage-debug pre.raw { max-height: 180px; }
