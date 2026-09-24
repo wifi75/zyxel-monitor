@@ -317,3 +317,14 @@ body { background: radial-gradient(1200px 500px at 0 -10%, color-mix(in srgb, va
 .radio.b24 { background: color-mix(in srgb, var(--blue) 12%, transparent); color: color-mix(in srgb, var(--blue) 80%, var(--text)); }
 .radio.b5 { background: color-mix(in srgb, var(--violet) 12%, transparent); color: color-mix(in srgb, var(--violet) 80%, var(--text)); }
 .radio.b6 { background: color-mix(in srgb, var(--teal) 12%, transparent); color: color-mix(in srgb, var(--teal) 80%, var(--text)); }
+
+/* card AP identiche: righe a altezza fissa, contenuto sempre dall'alto */
+.ap-grid { align-items: start; }
+.ap-grid .ap { grid-template-rows: 44px 64px 28px auto; align-content: start; }
+.ap header { height: 44px; overflow: hidden; }
+.ap header h3, .ap header p { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tile { height: 64px; }
+.ap-bands { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; height: 28px; }
+.ap-bands .radio { display: flex; align-items: center; justify-content: space-between; gap: 6px; height: 28px;
+                   padding: 0 10px; border-radius: 8px; white-space: nowrap; overflow: hidden; font-size: 12px; }
+.ap-bands .radio span { font-variant-numeric: tabular-nums; }

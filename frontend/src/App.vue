@@ -337,13 +337,16 @@ const SSH_NA = "La CLI SSH di questo AP non fornisce ancora il dato: in Impostaz
                   <strong>{{ a.uptime_s == null && a.method === 'ssh' && a.online ? 'n.d.' : duration(a.uptime_s) }}</strong>
                 </div>
                 <div class="tile tone-amber" :title="a.method === 'ssh' && !usage?.per_ap[a.ap] ? SSH_NA : ''">
-                  <Icon name="chart" :size="16" /><span>Traffico {{ periodLabel }}</span>
+                  <Icon name="chart" :size="16" /><span :title="`Traffico ${periodLabel}`">Traffico</span>
                   <strong>{{ usage?.per_ap[a.ap] ? bytes(usage.per_ap[a.ap].down + usage.per_ap[a.ap].up) : a.method === 'ssh' && a.online ? 'n.d.' : '—' }}</strong>
                 </div>
               </div>
-              <div class="radios">
-                <span v-for="r in a.radios" :key="r.band" class="radio" :class="bandClass(r.band)">
-                  <b>{{ r.band.replace('GHz', ' GHz') }}</b><template v-if="r.channel"> · canale {{ r.channel }}</template> · {{ r.clients }} client
+              <div class="ap-bands">
+                <span v-for="r in a.radios" :key="r.band" class="radio" :class="bandClass(r.band)"
+                      :title="r.channel ? `canale ${r.channel}` : 'canale non fornito da questo AP'">
+                  <b>{{ r.band.replace('GHz', ' GHz') }}</b>
+                  <span>ch {{ r.channel ?? '—' }}</span>
+                  <span>{{ r.clients }} client</span>
                 </span>
               </div>
               <p v-if="a.error" class="error small">{{ a.error }}</p>
