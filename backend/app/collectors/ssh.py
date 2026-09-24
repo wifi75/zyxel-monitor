@@ -334,6 +334,11 @@ async def configure(host: str, user: str, password: str, port: int, commands: li
     return await _session(host, user, password, port, ["configure terminal", *commands, "exit"])
 
 
+async def run_lines(host: str, user: str, password: str, port: int, lines: list[str]) -> str:
+    """Invia righe alla CLI così come sono (usato dall'esplorazione dei comandi, solo richieste di aiuto)."""
+    return await _session(host, user, password, port, lines)
+
+
 async def running_config(host: str, user: str, password: str, port: int = 22) -> str:
     text = await _session(host, user, password, port, ["show running-config"])
     start = text.find("Router> show running-config")

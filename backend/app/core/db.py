@@ -150,6 +150,12 @@ CREATE TABLE IF NOT EXISTS config_backups (
 );
 CREATE INDEX IF NOT EXISTS ix_backups_ap ON config_backups(ap, ts);
 
+-- impostazioni del sito applicate a tutti gli AP (rete, radio, sistema): valore in JSON
+CREATE TABLE IF NOT EXISTS site_config (
+    key   TEXT PRIMARY KEY,
+    value TEXT NOT NULL
+);
+
 -- impostazioni salvate dal pannello: hanno la precedenza sul .env
 CREATE TABLE IF NOT EXISTS settings (
     key   TEXT PRIMARY KEY,

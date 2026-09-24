@@ -460,3 +460,17 @@ button.danger:not(.ghost) { color: #fff; background: var(--bad); border-color: v
   .nav-toggle { display: inline-grid; }
   .layout .shell { padding: 0 12px 40px; }
 }
+
+/* impostazioni del sito */
+.site-sections { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 14px; }
+.site-section { border: 1px solid color-mix(in srgb, var(--tone) 25%, var(--border)); border-radius: 12px; padding: 12px 14px;
+                background: linear-gradient(180deg, color-mix(in srgb, var(--tone) 6%, var(--surface)), var(--surface) 40%); }
+.site-head { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+.site-head h3 { color: var(--tone); }
+.site-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid var(--border); }
+.site-row p { margin: 2px 0 0; }
+.site-ctrl { flex: none; width: 210px; }
+.site-ctrl select { width: 100%; }
+.site-input { display: flex; align-items: center; gap: 6px; }
+.site-input input { min-width: 0; flex: 1; }
+@media (max-width: 640px) { .site-row { flex-wrap: wrap; } .site-ctrl { width: 100%; } }

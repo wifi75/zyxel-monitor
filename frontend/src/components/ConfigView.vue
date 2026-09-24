@@ -3,6 +3,7 @@ import { computed, onMounted, ref } from 'vue'
 import { api, type Backup, type PolicyField, type PolicyOverview, type PolicyResult } from '../api'
 import { copyText, time } from '../format'
 import Icon from './Icon.vue'
+import SiteSettings from './SiteSettings.vue'
 import { t } from '../i18n'
 
 /** Configurazione centralizzata: il profilo del sito vale per tutti, ogni AP può personalizzare. */
@@ -160,6 +161,8 @@ const others = computed(() => data.value?.aps.filter(a => !a.configurable || !a.
         </div>
       </div>
     </section>
+
+    <SiteSettings @results="r => { results = r; refreshSoon() }" />
 
     <!-- per AP -->
     <section class="card">

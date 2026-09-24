@@ -2,6 +2,11 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) — versioni: [SemVer](https://semver.org/lang/it/).
 
+## [0.10.0] - 2026-09-24
+### Aggiunto
+- Configurazione → **Impostazioni del sito**, applicate a tutti gli AP e ricontrollate ogni 15 minuti: nome della rete, limiti di download/upload, roaming assistito 802.11k/v e veloce 802.11r, espulsione dei segnali deboli, bilanciamento del carico, LED spenti, SNMP in scrittura, server NTP, hostname uguale al nome della dashboard.
+- Gestione AP → Strumenti → **Esplora comandi**: chiede all'AP le opzioni dei suoi profili (solo richieste di aiuto) per completare le impostazioni successive.
+
 ## [0.9.0] - 2026-09-24
 ### Aggiunto
 - Interfaccia in italiano e inglese: bandierina per cambiare lingua, scelta automatica (italiano se il browser è in italiano, altrimenti inglese).

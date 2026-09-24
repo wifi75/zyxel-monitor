@@ -32,7 +32,7 @@ const current = computed(() => typeof selected.value === 'number' ? list.value.f
 const live = computed(() => current.value ? props.status.find(s => s.ap === current.value!.name) ?? null : null)
 const statusOf = (a: ApConfig) => props.status.find(s => s.ap === a.name) ?? null
 
-watch(selected, () => { test.value = null; raw.value = null; notice.value = ''; error.value = '' })
+watch(selected, () => { test.value = null; raw.value = null; explored.value = null; notice.value = ''; error.value = '' })
 
 function select(id: number | 'new') {
   selected.value = id
@@ -73,6 +73,10 @@ async function copyRaw() {
   copied.value = (await copyText(raw.value?.text ?? '')) ? 'ok' : 'manual'
   if (copied.value === 'manual') window.getSelection()?.selectAllChildren(document.querySelector('pre.raw')!)
 }
+
+const explored = ref<string | null>(null)
+const doExplore = () => run('explore', async () => { explored.value = (await api.exploreAp(current.value!.id)).text; copied.value = '' })
+async function copyExplore() { copied.value = (await copyText(explored.value ?? '')) ? 'ok' : 'manual' }
 
 const doToggle = () => run('toggle', async () => {
   const a = current.value!
@@ -195,6 +199,17 @@ const doDelete = () => {
               <button class="ghost small" @click="copyRaw">{{ copied === 'ok' ? t('Copiato ✓') : copied === 'manual' ? t('Premi Ctrl+C') : t('Copia') }}</button>
               <button class="ghost small" @click="raw = null">{{ t('Chiudi') }}</button></div>
             <pre class="raw">{{ raw.text || t('Nessuna lettura riuscita finora.') }}</pre>
+          </template>
+
+          <div v-if="current.has_ssh_password" class="apm-tool">
+            <div class="grow"><strong>{{ t('Esplora comandi') }}</strong><p class="muted small">{{ t("Chiede all'AP l'elenco delle opzioni dei suoi profili, senza cambiare nulla: copia il testo e mandalo per aggiungere nuove impostazioni.") }}</p></div>
+            <button :disabled="!!busy" @click="doExplore">{{ busy === 'explore' ? t('Leggo…') : t('Esplora') }}</button>
+          </div>
+          <template v-if="explored">
+            <div class="actions"><span class="grow" />
+              <button class="ghost small" @click="copyExplore">{{ copied === 'ok' ? t('Copiato ✓') : t('Copia') }}</button>
+              <button class="ghost small" @click="explored = null">{{ t('Chiudi') }}</button></div>
+            <pre class="raw">{{ explored }}</pre>
           </template>
 
           <div class="apm-tool">

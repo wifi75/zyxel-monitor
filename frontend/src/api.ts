@@ -117,6 +117,10 @@ export interface PolicyOverview {
   aps: { id: number; name: string; method: string; enabled: boolean; configurable: boolean; bands: Record<string, PolicyBand> }[]
 }
 export interface PolicyResult { ap: string; ok: boolean; message: string }
+export interface SiteItem {
+  key: string; section: string; label: string; kind: 'text' | 'int' | 'bool' | 'choice'; help: string
+  choices: string[]; unit: string; value: string | number | boolean | null
+}
 export interface Backup { id: number; ap: string; ts: number; size: number }
 
 export interface WidgetPos { i: string; x: number; y: number; w: number; h: number }
@@ -191,6 +195,10 @@ export const api = {
   applyPolicy: () => req<{ results: PolicyResult[] }>('/policy/apply', { method: 'POST' }),
   backupAll: () => req<{ results: PolicyResult[] }>('/policy/backups', { method: 'POST' }),
   backups: () => req<Backup[]>('/policy/backups'),
+  siteItems: () => req<SiteItem[]>('/policy/items'),
+  setSiteItem: (key: string, value: string | number | boolean | null) =>
+    req<{ results: PolicyResult[] }>(`/policy/items/${key}`, { method: 'PUT', body: JSON.stringify({ value }) }),
+  exploreAp: (id: number) => req<{ text: string }>(`/settings/aps/${id}/explore`, { method: 'POST' }),
   backup: (id: number) => req<Backup & { text: string }>(`/policy/backups/${id}`),
 
   // Nebula (licenza Pro)

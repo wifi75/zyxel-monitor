@@ -1,0 +1,81 @@
+<script setup lang="ts">
+import { computed, onMounted, ref } from 'vue'
+import { api, type PolicyResult, type SiteItem } from '../api'
+import { t } from '../i18n'
+import Icon from './Icon.vue'
+import type { IconName } from '../icons'
+
+/** Impostazioni del sito: valgono per tutti gli AP e il sistema le mantiene (controllo ogni 15 minuti). */
+const emit = defineEmits<{ results: [r: PolicyResult[]] }>()
+
+const items = ref<SiteItem[]>([])
+const draft = ref<Record<string, string>>({})
+const busy = ref('')
+const error = ref('')
+
+const SECTIONS: { key: string; title: string; icon: IconName; tone: string }[] = [
+  { key: 'rete', title: 'Rete Wi-Fi', icon: 'wifi', tone: 'tone-blue' },
+  { key: 'radio', title: 'Radio e roaming', icon: 'activity', tone: 'tone-violet' },
+  { key: 'sistema', title: 'Sistema', icon: 'gear', tone: 'tone-teal' },
+]
+const bySection = computed(() => Object.fromEntries(SECTIONS.map(s => [s.key, items.value.filter(i => i.section === s.key)])))
+
+async function load() {
+  try {
+    items.value = await api.siteItems()
+    draft.value = Object.fromEntries(items.value.map(i => [i.key, i.value == null ? '' : String(i.value)]))
+  } catch (e) { error.value = (e as Error).message }
+}
+onMounted(load)
+
+async function save(i: SiteItem, value: string | number | boolean | null) {
+  if (i.key === 'ssid_name' && value != null &&
+      !window.confirm(t('Cambiare il nome della rete scollega tutti i dispositivi: andranno ricollegati alla rete "{n}". Procedere?', { n: String(value) }))) return
+  busy.value = i.key; error.value = ''
+  try { emit('results', (await api.setSiteItem(i.key, value)).results); await load() }
+  catch (e) { error.value = (e as Error).message } finally { busy.value = '' }
+}
+
+/** select per le voci sì/no: "" = non gestito */
+function saveBool(i: SiteItem, v: string) { save(i, v === '' ? null : v === 'on') }
+function saveText(i: SiteItem) {
+  const v = draft.value[i.key].trim()
+  save(i, v === '' ? null : i.kind === 'int' ? Number(v) : v)
+}
+const boolValue = (i: SiteItem) => (i.value == null ? '' : i.value ? 'on' : 'off')
+</script>
+
+<template>
+  <section class="card">
+    <h2 class="mb">{{ t('Impostazioni del sito') }} <span class="muted small">{{ t('(valgono per tutti gli AP, controllate ogni 15 minuti)') }}</span></h2>
+    <p v-if="error" class="note ko mb">{{ error }}</p>
+    <div class="site-sections">
+      <div v-for="s in SECTIONS" :key="s.key" class="site-section" :class="s.tone">
+        <div class="site-head"><span class="nav-ico"><Icon :name="s.icon" :size="17" /></span><h3>{{ t(s.title) }}</h3></div>
+        <div v-for="i in bySection[s.key]" :key="i.key" class="site-row">
+          <div class="grow">
+            <strong>{{ t(i.label) }}</strong>
+            <p class="muted small">{{ t(i.help) }}</p>
+          </div>
+          <div class="site-ctrl">
+            <select v-if="i.kind === 'bool'" :value="boolValue(i)" :disabled="!!busy" @change="saveBool(i, ($event.target as HTMLSelectElement).value)">
+              <option value="">{{ t('Non gestito') }}</option>
+              <option value="on">{{ t('Attivo') }}</option>
+              <option value="off">{{ t('Spento') }}</option>
+            </select>
+            <select v-else-if="i.kind === 'choice'" :value="i.value == null ? '' : String(i.value)" :disabled="!!busy"
+                    @change="save(i, ($event.target as HTMLSelectElement).value || null)">
+              <option value="">{{ t('Non gestito') }}</option>
+              <option v-for="c in i.choices" :key="c" :value="c">{{ c === '0' ? t('Disattivata') : `${c} ${i.unit}` }}</option>
+            </select>
+            <form v-else class="site-input" @submit.prevent="saveText(i)">
+              <input v-model="draft[i.key]" :type="i.kind === 'int' ? 'number' : 'text'" :placeholder="t('Non gestito')" :disabled="!!busy" />
+              <span v-if="i.unit" class="muted small">{{ i.unit }}</span>
+              <button class="ghost small" :disabled="!!busy">{{ busy === i.key ? t('Applico…') : t('Applica') }}</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</template>

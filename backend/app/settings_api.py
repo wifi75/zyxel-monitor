@@ -199,6 +199,22 @@ async def reboot_ap(ap_id: int):
     return {"ok": True}
 
 
+@router.post("/aps/{ap_id}/explore")
+async def explore_ap(ap_id: int):
+    """Chiede all'AP l'elenco dei comandi dei suoi profili (solo "?"): serve a completare le impostazioni."""
+    from . import config_items, site_config
+    ap = store.get_ap(ap_id)
+    if not ap or not ap.ssh_password:
+        raise HTTPException(409, "Servono le credenziali SSH")
+    try:
+        cfg = config_items.RunningConfig(await ssh.running_config(ap.host, ap.ssh_user, ap.ssh_password, ap.ssh_port))
+        lines = site_config.explore_commands(cfg)
+        text = await ssh.run_lines(ap.host, ap.ssh_user, ap.ssh_password, ap.ssh_port, lines)
+    except (OSError, ssh.asyncssh.Error, TimeoutError) as exc:
+        raise HTTPException(502, f"SSH: {exc}") from None
+    return {"text": text}
+
+
 async def _port_open(host: str, port: int, timeout: float = 3) -> bool:
     try:
         _, writer = await asyncio.wait_for(asyncio.open_connection(host, port), timeout)

@@ -126,3 +126,22 @@ def test_radio_profiles_and_commands():
     assert radio_commands("5GHz", "P", "100", "20/40/80") == [
         "wlan-radio-profile P", "no dcs activate", "5g-channel 100", "ch-width 20/40/80", "exit",
     ]
+
+
+def test_config_items_read_and_build():
+    from app import config_items as ci
+    text = (
+        "hostname SOGGIORNO\n!\nwlan-security-profile SECURITY1\n mode wpa2\n dot11r activate\n!\n"
+        "wlan-ssid-profile SSID1\n ssid WiFi\n security SECURITY1\n downlink-rate-limit 0 kbps\n dot11k-v activate\n!\n"
+        "wlan-radio-profile RADIO_SETTING_TYPE_2\n rssi-thres\n rssi-kickout -70\n!\n"
+        "wlan slot1\n ap profile RADIO_SETTING_TYPE_2\n ssid profile 1 SSID1\n!\n"
+        "snmp-server community ZyxelAP ro\nsnmp-server community ZyxelAP rw\n!\nntp server time.google.com\n!\n"
+        "led_suppress disable\n"
+    )
+    cfg = ci.RunningConfig(text)
+    v = {i.key: i.read(cfg) for i in ci.ITEMS}
+    assert v["ssid_name"] == "WiFi" and v["rate_down"] == 0 and v["dot11kv"] and v["dot11r"]
+    assert v["rssi_kickout"] == -70 and v["snmp_rw"] and v["ntp_server"] == "time.google.com" and not v["led_off"]
+    assert ci.BY_KEY["ssid_name"].build("Casa", cfg) == ["wlan-ssid-profile SSID1", "ssid Casa", "exit"]
+    assert ci.BY_KEY["snmp_rw"].build(False, cfg) == ["no snmp-server community ZyxelAP rw"]
+    assert ci.hostname_commands("ZONA NOTTE", cfg) == ["hostname ZONA-NOTTE"]

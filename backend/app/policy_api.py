@@ -4,7 +4,7 @@ from typing import Literal
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
-from . import policy
+from . import config_items, policy, site_config
 from .core import store
 from .core.db import connect
 from .core.security import current_user
@@ -82,6 +82,37 @@ async def set_ap(ap_id: int, body: RuleIn):
         raise HTTPException(404, "Access point non trovato")
     policy.set_rule(policy.scope_of(ap_id), body.band, body.field, _validate(body))
     return {"results": [await policy.apply_ap(ap, reason="personalizzazione")]}
+
+
+@router.get("/items")
+def list_items():
+    values = site_config.load()
+    return [{"key": i.key, "section": i.section, "label": i.label, "kind": i.kind, "help": i.help,
+             "choices": i.choices, "unit": i.unit, "value": values.get(i.key)} for i in config_items.ITEMS]
+
+
+class ItemIn(BaseModel):
+    value: int | str | bool | None = None      # None = non gestito
+
+
+@router.put("/items/{key}")
+async def set_item(key: str, body: ItemIn):
+    item = config_items.BY_KEY.get(key)
+    if not item:
+        raise HTTPException(404, "Impostazione sconosciuta")
+    try:
+        value = None if body.value is None else config_items.parse_value(item, body.value)
+    except ValueError as exc:
+        raise HTTPException(422, f"{item.label}: {exc}") from None
+    site_config.set_value(key, value)
+    if value is None:
+        return {"results": []}
+    return {"results": await site_config.apply_all(reason=item.label)}
+
+
+@router.post("/items/apply")
+async def apply_items():
+    return {"results": await site_config.apply_all()}
 
 
 @router.post("/apply")
