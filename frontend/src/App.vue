@@ -280,7 +280,7 @@ async function changePassword() {
       <section class="pies">
         <div class="card">
           <h2>Siti più visitati <span class="muted small">({{ periodLabel }}, richieste DNS)</span></h2>
-          <PieChart v-if="siteItems.length" :items="siteItems" />
+          <BarList v-if="siteItems.length" :items="siteItems" />
           <p v-else-if="sites?.available" class="muted">Nessuna richiesta nel periodo per questi dispositivi.</p>
           <div v-else class="empty">
             <p>Gli access point non vedono i siti visitati: questo dato arriva dal <strong>DNS della rete</strong>.</p>
