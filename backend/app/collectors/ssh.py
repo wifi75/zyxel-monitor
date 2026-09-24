@@ -16,7 +16,8 @@ from .base import ApReading, Client, Radio
 # (formato da verificare, l'ultimo output grezzo resta consultabile dal pannello: last_output)
 COMMANDS = [
     "show version", "show system uptime", "show wireless-hal station info",
-    "show wireless-hal statistic", "show port status", "show cpu status", "show mem status",
+    "show wireless-hal statistic", "show wireless-hal current", "show port status", "show cpu status",
+    "show mem status",
 ]
 last_output: dict[str, tuple[float, str]] = {}
 
@@ -144,6 +145,28 @@ def parse_hal_radios(text: str) -> dict[str, dict[str, int]]:
     return out
 
 
+HAL_CHANNEL = re.compile(r"^\s*(?:operating\s+|current\s+)?channel\s*(?:number)?\s*[:=]\s*(\d+)\b", re.I)
+
+
+def parse_channels(text: str) -> dict[str, int]:
+    """Canale per banda da `show wireless-hal current` (formato da confermare: righe "Slot: N" e "Channel: C")."""
+    out: dict[str, int] = {}
+    slot: str | None = None
+    active = False
+    for line in text.splitlines():
+        if line.startswith("Router>"):
+            active = "wireless-hal current" in line
+            slot = None
+            continue
+        if not active:
+            continue
+        if m := HAL_SLOT.match(line):
+            slot = m.group(1)
+        elif slot and (m := HAL_CHANNEL.match(line)):
+            out.setdefault(SLOT_BAND.get(slot, f"radio{slot}"), int(m.group(1)))
+    return out
+
+
 def parse_hal_statistic(text: str) -> dict[str, tuple[int, int]]:
     """`show wireless-hal statistic` (NWA50AX PRO, firmware 7.12): contatori per radio.
     Slot N diventa "wlan-N-1", come le interfacce SSID lette via SNMP; (ricevuti, trasmessi) dalla radio."""
@@ -229,13 +252,15 @@ async def collect(host: str, user: str, password: str, port: int = 22) -> ApRead
     model, fw, uptime = parse_version(text)
     clients = parse_stations(text)
     hal = parse_hal_radios(text)
-    radios: dict[str, int] = {}
+    # bande: quelle dichiarate dalle radio (anche senza client), più quelle viste nei client
+    radios: dict[str, int] = dict.fromkeys(hal, 0)
     for c in clients:
         radios[c.band or "?"] = radios.get(c.band or "?", 0) + 1
+    channels = parse_channels(text)
     return ApReading(
         online=True, model=model, firmware=fw, uptime_s=uptime, clients=clients,
         traffic={**parse_traffic(text), **parse_port_status(text), **parse_hal_statistic(text)},
-        radios=[Radio(band=b, channel=None, clients=n, **hal.get(b, {})) for b, n in sorted(radios.items())],
+        radios=[Radio(band=b, channel=channels.get(b), clients=n, **hal.get(b, {})) for b, n in sorted(radios.items())],
     )
 
 

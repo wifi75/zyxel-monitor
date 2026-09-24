@@ -1,5 +1,5 @@
 from app.collectors.ssh import (
-    parse_hal_radios, parse_hal_statistic, parse_port_status, parse_stations, parse_traffic, parse_version,
+    parse_channels, parse_hal_radios, parse_hal_statistic, parse_port_status, parse_stations, parse_traffic, parse_version,
 )
 from app.devices import device_type
 from app.poller import site_of
@@ -103,3 +103,8 @@ def test_parse_hal_radios():
         "2.4GHz": {"tx_power": 20, "utilization": 10},
         "5GHz": {"tx_power": 21, "utilization": 1},
     }
+
+
+def test_parse_channels():
+    text = "Router> show wireless-hal current\nSlot: 1\n  Channel: 6\nSlot: 2\n  Channel: 44\nRouter> show port status\nChannel: 99\n"
+    assert parse_channels(text) == {"2.4GHz": 6, "5GHz": 44}
