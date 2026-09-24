@@ -36,6 +36,11 @@ class Settings(BaseSettings):
     # domini da non contare tra i "siti visitati" (rete locale, reverse DNS)
     local_domain: str = ""
 
+    # Nebula OpenAPI (licenza Pro): chiave e sito scelti dal pannello
+    nebula_api_key: str = ""
+    nebula_org_id: str = ""
+    nebula_site_id: str = ""
+
     poll_interval: int = 60         # secondi tra una lettura e l'altra
     retention_days: int = 30         # giorni di storico conservati
     db_path: str = "data/monitor.db"
@@ -55,7 +60,7 @@ class Settings(BaseSettings):
 # impostazioni modificabili dal pannello: il valore salvato nel DB vale più del .env
 EDITABLE = (
     "opnsense_url", "opnsense_key", "opnsense_secret", "opnsense_verify_tls", "opnsense_wan_if",
-    "local_domain", "poll_interval", "retention_days",
+    "local_domain", "poll_interval", "retention_days", "nebula_api_key", "nebula_org_id", "nebula_site_id",
 )
 
 

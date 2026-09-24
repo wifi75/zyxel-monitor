@@ -245,7 +245,7 @@ class GeneralIn(BaseModel):
 
 def _general() -> dict:
     s = get_settings()
-    d = {k: getattr(s, k) for k in EDITABLE if k != "opnsense_secret"}
+    d = {k: getattr(s, k) for k in EDITABLE if k != "opnsense_secret" and not k.startswith("nebula_")}
     d["has_opnsense_secret"] = bool(s.opnsense_secret)
     return d
 

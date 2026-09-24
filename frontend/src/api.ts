@@ -86,6 +86,21 @@ export interface DeviceUsage {
   by_type?: { type: string; bytes: number }[]
   debug?: { path: string; rows: number; addresses: number; sample_addresses: string[]; sample: string } | null
 }
+export interface NebulaStatus { configured: boolean; has_key: boolean; org_id: string; site_id: string }
+export interface NebulaDiscover {
+  ok: boolean; pro?: boolean; message: string | null
+  organizations?: { orgId: string; name: string; mode: string; error: string | null;
+    sites: { siteId: string; name: string; deviceCount: number }[] }[]
+}
+export interface NebulaDevice {
+  devId: string; name: string | null; model: string | null; mac: string; type: string | null; online: boolean
+  currentVersion: string | null; latestVersion: string | null; firmwareStatus: string | null; lastUpgradeTime: string | null
+}
+export interface NebulaSsid {
+  id: number; name: string; enabled: boolean; security: string; band: string[]; visibility: boolean; vlan: number
+  guestNetwork: boolean; enabledBands: string[]; has_wpa_key: boolean
+}
+
 export interface WidgetPos { i: string; x: number; y: number; w: number; h: number }
 export type ViewKind = 'overview' | 'ap'
 export type SavedLayout = Partial<Record<ViewKind, WidgetPos[]>>
@@ -147,6 +162,19 @@ export const api = {
   saveLayout: (l: SavedLayout) => req('/layout', { method: 'PUT', body: JSON.stringify(l) }),
   resetLayout: () => req('/layout', { method: 'DELETE' }),
   rawOutput: (id: number) => req<{ ts: number | null; text: string }>(`/settings/aps/${id}/raw`),
+
+  // Nebula (licenza Pro)
+  nebulaStatus: () => req<NebulaStatus>('/nebula/status'),
+  nebulaDiscover: (api_key: string) =>
+    req<NebulaDiscover>('/nebula/discover', { method: 'POST', body: JSON.stringify({ api_key }) }),
+  nebulaConnect: (api_key: string, org_id: string, site_id: string) =>
+    req<NebulaStatus>('/nebula/connect', { method: 'PUT', body: JSON.stringify({ api_key, org_id, site_id }) }),
+  nebulaDisconnect: () => req<NebulaStatus>('/nebula/connect', { method: 'DELETE' }),
+  nebulaDevices: () => req<{ devices: NebulaDevice[]; updates: number }>('/nebula/devices'),
+  nebulaReboot: (devId: string) => req(`/nebula/devices/${encodeURIComponent(devId)}/reboot`, { method: 'POST' }),
+  nebulaSsids: () => req<NebulaSsid[]>('/nebula/ssids'),
+  nebulaUpdateSsid: (id: number, patch: { name?: string; enabled?: boolean; bands?: string[] }) =>
+    req(`/nebula/ssids/${id}`, { method: 'PATCH', body: JSON.stringify(patch) }),
 
   // pannello impostazioni
   apConfigs: () => req<ApConfig[]>('/settings/aps'),

@@ -2,6 +2,7 @@
 import { onMounted, reactive, ref } from 'vue'
 import { api, apForm, type Ap, type ApConfig, type ApTest, type GeneralForm } from '../api'
 import ApEditor from './ApEditor.vue'
+import NebulaPanel from './NebulaPanel.vue'
 
 const props = defineProps<{ status: Ap[] }>()
 const emit = defineEmits<{ changed: [] }>()
@@ -201,5 +202,7 @@ onMounted(() => { load(); loadGeneral() })
       </div>
       <p v-if="genMsg" class="note" :class="genMsg.ok ? 'ok' : 'ko'">{{ genMsg.message }}</p>
     </form>
+
+    <NebulaPanel />
   </main>
 </template>

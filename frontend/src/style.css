@@ -345,3 +345,5 @@ table td { vertical-align: middle; }
 tbody tr:nth-child(even) td { background: color-mix(in srgb, var(--bg) 60%, transparent); }
 tr.unknown td { background: color-mix(in srgb, var(--weak) 10%, transparent) !important; }
 .dev-search { display: block; width: 100%; margin-bottom: 10px; }
+
+label.check.inline { display: inline-flex; min-height: 0; margin-right: 10px; font-size: 12px; }
