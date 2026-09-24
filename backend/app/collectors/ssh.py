@@ -16,7 +16,7 @@ from .base import ApReading, Client, Radio
 # (formato da verificare, l'ultimo output grezzo resta consultabile dal pannello: last_output)
 COMMANDS = [
     "show version", "show system uptime", "show wireless-hal station info",
-    "show wireless-hal statistic", "show port status", "show cpu status", "show mem status",
+    "show wireless-hal statistic", "show port status", "show cpu status", "show mem status", "show wlan all",
 ]
 last_output: dict[str, tuple[float, str]] = {}
 
@@ -146,24 +146,27 @@ def parse_hal_radios(text: str) -> dict[str, dict[str, int]]:
     return out
 
 
-HAL_CHANNEL = re.compile(r"^\s*(?:operating\s+|current\s+)?channel\s*(?:number)?\s*[:=]\s*(\d+)\b", re.I)
+HAL_CHANNEL = re.compile(r"\b(?:operating\s+|current\s+)?channel\s*(?:number)?\s*[:=]?\s*(\d{1,3})\b", re.I)
+# intestazione di uno slot: "Slot: 1", "slot1", "wlan slot1"
+SLOT_HEAD = re.compile(r"^\s*(?:wlan\s+)?slot\s*:?\s*(\d)\b", re.I)
 
 
 def parse_channels(text: str) -> dict[str, int]:
-    """Canale per banda da `show wireless-hal current` (formato da confermare: righe "Slot: N" e "Channel: C")."""
+    """Canale per banda da `show wlan all` (formato da confermare sull'Output CLI: intestazioni di slot e righe
+    con "channel"). Si guardano solo le righe dopo l'eco del comando, per non confondersi con altri output."""
     out: dict[str, int] = {}
     slot: str | None = None
     active = False
     for line in text.splitlines():
         if line.startswith("Router>"):
-            active = "wireless-hal current" in line
+            active = "show wlan" in line or "wireless-hal current" in line
             slot = None
             continue
         if not active:
             continue
-        if m := HAL_SLOT.match(line):
+        if m := SLOT_HEAD.match(line):
             slot = m.group(1)
-        elif slot and (m := HAL_CHANNEL.match(line)):
+        if slot and "utilization" not in line.lower() and (m := HAL_CHANNEL.search(line)):
             out.setdefault(SLOT_BAND.get(slot, f"radio{slot}"), int(m.group(1)))
     return out
 

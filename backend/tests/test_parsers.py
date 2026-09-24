@@ -174,3 +174,8 @@ def test_password_hide_macblock():
         "wlan-security-profile SECURITY1", "wpa-psk segreta123", "exit"]
     assert ci.parse_value(ci.BY_KEY["mac_block"], "AA-BB-CC-DD-EE-FF, 11:22:33:44:55:66") == [
         "11:22:33:44:55:66", "aa:bb:cc:dd:ee:ff"]
+
+
+def test_parse_channels_show_wlan():
+    text = "Router> show wlan all\nslot1:\n  Channel: 6\nslot2:\n  channel 44\nRouter> exit\n"
+    assert parse_channels(text) == {"2.4GHz": 6, "5GHz": 44}

@@ -2,6 +2,10 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) — versioni: [SemVer](https://semver.org/lang/it/).
 
+## [0.11.1] - 2026-09-24
+### Aggiunto
+- AP via SSH: lettura del canale da show wlan all (formato da confermare con l'Output CLI).
+
 ## [0.11.0] - 2026-09-24
 ### Aggiunto
 - Impostazioni del sito: password della rete (applicata solo quando la cambi, mai mostrata), rete nascosta, dispositivi bloccati per MAC.
