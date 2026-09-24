@@ -39,4 +39,7 @@
 - Nebula OpenAPI: solo Pro; non esistono endpoint per potenza radio e canali. L'utente ha licenza Base.
 - Controlli prima di ogni commit: `ruff check backend`, `(cd backend && pytest tests)`, `npm run build` (include vue-tsc): un errore di tipi blocca il deploy su Portainer.
 - Versioning: bump a ogni blocco di lavoro chiuso, l'utente legge la versione nel piè di pagina per sapere dove si trova.
+- v0.20.1 (2026-09-24): configurazione a tabella di confronto (sito + colonna per AP, applicazione raggruppata per non ricaricare le radio a ogni modifica), roaming per AP, temi chiaro/scuro.
+- Grafica: `frontend/src/tokens.css` (caricato dopo `style.css`) ridefinisce le variabili per `[data-theme=light|dark]`; tema chiaro "denso operativo" (Public Sans + IBM Plex Mono, blu petrolio), scuro "console" (IBM Plex Sans + JetBrains Mono, ciano). Scelta in `localStorage` `zm-theme`, altrimenti dal sistema. Icone solo dalla famiglia a tratto di `icons.ts`, niente emoji.
+- Nome rete 5 GHz separato: copia del profilo SSID della 2.4 in `SSID5G` assegnata a `wlan slot2`; stesso nome = slot2 torna al profilo della 2.4.
 Vedi [TODO.md](TODO.md).

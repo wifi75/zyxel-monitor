@@ -2,6 +2,24 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) — versioni: [SemVer](https://semver.org/lang/it/).
 
+## [0.20.1] - 2026-09-24
+### Modificato
+- Configurazione: nome della rete 2.4 GHz e 5 GHz impostabili separatamente; stesso nome = un'unica rete.
+### Corretto
+- Icona del gruppo sulla stessa riga del titolo.
+
+## [0.20.0] - 2026-09-24
+### Aggiunto
+- Tema chiaro e tema scuro a scelta (pulsante sole/luna, predefinito dal sistema), con file di token grafici.
+### Modificato
+- Barra del titolo a fondo pieno, controlli di altezza unica, icone al posto delle emoji; "in attesa" diventa "da applicare".
+
+## [0.19.0] - 2026-09-24
+### Modificato
+- Pannello Roaming: una riga per access point con arrivi e partenze e i relativi AP.
+### Aggiunto
+- Configurazione: nome rete separato per i 5 GHz.
+
 ## [0.18.4] - 2026-09-24
 ### Modificato
 - Pannello Roaming a coppie: andata e ritorno fra due access point sulla stessa riga (una riga per coppia invece che per direzione), con la barra che punta all'AP di arrivo e il totale della coppia. La coppia è segnata "rimbalza" quando tutte e due le direzioni arrivano alla soglia già usata per i dispositivi.
