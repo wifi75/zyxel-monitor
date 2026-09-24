@@ -10,10 +10,11 @@ import { COLS, appendWidget, defOf, defaultLayout, normalize, widgetsFor } from 
  */
 const props = defineProps<{ view: ViewKind }>()
 defineSlots<{ widget(props: { id: string }): unknown }>()
+/** acceso dal pulsante "Personalizza" nella barra in alto */
+const editing = defineModel<boolean>('editing', { default: false })
 
 const saved = ref<SavedLayout>({})
 const layout = ref<WidgetPos[]>(defaultLayout(props.view))
-const editing = ref(false)
 const addId = ref('')
 
 // sotto i 768 px la griglia non ha senso: i widget si impilano nell'ordine della disposizione
@@ -65,17 +66,14 @@ async function reset() {
 </script>
 
 <template>
-  <div class="dash-tools">
-    <template v-if="editing">
-      <span class="muted small">Trascina un widget dalla barra del titolo, ridimensionalo dall'angolo in basso a destra.</span>
-      <select v-if="missing.length" v-model="addId" @change="add">
-        <option value="">+ Aggiungi widget…</option>
-        <option v-for="w in missing" :key="w.id" :value="w.id">{{ w.title }}</option>
-      </select>
-      <button class="ghost small" @click="reset">Ripristina</button>
-      <button class="primary small" @click="editing = false">Fatto</button>
-    </template>
-    <button v-else class="ghost small" @click="editing = true">Personalizza dashboard</button>
+  <div v-if="editing" class="dash-tools">
+    <span class="muted small grow">Trascina un widget dalla barra del titolo, ridimensionalo dall'angolo in basso a destra.</span>
+    <select v-if="missing.length" v-model="addId" @change="add">
+      <option value="">+ Aggiungi widget…</option>
+      <option v-for="w in missing" :key="w.id" :value="w.id">{{ w.title }}</option>
+    </select>
+    <button class="ghost small" @click="reset">Ripristina</button>
+    <button class="primary small" @click="editing = false">Fatto</button>
   </div>
 
   <div v-if="narrow" class="dash-stack">

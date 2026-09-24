@@ -9,12 +9,14 @@ import ClientsTable from './components/ClientsTable.vue'
 import Dashboard from './components/Dashboard.vue'
 import DevicesView from './components/DevicesView.vue'
 import EventsTable from './components/EventsTable.vue'
+import Icon from './components/Icon.vue'
 import InternetCard from './components/InternetCard.vue'
 import LoginView from './components/LoginView.vue'
 import PieChart from './components/PieChart.vue'
 import SettingsView from './components/SettingsView.vue'
 import TrafficChart from './components/TrafficChart.vue'
 import { bps, bytes, duration, signal, time } from './format'
+import type { IconName } from './icons'
 
 const REFRESH_MS = 30_000
 
@@ -23,6 +25,9 @@ const logged = ref(!!auth.token)
 const defaultPassword = ref(false)
 /** '' = panoramica, '#devices' = dispositivi, '#events' = eventi, '#settings' = impostazioni, altrimenti nome dell'AP */
 const view = ref('')
+/** modalità "Personalizza dashboard" */
+const editing = ref(false)
+const isDashboard = computed(() => !view.value.startsWith('#'))
 
 const aps = ref<Ap[]>([])
 const clients = ref<Client[]>([])
@@ -85,7 +90,7 @@ function reloadSoon() {
 }
 
 watch(hours, load)
-watch(view, loadScoped)
+watch(view, () => { if (!isDashboard.value) editing.value = false; loadScoped() })
 
 // ---- aggiornamento automatico: dopo un nuovo deploy la pagina aperta si ricarica da sola ----
 const updating = ref(false)
@@ -155,6 +160,29 @@ const periodBytes = computed(() => {
   const keys = currentAp.value ? [currentAp.value.ap] : Object.keys(per)
   return keys.reduce((s, k) => s + (per[k] ? per[k].down + per[k].up : 0), 0)
 })
+
+const kpis = computed(() => {
+  const ap = currentAp.value
+  const list: { label: string; value: string | number; of?: number; icon: IconName;
+    tone: string; warn?: boolean; go?: string; title?: string }[] = [
+    ap
+      ? { label: 'Uptime', value: duration(ap.uptime_s), icon: 'clock', tone: 'blue',
+          title: ap.method === 'ssh' && ap.uptime_s == null ? SSH_NA : undefined }
+      : { label: 'Access point online', value: onlineAps.value, of: aps.value.length, icon: 'wifi', tone: 'blue',
+          warn: onlineAps.value < aps.value.length },
+    { label: 'Client connessi', value: scopedClients.value.length, icon: 'users', tone: 'violet' },
+    { label: 'Download Wi-Fi', value: bps(currentDown.value), icon: 'down', tone: 'green' },
+    { label: 'Upload Wi-Fi', value: bps(currentUp.value), icon: 'up', tone: 'teal' },
+    { label: `Traffico ${periodLabel.value}`, value: periodBytes.value ? bytes(periodBytes.value) : '—', icon: 'chart', tone: 'amber' },
+    { label: 'Segnale debole', value: weakClients.value, icon: 'alert', tone: 'orange', warn: weakClients.value > 0 },
+  ]
+  if (!ap) list.push({ label: 'Dispositivi nuovi', value: newDevices.value.length, icon: 'star', tone: 'pink',
+                       warn: newDevices.value.length > 0, go: '#devices' })
+  return list
+})
+
+/** classe colore per banda radio */
+const bandClass = (band: string) => (band.startsWith('2') ? 'b24' : band.startsWith('5') ? 'b5' : band.startsWith('6') ? 'b6' : '')
 
 // ---- torte e classifiche ----
 function countBy(list: Client[], key: (c: Client) => string) {
@@ -229,10 +257,11 @@ const SSH_NA = "La CLI SSH di questo AP non fornisce ancora il dato: in Impostaz
           <option :value="1">1 ora</option><option :value="6">6 ore</option>
           <option :value="24">24 ore</option><option :value="168">7 giorni</option>
         </select>
-        <span class="muted small" v-if="lastUpdate">agg. {{ lastUpdate.toLocaleTimeString('it-IT') }}</span>
-        <button class="ghost" :class="{ active: view === '#settings' }" @click="view = '#settings'">Impostazioni</button>
-        <button class="ghost" @click="showPwd = !showPwd">Password</button>
-        <button class="ghost" @click="logout">Esci</button>
+        <span class="muted small updated" v-if="lastUpdate" title="Ultimo aggiornamento">{{ lastUpdate.toLocaleTimeString('it-IT') }}</span>
+        <button v-if="isDashboard" class="icon-btn" :class="{ active: editing }" title="Personalizza dashboard" @click="editing = !editing"><Icon name="grid" /></button>
+        <button class="icon-btn" :class="{ active: view === '#settings' }" title="Impostazioni" @click="view = '#settings'"><Icon name="sliders" /></button>
+        <button class="icon-btn" :class="{ active: showPwd }" title="Cambia password" @click="showPwd = !showPwd"><Icon name="key" /></button>
+        <button class="icon-btn" title="Esci" @click="logout"><Icon name="logout" /></button>
       </div>
     </header>
 
@@ -268,24 +297,24 @@ const SSH_NA = "La CLI SSH di questo AP non fornisce ancora il dato: in Impostaz
           <p v-if="currentAp.error" class="error small">{{ currentAp.error }}</p>
         </div>
         <div class="radios">
-          <span v-for="r in currentAp.radios" :key="r.band" class="radio">
+          <span v-for="r in currentAp.radios" :key="r.band" class="radio" :class="bandClass(r.band)">
             {{ r.band }}<template v-if="r.channel"> · canale {{ r.channel }}</template> · {{ r.clients }} client
           </span>
         </div>
       </section>
 
-      <Dashboard :view="currentAp ? 'ap' : 'overview'">
+      <Dashboard v-model:editing="editing" :view="currentAp ? 'ap' : 'overview'">
         <template #widget="{ id }">
           <!-- indicatori -->
           <section v-if="id === 'kpis'" class="kpis fill">
-            <div class="kpi" v-if="!currentAp"><span>Access point online</span><strong>{{ onlineAps }}<small> / {{ aps.length }}</small></strong></div>
-            <div class="kpi" v-else><span>Uptime</span><strong :title="currentAp.method === 'ssh' && currentAp.uptime_s == null ? SSH_NA : ''">{{ duration(currentAp.uptime_s) }}</strong></div>
-            <div class="kpi"><span>Client connessi</span><strong>{{ scopedClients.length }}</strong></div>
-            <div class="kpi"><span>Download Wi-Fi</span><strong>{{ bps(currentDown) }}</strong></div>
-            <div class="kpi"><span>Upload Wi-Fi</span><strong>{{ bps(currentUp) }}</strong></div>
-            <div class="kpi"><span>Traffico {{ periodLabel }}</span><strong>{{ periodBytes ? bytes(periodBytes) : '—' }}</strong></div>
-            <div class="kpi"><span>Segnale debole</span><strong :class="{ warn: weakClients }">{{ weakClients }}</strong></div>
-            <div class="kpi clickable" v-if="!currentAp" @click="view = '#devices'"><span>Dispositivi nuovi</span><strong :class="{ warn: newDevices.length }">{{ newDevices.length }}</strong></div>
+            <div v-for="k in kpis" :key="k.label" class="kpi rich" :class="[`tone-${k.tone}`, { clickable: k.go }]"
+                 :title="k.title" @click="k.go && (view = k.go)">
+              <div class="kpi-icon"><Icon :name="k.icon" /></div>
+              <div class="kpi-text">
+                <span>{{ k.label }}</span>
+                <strong :class="{ warn: k.warn }">{{ k.value }}<small v-if="k.of"> / {{ k.of }}</small></strong>
+              </div>
+            </div>
           </section>
 
           <!-- access point -->
@@ -293,23 +322,28 @@ const SSH_NA = "La CLI SSH di questo AP non fornisce ancora il dato: in Impostaz
             <article v-for="a in aps" :key="a.ap" class="ap clickable" :class="{ off: !a.online }" @click="view = a.ap">
               <header>
                 <span class="status" :class="a.online ? 'on' : 'off'" />
-                <h3>{{ a.ap }}</h3>
-                <span class="tag">{{ a.method.toUpperCase() }}</span>
-              </header>
-              <p class="muted small">{{ a.model || '—' }} · {{ a.host }}</p>
-              <div class="ap-stats">
-                <div><span>Client</span><strong>{{ a.clients ?? '—' }}</strong></div>
-                <div :title="a.method === 'ssh' && a.uptime_s == null ? SSH_NA : ''">
-                  <span>Uptime</span><strong>{{ a.uptime_s == null && a.method === 'ssh' && a.online ? 'n.d.' : duration(a.uptime_s) }}</strong>
+                <div class="grow">
+                  <h3>{{ a.ap }}</h3>
+                  <p class="muted small">{{ a.model || 'modello non letto' }} · <span class="mono">{{ a.host }}</span></p>
                 </div>
-                <div :title="a.method === 'ssh' && !usage?.per_ap[a.ap] ? SSH_NA : ''">
-                  <span>Traffico</span>
+                <span class="tag" :class="a.method">{{ a.method.toUpperCase() }}</span>
+              </header>
+              <div class="ap-tiles">
+                <div class="tile tone-violet">
+                  <Icon name="users" :size="16" /><span>Client</span><strong>{{ a.clients ?? '—' }}</strong>
+                </div>
+                <div class="tile tone-blue" :title="a.method === 'ssh' && a.uptime_s == null ? SSH_NA : ''">
+                  <Icon name="clock" :size="16" /><span>Acceso da</span>
+                  <strong>{{ a.uptime_s == null && a.method === 'ssh' && a.online ? 'n.d.' : duration(a.uptime_s) }}</strong>
+                </div>
+                <div class="tile tone-amber" :title="a.method === 'ssh' && !usage?.per_ap[a.ap] ? SSH_NA : ''">
+                  <Icon name="chart" :size="16" /><span>Traffico {{ periodLabel }}</span>
                   <strong>{{ usage?.per_ap[a.ap] ? bytes(usage.per_ap[a.ap].down + usage.per_ap[a.ap].up) : a.method === 'ssh' && a.online ? 'n.d.' : '—' }}</strong>
                 </div>
               </div>
               <div class="radios">
-                <span v-for="r in a.radios" :key="r.band" class="radio">
-                  {{ r.band }}<template v-if="r.channel"> · ch {{ r.channel }}</template> · {{ r.clients }}
+                <span v-for="r in a.radios" :key="r.band" class="radio" :class="bandClass(r.band)">
+                  <b>{{ r.band.replace('GHz', ' GHz') }}</b><template v-if="r.channel"> · canale {{ r.channel }}</template> · {{ r.clients }} client
                 </span>
               </div>
               <p v-if="a.error" class="error small">{{ a.error }}</p>
