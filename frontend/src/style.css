@@ -153,3 +153,14 @@ tr.disabled td { opacity: .55; }
 button.danger { color: var(--bad); }
 button.ghost.active { background: var(--accent-soft); color: var(--accent); border-color: transparent; }
 .status.idle { background: var(--muted); }
+
+/* classifica a righe (DNS bloccati) */
+.blocked-head { display: flex; align-items: baseline; gap: 10px; }
+.blocked-head strong { font-size: 28px; font-variant-numeric: tabular-nums; color: var(--good); }
+.bar-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.bar-list li { display: grid; grid-template-columns: 18px minmax(0, 1fr) auto; column-gap: 8px; row-gap: 3px; align-items: center; font-size: 13px; }
+.bar-list .rank { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+.bar-list .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bar-list .value { font-variant-numeric: tabular-nums; font-weight: 600; }
+.bar-list .bar { grid-column: 2 / 4; height: 4px; border-radius: 2px; background: var(--grid); overflow: hidden; }
+.bar-list .bar span { display: block; height: 100%; border-radius: 2px; background: var(--accent); }

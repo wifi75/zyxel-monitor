@@ -3,6 +3,7 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import {
   api, auth, Unauthorized, type Ap, type Client, type Event, type Health, type Internet, type Sites, type Traffic, type TrafficPoint, type Usage,
 } from './api'
+import BarList from './components/BarList.vue'
 import ClientsTable from './components/ClientsTable.vue'
 import EventsTable from './components/EventsTable.vue'
 import LoginView from './components/LoginView.vue'
@@ -136,7 +137,7 @@ const internetNow = computed(() => {
   return p ?? null
 })
 const blockedItems = computed(() =>
-  (internet.value?.dns?.top_blocked ?? []).map(i => ({ label: i.domain, value: i.queries })))
+  (internet.value?.dns?.top_blocked ?? []).map(i => ({ label: i.domain, value: i.queries, title: i.list })))
 
 const siteItems = computed(() => (sites.value?.items ?? []).map(i => ({ label: i.site, value: i.queries })))
 
@@ -298,11 +299,15 @@ async function changePassword() {
         </div>
         <div class="card" v-if="!currentAp && internet?.dns">
           <h2>Pubblicità e tracker bloccati</h2>
-          <p class="muted small">
-            {{ internet.dns.blocked.toLocaleString('it-IT') }} richieste bloccate su {{ internet.dns.total.toLocaleString('it-IT') }}
-            ({{ internet.dns.blocked_pct }}%) dal {{ new Date(internet.dns.since * 1000).toLocaleDateString('it-IT') }}
-          </p>
-          <PieChart v-if="blockedItems.length" :items="blockedItems" />
+          <div class="blocked-head">
+            <strong>{{ internet.dns.blocked_pct.toLocaleString('it-IT', { maximumFractionDigits: 1 }) }}%</strong>
+            <span class="muted small">
+              delle richieste DNS: {{ internet.dns.blocked.toLocaleString('it-IT') }} su
+              {{ internet.dns.total.toLocaleString('it-IT') }} dal {{ new Date(internet.dns.since * 1000).toLocaleDateString('it-IT') }}
+            </span>
+          </div>
+          <BarList v-if="blockedItems.length" :items="blockedItems" />
+          <p v-else class="muted">Nessun dominio bloccato finora.</p>
         </div>
         <div class="card" v-if="!currentAp">
           <h2>Client per access point</h2>
