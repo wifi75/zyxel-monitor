@@ -66,7 +66,7 @@ async function copyBackup() { copied.value = await copyText(shown.value?.text ??
 const STATUS: Record<string, { label: string; tone: string }> = {
   ok: { label: 'allineato', tone: 'var(--green)' },
   pending: { label: 'in applicazione', tone: 'var(--amber)' },
-  capped: { label: "limitato dall'AP", tone: 'var(--orange)' },
+  capped: { label: 'al massimo di legge', tone: 'var(--orange)' },
   unknown: { label: 'non letto', tone: 'var(--muted)' },
   unmanaged: { label: 'non gestito', tone: 'var(--muted)' },
 }
@@ -105,10 +105,13 @@ const others = computed(() => data.value?.aps.filter(a => !a.configurable || !a.
           <label>Potenza di trasmissione
             <select :value="data?.site[b] ?? ''" :disabled="!!busy" @change="setSite(b, ($event.target as HTMLSelectElement).value)">
               <option value="">Non gestita (decide l'AP / Nebula)</option>
-              <option v-for="p in POWERS" :key="p" :value="p">{{ p }} dBm{{ p === 30 ? ' (massima)' : '' }}</option>
+              <option v-for="p in POWERS" :key="p" :value="p">{{ p === 30 ? 'Massima consentita' : `${p} dBm` }}</option>
             </select>
           </label>
-          <span class="small muted">Meno potenza = celle più piccole: aiuta i dispositivi che “rimbalzano” fra AP vicini.</span>
+          <span class="small muted">
+            Limite di legge in Italia: {{ b === '2.4GHz' ? '20 dBm' : '23 dBm sui canali 36-48, 30 dBm sui canali 100-140 (DFS)' }};
+            l'AP non supera mai il massimo consentito. Meno potenza = celle più piccole, meno “rimbalzi” fra AP vicini.
+          </span>
         </div>
       </div>
     </section>
@@ -126,9 +129,9 @@ const others = computed(() => data.value?.aps.filter(a => !a.configurable || !a.
               <td v-for="b in BANDS" :key="b" class="cfg-cell">
                 <select :value="a.bands[b].override === 'inherit' ? 'inherit' : a.bands[b].override ?? 'none'" :disabled="!!busy"
                         @change="setAp(a.id, b, ($event.target as HTMLSelectElement).value)">
-                  <option value="inherit">Come il sito{{ data?.site[b] != null ? ` (${data.site[b]} dBm)` : '' }}</option>
+                  <option value="inherit">Come il sito{{ data?.site[b] != null ? ` (${data.site[b] === 30 ? 'massima' : `${data.site[b]} dBm`})` : '' }}</option>
                   <option value="none">Non gestita</option>
-                  <option v-for="p in POWERS" :key="p" :value="p">{{ p }} dBm</option>
+                  <option v-for="p in POWERS" :key="p" :value="p">{{ p === 30 ? 'Massima consentita' : `${p} dBm` }}</option>
                 </select>
                 <div class="cfg-state">
                   <span class="chip" :style="{ '--tone': STATUS[a.bands[b].status].tone }">{{ STATUS[a.bands[b].status].label }}</span>

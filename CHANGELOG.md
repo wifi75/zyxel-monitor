@@ -2,6 +2,10 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) — versioni: [SemVer](https://semver.org/lang/it/).
 
+## [0.7.1] - 2026-09-24
+### Modificato
+- Configurazione: "30 dBm" diventa "Massima consentita", lo stato "limitato dall'AP" diventa "al massimo di legge" e ogni banda riporta i limiti italiani (2.4 GHz 20 dBm; 5 GHz 23 dBm sui canali 36-48, 30 dBm sui 100-140).
+
 ## [0.7.0] - 2026-09-24
 ### Aggiunto
 - Accesso SSH anche per gli AP letti via SNMP (Gestione AP → Connessione): i dati restano da SNMP, configurazione centralizzata, backup e riavvio passano da SSH. Così tutti e 4 gli AP sono configurabili.
