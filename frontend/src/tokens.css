@@ -80,3 +80,6 @@ tbody tr:nth-child(even) td { background: var(--row-alt); }
 :root[data-theme="dark"] .kpi strong { letter-spacing: -.01em; }
 
 @media (prefers-reduced-motion: reduce) { * { transition-duration: 1ms !important; animation-duration: 1ms !important; } }
+
+/* icona del gruppo sulla stessa riga del titolo */
+.cmp-group .icon { display: inline-block; vertical-align: -2px; margin-right: 6px; }
