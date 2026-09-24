@@ -12,11 +12,11 @@ import asyncssh
 
 from .base import ApReading, Client, Radio
 
-# "show interface all" elenca solo le interfacce, senza contatori: si prova il dettaglio di ognuna (da verificare);
-# l'ultimo output grezzo resta consultabile dal pannello (last_output)
+# i contatori di traffico: "show interface ..." ha solo configurazione; candidati trovati con "show ?"
+# (formato da verificare, l'ultimo output grezzo resta consultabile dal pannello: last_output)
 COMMANDS = [
     "show version", "show system uptime", "show wireless-hal station info",
-    "show interface wlan-1-1", "show interface wlan-2-1",
+    "show wireless-hal statistic", "show port status",
 ]
 last_output: dict[str, tuple[float, str]] = {}
 
