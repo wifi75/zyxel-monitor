@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { locale } from '../i18n'
 
 /** classifica a righe: nome intero, barra proporzionale al primo, valore */
 const props = defineProps<{
@@ -8,7 +9,7 @@ const props = defineProps<{
 }>()
 
 const max = computed(() => Math.max(1, ...props.items.map(i => i.value)))
-const fmt = (v: number) => (props.format ?? ((x: number) => x.toLocaleString('it-IT')))(v)
+const fmt = (v: number) => (props.format ?? ((x: number) => x.toLocaleString(locale())))(v)
 </script>
 
 <template>

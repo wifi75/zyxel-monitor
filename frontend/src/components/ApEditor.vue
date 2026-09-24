@@ -2,6 +2,7 @@
 import { computed, reactive, ref, watch } from 'vue'
 import { api, apForm, type ApConfig, type ApTest, type Detect, type Secret } from '../api'
 import { duration } from '../format'
+import { t } from '../i18n'
 
 const props = defineProps<{ ap: ApConfig | null; all: ApConfig[] }>()
 const emit = defineEmits<{ saved: [copied: number]; cancel: [] }>()
@@ -38,7 +39,7 @@ const others = computed(() => props.all.filter(a => a.method === form.method && 
 function keeps(k: Secret, fallback: string) {
   const s = source.value
   if (!s || !s[HAS[k]]) return fallback
-  return props.ap ? 'invariata — scrivi per cambiarla' : `come ${s.name}`
+  return props.ap ? t('invariata — scrivi per cambiarla') : t('come {name}', { name: s.name })
 }
 
 async function run(kind: 'save' | 'test' | 'detect', fn: () => Promise<void>) {
@@ -70,83 +71,83 @@ const save = () => run('save', async () => {
 <template>
   <form class="ap-editor" @submit.prevent="save">
     <div class="grid">
-      <label>Nome<input v-model="form.name" required maxlength="40" placeholder="es. TAVERNA" /></label>
-      <label>Indirizzo IP o nome host<input v-model="form.host" required placeholder="192.168.1.15" /></label>
-      <label>Protocollo
+      <label>{{ t('Nome') }}<input v-model="form.name" required maxlength="40" :placeholder="t('es. TAVERNA')" /></label>
+      <label>{{ t('Indirizzo IP o nome host') }}<input v-model="form.host" required placeholder="192.168.1.15" /></label>
+      <label>{{ t('Protocollo') }}
         <select v-model="form.method"><option value="snmp">SNMP</option><option value="ssh">SSH</option></select>
       </label>
-      <label class="check"><input v-model="form.enabled" type="checkbox" /> Attivo</label>
+      <label class="check"><input v-model="form.enabled" type="checkbox" /> {{ t('Attivo') }}</label>
     </div>
 
     <div v-if="form.method === 'snmp'" class="grid">
-      <label>Versione SNMP
+      <label>{{ t('Versione SNMP') }}
         <select v-model="form.snmp_version">
-          <option value="2c">v2c</option><option value="3">v3 (utente e password)</option><option value="1">v1</option>
+          <option value="2c">v2c</option><option value="3">{{ t('v3 (utente e password)') }}</option><option value="1">v1</option>
         </select>
       </label>
       <label v-if="form.snmp_version !== '3'">Community
         <input v-model="form.snmp_community" type="password" autocomplete="off" :placeholder="keeps('snmp_community', 'public')" />
       </label>
       <template v-else>
-        <label>Utente<input v-model="form.snmp_user" required autocomplete="off" /></label>
-        <label>Autenticazione
+        <label>{{ t('Utente') }}<input v-model="form.snmp_user" required autocomplete="off" /></label>
+        <label>{{ t('Autenticazione') }}
           <select v-model="form.snmp_auth_proto"><option v-for="p in AUTH" :key="p">{{ p }}</option></select>
         </label>
-        <label>Password autenticazione
-          <input v-model="form.snmp_auth_pass" type="password" autocomplete="new-password" :placeholder="keeps('snmp_auth_pass', 'min. 8 caratteri')" />
+        <label>{{ t('Password autenticazione') }}
+          <input v-model="form.snmp_auth_pass" type="password" autocomplete="new-password" :placeholder="keeps('snmp_auth_pass', t('min. 8 caratteri'))" />
         </label>
-        <label>Cifratura
+        <label>{{ t('Cifratura') }}
           <select v-model="form.snmp_priv_proto"><option v-for="p in PRIV" :key="p">{{ p }}</option></select>
         </label>
-        <label>Password cifratura
-          <input v-model="form.snmp_priv_pass" type="password" autocomplete="new-password" :placeholder="keeps('snmp_priv_pass', 'vuota = senza cifratura')" />
+        <label>{{ t('Password cifratura') }}
+          <input v-model="form.snmp_priv_pass" type="password" autocomplete="new-password" :placeholder="keeps('snmp_priv_pass', t('vuota = senza cifratura'))" />
         </label>
       </template>
     </div>
 
     <details v-if="form.method === 'snmp'" class="ssh-extra" :open="!!props.ap?.has_ssh_password">
-      <summary>Accesso SSH per configurazione e riavvio <span class="muted small">(facoltativo: i dati si leggono via SNMP)</span></summary>
+      <summary>{{ t('Accesso SSH per configurazione e riavvio') }} <span class="muted small">{{ t('(facoltativo: i dati si leggono via SNMP)') }}</span></summary>
       <div class="grid">
-        <label>Utente SSH<input v-model="form.ssh_user" autocomplete="off" /></label>
-        <label>Password SSH
-          <input v-model="form.ssh_password" type="password" autocomplete="new-password" :placeholder="keeps('ssh_password', 'Local credentials di Nebula')" />
+        <label>{{ t('Utente SSH') }}<input v-model="form.ssh_user" autocomplete="off" /></label>
+        <label>{{ t('Password SSH') }}
+          <input v-model="form.ssh_password" type="password" autocomplete="new-password" :placeholder="keeps('ssh_password', t('Local credentials di Nebula'))" />
         </label>
-        <label>Porta<input v-model.number="form.ssh_port" type="number" min="1" max="65535" /></label>
+        <label>{{ t('Porta') }}<input v-model.number="form.ssh_port" type="number" min="1" max="65535" /></label>
       </div>
     </details>
 
     <div v-else class="grid">
-      <label>Utente<input v-model="form.ssh_user" required autocomplete="off" /></label>
-      <label>Password
-        <input v-model="form.ssh_password" type="password" autocomplete="new-password" :placeholder="keeps('ssh_password', 'Local credentials di Nebula')" />
+      <label>{{ t('Utente') }}<input v-model="form.ssh_user" required autocomplete="off" /></label>
+      <label>{{ t('Password') }}
+        <input v-model="form.ssh_password" type="password" autocomplete="new-password" :placeholder="keeps('ssh_password', t('Local credentials di Nebula'))" />
       </label>
-      <label>Porta<input v-model.number="form.ssh_port" type="number" min="1" max="65535" /></label>
+      <label>{{ t('Porta') }}<input v-model.number="form.ssh_port" type="number" min="1" max="65535" /></label>
     </div>
 
     <label v-if="others" class="check">
       <input v-model="form.apply_to_all" type="checkbox" />
-      Usa queste credenziali anche per {{ others === 1 ? "l'altro AP" : `gli altri ${others} AP` }} {{ form.method.toUpperCase() }}
+      {{ others === 1 ? t("Usa queste credenziali anche per l'altro AP {proto}", { proto: form.method.toUpperCase() }) : t('Usa queste credenziali anche per gli altri {n} AP {proto}', { n: others, proto: form.method.toUpperCase() }) }}
     </label>
 
     <div class="actions">
-      <button type="button" :disabled="!form.host || !!busy" @click="detect">{{ busy === 'detect' ? 'Rilevo…' : 'Rileva protocollo' }}</button>
-      <button type="button" :disabled="!form.host || !!busy" @click="test">{{ busy === 'test' ? 'Provo…' : 'Prova connessione' }}</button>
+      <button type="button" :disabled="!form.host || !!busy" @click="detect">{{ busy === 'detect' ? t('Rilevo…') : t('Rileva protocollo') }}</button>
+      <button type="button" :disabled="!form.host || !!busy" @click="test">{{ busy === 'test' ? t('Provo…') : t('Prova connessione') }}</button>
       <span class="spacer" />
-      <button type="button" class="ghost" @click="emit('cancel')">Annulla</button>
-      <button class="primary" :disabled="!!busy">{{ busy === 'save' ? 'Salvo…' : 'Salva' }}</button>
+      <button type="button" class="ghost" @click="emit('cancel')">{{ t('Annulla') }}</button>
+      <button class="primary" :disabled="!!busy">{{ busy === 'save' ? t('Salvo…') : t('Salva') }}</button>
     </div>
 
     <p v-if="found" class="note" :class="found.suggested ? 'ok' : 'ko'">{{ found.message }}</p>
     <div v-if="result" class="note" :class="result.online ? 'ok' : 'ko'">
       <template v-if="result.online">
-        <strong>Connesso</strong> in {{ result.ms }} ms — {{ result.model || 'modello non letto' }}
-        <template v-if="result.firmware"> · firmware {{ result.firmware }}</template>
+        <strong>{{ t('Connesso') }}</strong> {{ t('in {ms} ms', { ms: result.ms }) }} — {{ result.model || t('modello non letto') }}
+        <template v-if="result.firmware"> · {{ t('firmware {v}', { v: result.firmware }) }}</template>
         · {{ result.clients }} client
-        <template v-if="result.uptime_s"> · acceso da {{ duration(result.uptime_s) }}</template>
-        <template v-if="!result.traffic"> · traffico non disponibile</template>
+        <template v-if="result.uptime_s"> · {{ t('acceso da {d}', { d: duration(result.uptime_s) }) }}</template>
+        <template v-if="!result.traffic"> · {{ t('traffico non disponibile') }}</template>
       </template>
       <template v-else>
-        <strong>Non risponde:</strong> {{ result.error }}
+        <strong>{{ t('Non risponde:') }}</strong> {{ result.error }}
         <p v-if="result.hint" class="muted">{{ result.hint }}</p>
       </template>
     </div>

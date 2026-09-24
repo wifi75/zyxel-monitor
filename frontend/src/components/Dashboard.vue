@@ -2,6 +2,7 @@
 import { GridItem, GridLayout } from 'grid-layout-plus'
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { api, type SavedLayout, type ViewKind, type WidgetPos } from '../api'
+import { t } from '../i18n'
 import { COLS, appendWidget, defOf, defaultLayout, normalize, widgetsFor } from '../widgets'
 
 /**
@@ -59,7 +60,7 @@ function add() {
 }
 
 async function reset() {
-  if (!window.confirm('Ripristinare la disposizione iniziale di questa vista?')) return
+  if (!window.confirm(t('Ripristinare la disposizione iniziale di questa vista?'))) return
   layout.value = defaultLayout(props.view)
   persist()
 }
@@ -67,20 +68,20 @@ async function reset() {
 
 <template>
   <div v-if="editing" class="dash-tools">
-    <span class="muted small grow">Trascina un widget dalla barra del titolo, ridimensionalo dall'angolo in basso a destra.</span>
+    <span class="muted small grow">{{ t("Trascina un widget dalla barra del titolo, ridimensionalo dall'angolo in basso a destra.") }}</span>
     <select v-if="missing.length" v-model="addId" @change="add">
-      <option value="">+ Aggiungi widget…</option>
-      <option v-for="w in missing" :key="w.id" :value="w.id">{{ w.title }}</option>
+      <option value="">{{ t('+ Aggiungi widget…') }}</option>
+      <option v-for="w in missing" :key="w.id" :value="w.id">{{ t(w.title) }}</option>
     </select>
-    <button class="ghost small" @click="reset">Ripristina</button>
-    <button class="primary small" @click="editing = false">Fatto</button>
+    <button class="ghost small" @click="reset">{{ t('Ripristina') }}</button>
+    <button class="primary small" @click="editing = false">{{ t('Fatto') }}</button>
   </div>
 
   <div v-if="narrow" class="dash-stack">
     <div v-for="p in stacked" :key="p.i" class="widget card">
       <div v-if="editing" class="widget-bar">
-        <span>{{ defOf(p.i)?.title }}</span>
-        <button class="ghost small" title="Nascondi" @click="remove(p.i)">×</button>
+        <span>{{ t(defOf(p.i)?.title ?? '') }}</span>
+        <button class="ghost small" :title="t('Nascondi')" @click="remove(p.i)">×</button>
       </div>
       <div class="widget-body"><slot name="widget" :id="p.i" /></div>
     </div>
@@ -110,8 +111,8 @@ async function reset() {
     >
       <div class="widget card">
         <div v-if="editing" class="widget-bar">
-          <span>⠿ {{ defOf(p.i)?.title }}</span>
-          <button class="ghost small" title="Nascondi" @click="remove(p.i)">×</button>
+          <span>⠿ {{ t(defOf(p.i)?.title ?? '') }}</span>
+          <button class="ghost small" :title="t('Nascondi')" @click="remove(p.i)">×</button>
         </div>
         <div class="widget-body"><slot name="widget" :id="p.i" /></div>
       </div>

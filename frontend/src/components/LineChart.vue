@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Chart, type ChartConfiguration, registerables } from 'chart.js'
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { locale } from '../i18n'
 
 Chart.register(...registerables)
 
@@ -24,7 +25,7 @@ function build(): ChartConfiguration<'line'> {
   return {
     type: 'line',
     data: {
-      labels: props.ts.map(t => new Date(t * 1000).toLocaleString('it-IT', multiDay
+      labels: props.ts.map(t => new Date(t * 1000).toLocaleString(locale(), multiDay
         ? { day: '2-digit', month: '2-digit', hour: '2-digit' } : { hour: '2-digit', minute: '2-digit' })),
       datasets: props.datasets.map((d, i) => {
         const c = d.color ?? COLORS[i % COLORS.length]

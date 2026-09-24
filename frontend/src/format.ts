@@ -1,3 +1,5 @@
+import { locale, t } from './i18n'
+
 export function bps(v: number | null | undefined): string {
   if (v == null) return '—'
   const units = ['bit/s', 'kbit/s', 'Mbit/s', 'Gbit/s']
@@ -17,7 +19,7 @@ export function bytes(v: number | null | undefined): string {
 export function duration(s: number | null | undefined): string {
   if (s == null || s < 0) return '—'
   const d = Math.floor(s / 86400), h = Math.floor((s % 86400) / 3600), m = Math.floor((s % 3600) / 60)
-  if (d) return `${d}g ${h}h`
+  if (d) return `${d}${t('g')} ${h}h`
   if (h) return `${h}h ${m}m`
   return `${m}m`
 }
@@ -27,16 +29,16 @@ export function since(ts: number | null | undefined): string {
 }
 
 export function time(ts: number): string {
-  return new Date(ts * 1000).toLocaleString('it-IT', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
+  return new Date(ts * 1000).toLocaleString(locale(), { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
 }
 
 /** Qualità del segnale: soglie usuali per il Wi-Fi. */
 export function signal(dbm: number | null): { label: string; level: 'good' | 'ok' | 'weak' | 'bad' } {
   if (dbm == null) return { label: '—', level: 'bad' }
-  if (dbm >= -60) return { label: 'Ottimo', level: 'good' }
-  if (dbm >= -67) return { label: 'Buono', level: 'ok' }
-  if (dbm >= -75) return { label: 'Debole', level: 'weak' }
-  return { label: 'Scarso', level: 'bad' }
+  if (dbm >= -60) return { label: t('Ottimo'), level: 'good' }
+  if (dbm >= -67) return { label: t('Buono'), level: 'ok' }
+  if (dbm >= -75) return { label: t('Debole'), level: 'weak' }
+  return { label: t('Scarso'), level: 'bad' }
 }
 
 export function isPrivateMac(mac: string): boolean {

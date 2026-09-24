@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Chart, registerables } from 'chart.js'
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { locale } from '../i18n'
 
 Chart.register(...registerables)
 
@@ -16,7 +17,7 @@ const canvas = ref<HTMLCanvasElement>()
 let chart: Chart | null = null
 
 const total = computed(() => props.items.reduce((s, i) => s + i.value, 0) || 1)
-const fmt = (v: number) => (props.format ?? ((x: number) => x.toLocaleString('it-IT')))(v)
+const fmt = (v: number) => (props.format ?? ((x: number) => x.toLocaleString(locale())))(v)
 const pct = (v: number) => `${Math.round((v / total.value) * 100)}%`
 
 function render() {

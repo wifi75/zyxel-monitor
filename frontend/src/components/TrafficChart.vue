@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Chart, type ChartConfiguration, registerables } from 'chart.js'
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { locale } from '../i18n'
 import type { TrafficPoint } from '../api'
 import { bps } from '../format'
 
@@ -19,7 +20,7 @@ let chart: Chart | null = null
 function build(): ChartConfiguration<'line'> {
   const aps = Object.keys(props.series)
   const labels = (props.series[aps[0]] ?? []).map(p =>
-    new Date(p.ts * 1000).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }))
+    new Date(p.ts * 1000).toLocaleTimeString(locale(), { hour: '2-digit', minute: '2-digit' }))
   const css = getComputedStyle(document.documentElement)
   const grid = css.getPropertyValue('--grid').trim()
   const text = css.getPropertyValue('--muted').trim()

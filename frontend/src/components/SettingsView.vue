@@ -2,6 +2,7 @@
 import { onMounted, reactive, ref } from 'vue'
 import { api, apForm, type Ap, type ApConfig, type ApTest, type GeneralForm } from '../api'
 import { copyText } from '../format'
+import { t } from '../i18n'
 import ApEditor from './ApEditor.vue'
 import NebulaPanel from './NebulaPanel.vue'
 
@@ -26,15 +27,15 @@ const protocol = (a: ApConfig) => a.method === 'ssh'
 
 function credentials(a: ApConfig): { text: string; missing: boolean } {
   if (a.method === 'ssh')
-    return { text: `${a.ssh_user} · ${a.has_ssh_password ? 'password impostata' : 'password mancante'}`, missing: !a.has_ssh_password }
+    return { text: `${a.ssh_user} · ${a.has_ssh_password ? t('password impostata') : t('password mancante')}`, missing: !a.has_ssh_password }
   if (a.snmp_version === '3')
-    return { text: `${a.snmp_user} · ${a.has_snmp_priv_pass ? 'autenticato e cifrato' : a.has_snmp_auth_pass ? 'autenticato' : 'senza password'}`, missing: false }
-  return { text: a.has_snmp_community ? 'community impostata' : 'community public', missing: false }
+    return { text: `${a.snmp_user} · ${a.has_snmp_priv_pass ? t('autenticato e cifrato') : a.has_snmp_auth_pass ? t('autenticato') : t('senza password')}`, missing: false }
+  return { text: a.has_snmp_community ? t('community impostata') : t('community public'), missing: false }
 }
 
 async function saved(copied: number) {
   editing.value = null
-  notice.value = copied ? `Salvato. Credenziali copiate anche su ${copied} AP.` : 'Salvato: la lettura riparte subito.'
+  notice.value = copied ? t('Salvato. Credenziali copiate anche su {n} AP.', { n: copied }) : t('Salvato: la lettura riparte subito.')
   await load()
   emit('changed')
 }
@@ -44,7 +45,7 @@ async function toggle(a: ApConfig) {
 }
 
 async function remove(a: ApConfig) {
-  if (!window.confirm(`Eliminare ${a.name}? Scompare dalla dashboard; lo storico resta fino alla scadenza.`)) return
+  if (!window.confirm(t('Eliminare {name}? Scompare dalla dashboard; lo storico resta fino alla scadenza.', { name: a.name }))) return
   await run(() => api.deleteAp(a.id))
 }
 
@@ -53,8 +54,8 @@ async function run(fn: () => Promise<unknown>) {
 }
 
 async function reboot(a: ApConfig) {
-  if (!window.confirm(`Riavviare ${a.name}? Resta offline per 2-3 minuti.`)) return
-  try { await api.rebootAp(a.id); notice.value = `Riavvio di ${a.name} inviato: torna online in 2-3 minuti.` }
+  if (!window.confirm(t('Riavviare {name}? Resta offline per 2-3 minuti.', { name: a.name }))) return
+  try { await api.rebootAp(a.id); notice.value = t('Riavvio di {name} inviato: torna online in 2-3 minuti.', { name: a.name }) }
   catch (e) { error.value = (e as Error).message }
 }
 
@@ -99,7 +100,7 @@ const testGeneral = () => genRun(() => api.testOpnsense(gen))
 const saveGeneral = () => genRun(async () => {
   Object.assign(gen, await api.saveGeneral(gen), { opnsense_secret: '' })
   emit('changed')
-  return { ok: true, message: 'Salvato: i dati di OPNsense arrivano entro un minuto.' }
+  return { ok: true, message: t('Salvato: i dati di OPNsense arrivano entro un minuto.') }
 })
 
 onMounted(() => { load(); loadGeneral() })
@@ -109,33 +110,33 @@ onMounted(() => { load(); loadGeneral() })
   <main class="settings">
     <p v-if="error" class="banner err">{{ error }}</p>
 
-    <p class="muted small">Gli access point si gestiscono nella pagina <strong>Gestione AP</strong>.</p>
+    <p class="muted small">{{ t('Gli access point si gestiscono nella pagina') }} <strong>{{ t('Gestione AP') }}</strong>.</p>
 
     <form class="card ap-editor" @submit.prevent="saveGeneral">
       <div class="section-head">
-        <h2>OPNsense e raccolta</h2>
+        <h2>{{ t('OPNsense e raccolta') }}</h2>
       </div>
       <p class="muted small">
-        Facoltativo: dà i nomi dei dispositivi, i siti visitati, le pubblicità bloccate e lo stato della linea Internet.
-        Serve una chiave API (System → Access → Users → icona chiave).
+        {{ t('Facoltativo: dà i nomi dei dispositivi, i siti visitati, le pubblicità bloccate e lo stato della linea Internet.') }}
+        {{ t('Serve una chiave API (System → Access → Users → icona chiave).') }}
       </p>
       <div class="grid">
-        <label>Indirizzo OPNsense<input v-model="gen.opnsense_url" placeholder="https://opnsense.casa.lan" /></label>
-        <label>Chiave API<input v-model="gen.opnsense_key" autocomplete="off" /></label>
-        <label>Secret API
+        <label>{{ t('Indirizzo OPNsense') }}<input v-model="gen.opnsense_url" placeholder="https://opnsense.casa.lan" /></label>
+        <label>{{ t('Chiave API') }}<input v-model="gen.opnsense_key" autocomplete="off" /></label>
+        <label>{{ t('Secret API') }}
           <input v-model="gen.opnsense_secret" type="password" autocomplete="new-password"
-                 :placeholder="gen.has_opnsense_secret ? 'invariato — scrivi per cambiarlo' : ''" />
+                 :placeholder="gen.has_opnsense_secret ? t('invariato — scrivi per cambiarlo') : ''" />
         </label>
-        <label>Interfaccia WAN<input v-model="gen.opnsense_wan_if" placeholder="wan oppure opt1" /></label>
-        <label>Dominio della LAN<input v-model="gen.local_domain" placeholder="casa.lan" /></label>
-        <label class="check"><input v-model="gen.opnsense_verify_tls" type="checkbox" /> Verifica certificato</label>
-        <label>Lettura ogni (secondi)<input v-model.number="gen.poll_interval" type="number" min="15" max="3600" /></label>
-        <label>Storico (giorni)<input v-model.number="gen.retention_days" type="number" min="1" max="365" /></label>
+        <label>{{ t('Interfaccia WAN') }}<input v-model="gen.opnsense_wan_if" :placeholder="t('wan oppure opt1')" /></label>
+        <label>{{ t('Dominio della LAN') }}<input v-model="gen.local_domain" placeholder="casa.lan" /></label>
+        <label class="check"><input v-model="gen.opnsense_verify_tls" type="checkbox" /> {{ t('Verifica certificato') }}</label>
+        <label>{{ t('Lettura ogni (secondi)') }}<input v-model.number="gen.poll_interval" type="number" min="15" max="3600" /></label>
+        <label>{{ t('Storico (giorni)') }}<input v-model.number="gen.retention_days" type="number" min="1" max="365" /></label>
       </div>
       <div class="actions">
-        <button type="button" :disabled="genBusy" @click="testGeneral">Prova OPNsense</button>
+        <button type="button" :disabled="genBusy" @click="testGeneral">{{ t('Prova OPNsense') }}</button>
         <span class="spacer" />
-        <button class="primary" :disabled="genBusy">{{ genBusy ? 'Attendi…' : 'Salva' }}</button>
+        <button class="primary" :disabled="genBusy">{{ genBusy ? t('Attendi…') : t('Salva') }}</button>
       </div>
       <p v-if="genMsg" class="note" :class="genMsg.ok ? 'ok' : 'ko'">{{ genMsg.message }}</p>
     </form>

@@ -18,6 +18,8 @@ import PieChart from './components/PieChart.vue'
 import SettingsView from './components/SettingsView.vue'
 import TrafficChart from './components/TrafficChart.vue'
 import { bps, bytes, copyText, duration, signal, time } from './format'
+import { locale, t } from './i18n'
+import LangSwitch from './components/LangSwitch.vue'
 import type { IconName } from './icons'
 
 const REFRESH_MS = 30_000
@@ -168,17 +170,17 @@ const kpis = computed(() => {
   const list: { label: string; value: string | number; of?: number; icon: IconName;
     tone: string; warn?: boolean; go?: string; title?: string }[] = [
     ap
-      ? { label: 'Uptime', value: duration(ap.uptime_s), icon: 'clock', tone: 'blue',
-          title: ap.method === 'ssh' && ap.uptime_s == null ? SSH_NA : undefined }
-      : { label: 'Access point online', value: onlineAps.value, of: aps.value.length, icon: 'wifi', tone: 'blue',
+      ? { label: t('Uptime'), value: duration(ap.uptime_s), icon: 'clock', tone: 'blue',
+          title: ap.method === 'ssh' && ap.uptime_s == null ? t(SSH_NA) : undefined }
+      : { label: t('Access point online'), value: onlineAps.value, of: aps.value.length, icon: 'wifi', tone: 'blue',
           warn: onlineAps.value < aps.value.length },
-    { label: 'Client connessi', value: scopedClients.value.length, icon: 'users', tone: 'violet' },
-    { label: 'Download Wi-Fi', value: bps(currentDown.value), icon: 'down', tone: 'green' },
-    { label: 'Upload Wi-Fi', value: bps(currentUp.value), icon: 'up', tone: 'teal' },
-    { label: `Traffico ${periodLabel.value}`, value: periodBytes.value ? bytes(periodBytes.value) : '—', icon: 'chart', tone: 'amber' },
-    { label: 'Segnale debole', value: weakClients.value, icon: 'alert', tone: 'orange', warn: weakClients.value > 0 },
+    { label: t('Client connessi'), value: scopedClients.value.length, icon: 'users', tone: 'violet' },
+    { label: t('Download Wi-Fi'), value: bps(currentDown.value), icon: 'down', tone: 'green' },
+    { label: t('Upload Wi-Fi'), value: bps(currentUp.value), icon: 'up', tone: 'teal' },
+    { label: t('Traffico {period}', { period: periodLabel.value }), value: periodBytes.value ? bytes(periodBytes.value) : '—', icon: 'chart', tone: 'amber' },
+    { label: t('Segnale debole'), value: weakClients.value, icon: 'alert', tone: 'orange', warn: weakClients.value > 0 },
   ]
-  if (!ap) list.push({ label: 'Dispositivi nuovi', value: newDevices.value.length, icon: 'star', tone: 'pink',
+  if (!ap) list.push({ label: t('Dispositivi nuovi'), value: newDevices.value.length, icon: 'star', tone: 'pink',
                        warn: newDevices.value.length > 0, go: '#devices' })
   return list
 })
@@ -214,10 +216,10 @@ const roamItems = computed(() => (roaming.value?.pairs ?? []).map(p => ({ label:
 const usageItems = computed(() => (deviceUsage.value?.items ?? []).map(i => ({ label: i.name, value: i.bytes, title: i.ip })))
 const usageTypes = computed(() => (deviceUsage.value?.by_type ?? []).map(i => ({ label: i.type, value: i.bytes })))
 
-const periodLabel = computed(() => ({ 1: 'ultima ora', 6: 'ultime 6 ore', 24: 'ultime 24 ore', 168: 'ultimi 7 giorni' } as Record<number, string>)[hours.value])
+const periodLabel = computed(() => ({ 1: t('ultima ora'), 6: t('ultime 6 ore'), 24: t('ultime 24 ore'), 168: t('ultimi 7 giorni') } as Record<number, string>)[hours.value])
 
 async function rename(c: { mac: string; alias: string | null; hostname: string | null }) {
-  const name = window.prompt(`Nome per ${c.mac}`, c.alias || c.hostname || '')
+  const name = window.prompt(t('Nome per {mac}', { mac: c.mac }), c.alias || c.hostname || '')
   if (name === null) return
   await api.setAlias(c.mac, name)
   await load()
@@ -241,10 +243,10 @@ const SSH_NA = "La CLI SSH di questo AP non fornisce ancora il dato: in Impostaz
 
 <template>
   <div v-if="updating" class="update-bar">
-    È disponibile una nuova versione: la pagina si aggiorna tra pochi secondi…
-    <button class="ghost small" @click="reloadNow">Aggiorna ora</button>
+    {{ t('È disponibile una nuova versione: la pagina si aggiorna tra pochi secondi…') }}
+    <button class="ghost small" @click="reloadNow">{{ t('Aggiorna ora') }}</button>
   </div>
-  <div v-else-if="serverDown" class="update-bar down">Server non raggiungibile (aggiornamento in corso?): riprovo tra pochi secondi…</div>
+  <div v-else-if="serverDown" class="update-bar down">{{ t('Server non raggiungibile (aggiornamento in corso?): riprovo tra pochi secondi…') }}</div>
 
   <LoginView v-if="!logged" @done="afterLogin" />
 
@@ -252,39 +254,40 @@ const SSH_NA = "La CLI SSH di questo AP non fornisce ancora il dato: in Impostaz
     <header class="topbar">
       <div class="brand"><span class="dot" />Zyxel Monitor</div>
       <nav class="tabs">
-        <button :class="{ active: view === '' }" @click="view = ''">Panoramica <span class="pill">{{ clients.length }}</span></button>
+        <button :class="{ active: view === '' }" @click="view = ''">{{ t('Panoramica') }} <span class="pill">{{ clients.length }}</span></button>
         <button v-for="a in aps" :key="a.ap" :class="{ active: view === a.ap }" @click="view = a.ap">
           <span class="status" :class="a.online ? 'on' : 'off'" /> {{ a.ap }} <span class="pill">{{ a.clients ?? 0 }}</span>
         </button>
-        <button :class="{ active: view === '#aps' }" @click="view = '#aps'">Gestione AP</button>
-        <button :class="{ active: view === '#config' }" @click="view = '#config'">Configurazione</button>
+        <button :class="{ active: view === '#aps' }" @click="view = '#aps'">{{ t('Gestione AP') }}</button>
+        <button :class="{ active: view === '#config' }" @click="view = '#config'">{{ t('Configurazione') }}</button>
         <button :class="{ active: view === '#devices' }" @click="view = '#devices'">
-          Dispositivi <span v-if="newDevices.length" class="pill alert" title="Dispositivi nuovi da riconoscere">{{ newDevices.length }}</span>
+          {{ t('Dispositivi') }} <span v-if="newDevices.length" class="pill alert" :title="t('Dispositivi nuovi da riconoscere')">{{ newDevices.length }}</span>
         </button>
-        <button :class="{ active: view === '#events' }" @click="view = '#events'">Eventi</button>
+        <button :class="{ active: view === '#events' }" @click="view = '#events'">{{ t('Eventi') }}</button>
       </nav>
       <div class="top-actions">
-        <select v-model.number="hours" title="Periodo">
-          <option :value="1">1 ora</option><option :value="6">6 ore</option>
-          <option :value="24">24 ore</option><option :value="168">7 giorni</option>
+        <select v-model.number="hours" :title="t('Periodo')">
+          <option :value="1">{{ t('1 ora') }}</option><option :value="6">{{ t('6 ore') }}</option>
+          <option :value="24">{{ t('24 ore') }}</option><option :value="168">{{ t('7 giorni') }}</option>
         </select>
-        <span class="muted small updated" v-if="lastUpdate" title="Ultimo aggiornamento">{{ lastUpdate.toLocaleTimeString('it-IT') }}</span>
-        <button v-if="isDashboard" class="icon-btn" :class="{ active: editing }" title="Personalizza dashboard" @click="editing = !editing"><Icon name="grid" /></button>
-        <button class="icon-btn" :class="{ active: view === '#settings' }" title="Impostazioni" @click="view = '#settings'"><Icon name="sliders" /></button>
-        <button class="icon-btn" :class="{ active: showPwd }" title="Cambia password" @click="showPwd = !showPwd"><Icon name="key" /></button>
-        <button class="icon-btn" title="Esci" @click="logout"><Icon name="logout" /></button>
+        <span class="muted small updated" v-if="lastUpdate" :title="t('Ultimo aggiornamento')">{{ lastUpdate.toLocaleTimeString(locale()) }}</span>
+        <button v-if="isDashboard" class="icon-btn" :class="{ active: editing }" :title="t('Personalizza dashboard')" @click="editing = !editing"><Icon name="grid" /></button>
+        <LangSwitch />
+        <button class="icon-btn" :class="{ active: view === '#settings' }" :title="t('Impostazioni')" @click="view = '#settings'"><Icon name="sliders" /></button>
+        <button class="icon-btn" :class="{ active: showPwd }" :title="t('Cambia password')" @click="showPwd = !showPwd"><Icon name="key" /></button>
+        <button class="icon-btn" :title="t('Esci')" @click="logout"><Icon name="logout" /></button>
       </div>
     </header>
 
     <div v-if="defaultPassword" class="banner warn">
-      Stai usando la password predefinita. <a href="#" @click.prevent="showPwd = true">Cambiala adesso</a>.
+      {{ t('Stai usando la password predefinita.') }} <a href="#" @click.prevent="showPwd = true">{{ t('Cambiala adesso') }}</a>.
     </div>
-    <div v-if="loadError" class="banner err">Errore di caricamento: {{ loadError }}</div>
+    <div v-if="loadError" class="banner err">{{ t('Errore di caricamento: {error}', { error: loadError }) }}</div>
 
     <form v-if="showPwd" class="card pwd" @submit.prevent="changePassword">
-      <label>Password attuale<input v-model="pwdOld" type="password" required /></label>
-      <label>Nuova password (min. 10 caratteri)<input v-model="pwdNew" type="password" minlength="10" required /></label>
-      <button class="primary">Salva</button>
+      <label>{{ t('Password attuale') }}<input v-model="pwdOld" type="password" required /></label>
+      <label>{{ t('Nuova password (min. 10 caratteri)') }}<input v-model="pwdNew" type="password" minlength="10" required /></label>
+      <button class="primary">{{ t('Salva') }}</button>
       <span v-if="pwdMsg" class="error">{{ pwdMsg }}</span>
     </form>
 
@@ -297,7 +300,7 @@ const SSH_NA = "La CLI SSH di questo AP non fornisce ancora il dato: in Impostaz
     <DevicesView v-else-if="view === '#devices'" :devices="devices" @changed="load" @rename="rename" />
 
     <main v-else-if="view === '#events'">
-      <section class="card"><h2 class="mb">Storico collegamenti</h2><EventsTable :events="events" show-ap /></section>
+      <section class="card"><h2 class="mb">{{ t('Storico collegamenti') }}</h2><EventsTable :events="events" show-ap /></section>
     </main>
 
     <!-- PANORAMICA o DETTAGLIO AP: griglia di widget spostabili e ridimensionabili -->
@@ -306,15 +309,15 @@ const SSH_NA = "La CLI SSH di questo AP non fornisce ancora il dato: in Impostaz
         <div>
           <h2>{{ currentAp.ap }}</h2>
           <p class="muted small">
-            {{ currentAp.model || '—' }} · {{ currentAp.host }} · firmware {{ currentAp.firmware || '—' }} ·
-            lettura {{ currentAp.method.toUpperCase() }}
+            {{ currentAp.model || '—' }} · {{ currentAp.host }} · {{ t('firmware') }} {{ currentAp.firmware || '—' }} ·
+            {{ t('lettura') }} {{ currentAp.method.toUpperCase() }}
           </p>
           <p v-if="currentAp.error" class="error small">{{ currentAp.error }}</p>
         </div>
 
         <div class="radios">
           <span v-for="r in currentAp.radios" :key="r.band" class="radio" :class="bandClass(r.band)">
-            {{ r.band }}<template v-if="r.channel"> · canale {{ r.channel }}</template> · {{ r.clients }} client
+            {{ r.band }}<template v-if="r.channel"> · {{ t('canale {n}', { n: r.channel }) }}</template> · {{ t('{n} client', { n: r.clients }) }}
           </span>
         </div>
       </section>
@@ -340,36 +343,36 @@ const SSH_NA = "La CLI SSH di questo AP non fornisce ancora il dato: in Impostaz
                 <span class="status" :class="a.online ? 'on' : 'off'" />
                 <div class="grow">
                   <h3>{{ a.ap }}</h3>
-                  <p class="muted small">{{ a.model || 'modello non letto' }} · <span class="mono">{{ a.host }}</span></p>
+                  <p class="muted small">{{ a.model || t('modello non letto') }} · <span class="mono">{{ a.host }}</span></p>
                 </div>
                 <span class="tag" :class="a.method">{{ a.method.toUpperCase() }}</span>
               </header>
               <div class="ap-tiles">
                 <div class="tile tone-violet">
-                  <Icon name="users" :size="16" /><span>Client</span><strong>{{ a.clients ?? '—' }}</strong>
+                  <Icon name="users" :size="16" /><span>{{ t('Client') }}</span><strong>{{ a.clients ?? '—' }}</strong>
                 </div>
-                <div class="tile tone-blue" :title="a.method === 'ssh' && a.uptime_s == null ? SSH_NA : ''">
-                  <Icon name="clock" :size="16" /><span>Acceso da</span>
-                  <strong>{{ a.uptime_s == null && a.method === 'ssh' && a.online ? 'n.d.' : duration(a.uptime_s) }}</strong>
+                <div class="tile tone-blue" :title="a.method === 'ssh' && a.uptime_s == null ? t(SSH_NA) : ''">
+                  <Icon name="clock" :size="16" /><span>{{ t('Acceso da') }}</span>
+                  <strong>{{ a.uptime_s == null && a.method === 'ssh' && a.online ? t('n.d.') : duration(a.uptime_s) }}</strong>
                 </div>
-                <div class="tile tone-amber" :title="a.method === 'ssh' && !usage?.per_ap[a.ap] ? SSH_NA : ''">
-                  <Icon name="chart" :size="16" /><span :title="`Traffico ${periodLabel}`">Traffico</span>
-                  <strong>{{ usage?.per_ap[a.ap] ? bytes(usage.per_ap[a.ap].down + usage.per_ap[a.ap].up) : a.method === 'ssh' && a.online ? 'n.d.' : '—' }}</strong>
+                <div class="tile tone-amber" :title="a.method === 'ssh' && !usage?.per_ap[a.ap] ? t(SSH_NA) : ''">
+                  <Icon name="chart" :size="16" /><span :title="t('Traffico {period}', { period: periodLabel })">{{ t('Traffico') }}</span>
+                  <strong>{{ usage?.per_ap[a.ap] ? bytes(usage.per_ap[a.ap].down + usage.per_ap[a.ap].up) : a.method === 'ssh' && a.online ? t('n.d.') : '—' }}</strong>
                 </div>
               </div>
               <div class="ap-bands">
                 <span v-for="r in a.radios" :key="r.band" class="radio" :class="bandClass(r.band)"
-                      :title="r.channel ? `canale ${r.channel}` : 'canale non fornito da questo AP'">
+                      :title="r.channel ? t('canale {n}', { n: r.channel }) : t('canale non fornito da questo AP')">
                   <b>{{ r.band.replace('GHz', ' GHz') }}</b>
-                  <span :title="r.utilization != null ? `Potenza ${r.tx_power ?? '—'} dBm, canale occupato al ${r.utilization}%` : ''">
-                    <template v-if="r.channel">canale {{ r.channel }}</template><template v-if="r.channel && r.tx_power != null"> · </template><template v-if="r.tx_power != null">{{ r.tx_power }} dBm</template>
+                  <span :title="r.utilization != null ? t('Potenza {power} dBm, canale occupato al {util}%', { power: r.tx_power ?? '—', util: r.utilization }) : ''">
+                    <template v-if="r.channel">{{ t('canale {n}', { n: r.channel }) }}</template><template v-if="r.channel && r.tx_power != null"> · </template><template v-if="r.tx_power != null">{{ r.tx_power }} dBm</template>
                   </span>
-                  <span>{{ r.clients }} client</span>
+                  <span>{{ t('{n} client', { n: r.clients }) }}</span>
                 </span>
               </div>
               <p v-if="a.error" class="error small">{{ a.error }}</p>
             </article>
-            <p v-if="!aps.length" class="muted">In attesa della prima lettura degli access point…</p>
+            <p v-if="!aps.length" class="muted">{{ t('In attesa della prima lettura degli access point…') }}</p>
           </section>
 
           <!-- Internet -->
@@ -377,62 +380,64 @@ const SSH_NA = "La CLI SSH di questo AP non fornisce ancora il dato: in Impostaz
 
           <!-- siti -->
           <template v-else-if="id === 'sites'">
-            <h2>Siti più visitati <span class="muted small">({{ periodLabel }}, richieste DNS)</span></h2>
+            <h2>{{ t('Siti più visitati') }} <span class="muted small">({{ t('{period}, richieste DNS', { period: periodLabel }) }})</span></h2>
             <BarList v-if="siteItems.length" :items="siteItems" />
-            <p v-else-if="sites?.available" class="muted">Nessuna richiesta nel periodo per questi dispositivi.</p>
+            <p v-else-if="sites?.available" class="muted">{{ t('Nessuna richiesta nel periodo per questi dispositivi.') }}</p>
             <div v-else class="empty">
-              <p>Gli access point non vedono i siti visitati: questo dato arriva dal <strong>DNS della rete</strong>.</p>
-              <p class="muted small">Collega OPNsense in <a href="#" @click.prevent="view = '#settings'">Impostazioni</a>: i dati arrivano entro un minuto.</p>
+              <p>{{ t('Gli access point non vedono i siti visitati: questo dato arriva dal') }} <strong>{{ t('DNS della rete') }}</strong>.</p>
+              <p class="muted small">{{ t('Collega OPNsense in') }} <a href="#" @click.prevent="view = '#settings'">{{ t('Impostazioni') }}</a>{{ t(': i dati arrivano entro un minuto.') }}</p>
             </div>
           </template>
 
           <template v-else-if="id === 'types'">
-            <h2>Dispositivi per tipologia</h2>
+            <h2>{{ t('Dispositivi per tipologia') }}</h2>
             <PieChart v-if="byType.length" :items="byType" />
-            <p v-else class="muted">Nessun client.</p>
+            <p v-else class="muted">{{ t('Nessun client.') }}</p>
           </template>
 
           <template v-else-if="id === 'traffic_ap'">
-            <h2>Traffico per access point <span class="muted small">({{ periodLabel }})</span></h2>
+            <h2>{{ t('Traffico per access point') }} <span class="muted small">({{ periodLabel }})</span></h2>
             <PieChart v-if="gbByAp.length" :items="gbByAp" :format="bytes" />
-            <p v-else class="muted">Dati in raccolta: servono alcuni minuti.</p>
+            <p v-else class="muted">{{ t('Dati in raccolta: servono alcuni minuti.') }}</p>
           </template>
 
           <template v-else-if="id === 'blocked'">
-            <h2>Pubblicità e tracker bloccati</h2>
+            <h2>{{ t('Pubblicità e tracker bloccati') }}</h2>
             <template v-if="internet?.dns">
               <div class="blocked-head">
-                <strong>{{ internet.dns.blocked_pct.toLocaleString('it-IT', { maximumFractionDigits: 1 }) }}%</strong>
+                <strong>{{ internet.dns.blocked_pct.toLocaleString(locale(), { maximumFractionDigits: 1 }) }}%</strong>
                 <span class="muted small">
-                  delle richieste DNS: {{ internet.dns.blocked.toLocaleString('it-IT') }} su
-                  {{ internet.dns.total.toLocaleString('it-IT') }} dal {{ new Date(internet.dns.since * 1000).toLocaleDateString('it-IT') }}
+                  {{ t('delle richieste DNS: {blocked} su {total} dal {date}', {
+                    blocked: internet.dns.blocked.toLocaleString(locale()),
+                    total: internet.dns.total.toLocaleString(locale()),
+                    date: new Date(internet.dns.since * 1000).toLocaleDateString(locale()) }) }}
                 </span>
               </div>
               <BarList v-if="blockedItems.length" :items="blockedItems" />
-              <p v-else class="muted">Nessun dominio bloccato finora.</p>
+              <p v-else class="muted">{{ t('Nessun dominio bloccato finora.') }}</p>
             </template>
-            <p v-else class="muted small">Arriva dal DNS di OPNsense: collegalo in <a href="#" @click.prevent="view = '#settings'">Impostazioni</a>.</p>
+            <p v-else class="muted small">{{ t('Arriva dal DNS di OPNsense: collegalo in') }} <a href="#" @click.prevent="view = '#settings'">{{ t('Impostazioni') }}</a>.</p>
           </template>
 
           <template v-else-if="id === 'clients_ap'">
-            <h2>Client per access point</h2>
+            <h2>{{ t('Client per access point') }}</h2>
             <PieChart v-if="byAp.length" :items="byAp" />
-            <p v-else class="muted">Nessun client.</p>
+            <p v-else class="muted">{{ t('Nessun client.') }}</p>
           </template>
 
           <template v-else-if="id === 'band'">
-            <h2>Client per banda</h2>
+            <h2>{{ t('Client per banda') }}</h2>
             <PieChart v-if="byBand.length" :items="byBand" />
-            <p v-else class="muted">Nessun client.</p>
+            <p v-else class="muted">{{ t('Nessun client.') }}</p>
           </template>
 
           <!-- dispositivi nuovi -->
           <template v-else-if="id === 'new_devices'">
             <div class="section-head">
-              <h2>Dispositivi nuovi</h2>
-              <button class="ghost small" @click="view = '#devices'">Gestisci</button>
+              <h2>{{ t('Dispositivi nuovi') }}</h2>
+              <button class="ghost small" @click="view = '#devices'">{{ t('Gestisci') }}</button>
             </div>
-            <p v-if="!newDevices.length" class="muted small">Nessun dispositivo sconosciuto: tutti quelli visti sono riconosciuti.</p>
+            <p v-if="!newDevices.length" class="muted small">{{ t('Nessun dispositivo sconosciuto: tutti quelli visti sono riconosciuti.') }}</p>
             <ul v-else class="rows">
               <li v-for="d in newDevices.slice(0, 12)" :key="d.mac">
                 <span class="status" :class="d.online ? 'on' : 'idle'" />
@@ -445,17 +450,17 @@ const SSH_NA = "La CLI SSH di questo AP non fornisce ancora il dato: in Impostaz
 
           <!-- segnale -->
           <template v-else-if="id === 'signal'">
-            <h2>Qualità del segnale <span class="muted small">({{ periodLabel }})</span></h2>
-            <p v-if="!signalAps?.aps.length" class="muted small">Storico del segnale in raccolta.</p>
+            <h2>{{ t('Qualità del segnale') }} <span class="muted small">({{ periodLabel }})</span></h2>
+            <p v-if="!signalAps?.aps.length" class="muted small">{{ t('Storico del segnale in raccolta.') }}</p>
             <template v-else>
               <ul class="rows">
-                <li v-for="s in signalAps?.aps ?? []" :key="s.ap" :title="`${s.devices} dispositivi`">
+                <li v-for="s in signalAps?.aps ?? []" :key="s.ap" :title="t('{n} dispositivi', { n: s.devices })">
                   <span class="grow"><strong>{{ s.ap }}</strong></span>
                   <span class="sig" :class="signal(s.avg).level">{{ s.avg }} dBm</span>
-                  <span class="muted small">{{ s.weak_pct }}% deboli</span>
+                  <span class="muted small">{{ t('{n}% deboli', { n: s.weak_pct }) }}</span>
                 </li>
               </ul>
-              <h3 class="small sub">Segnale peggiore</h3>
+              <h3 class="small sub">{{ t('Segnale peggiore') }}</h3>
               <ul class="rows">
                 <li v-for="w in signalAps?.worst ?? []" :key="w.mac">
                   <span class="grow">{{ w.name }} <span class="muted small">· {{ w.ap || '—' }}</span></span>
@@ -467,15 +472,15 @@ const SSH_NA = "La CLI SSH di questo AP non fornisce ancora il dato: in Impostaz
 
           <!-- roaming -->
           <template v-else-if="id === 'roaming'">
-            <h2>Roaming <span class="muted small">({{ periodLabel }})</span></h2>
-            <p v-if="!roamItems.length" class="muted small">Nessuno spostamento fra access point nel periodo.</p>
+            <h2>{{ t('Roaming') }} <span class="muted small">({{ periodLabel }})</span></h2>
+            <p v-if="!roamItems.length" class="muted small">{{ t('Nessuno spostamento fra access point nel periodo.') }}</p>
             <template v-else>
               <BarList :items="roamItems" />
-              <h3 class="small sub">Chi si sposta di più</h3>
+              <h3 class="small sub">{{ t('Chi si sposta di più') }}</h3>
               <ul class="rows">
                 <li v-for="d in roaming?.devices ?? []" :key="d.mac">
                   <span class="grow">{{ d.name }} <span class="muted small">· {{ d.aps.join(' ↔ ') }}</span></span>
-                  <span v-if="d.bouncing" class="badge ko" title="Rimbalza fra AP: valuta di ridurre la potenza radio in Nebula">rimbalza</span>
+                  <span v-if="d.bouncing" class="badge ko" :title="t('Rimbalza fra AP: valuta di ridurre la potenza radio in Nebula')">{{ t('rimbalza') }}</span>
                   <strong>{{ d.count }}</strong>
                 </li>
               </ul>
@@ -484,68 +489,66 @@ const SSH_NA = "La CLI SSH di questo AP non fornisce ancora il dato: in Impostaz
 
           <!-- consumo per dispositivo -->
           <template v-else-if="id === 'usage_devices'">
-            <h2>Consumo per dispositivo <span class="muted small">(dati inviati, {{ periodLabel }})</span></h2>
-            <p v-if="deviceUsage?.available && !deviceUsage.debug" class="muted small">NetFlow di OPNsense conta i byte inviati da ogni indirizzo: i download non sono ancora inclusi.</p>
+            <h2>{{ t('Consumo per dispositivo') }} <span class="muted small">({{ t('dati inviati, {period}', { period: periodLabel }) }})</span></h2>
+            <p v-if="deviceUsage?.available && !deviceUsage.debug" class="muted small">{{ t('NetFlow di OPNsense conta i byte inviati da ogni indirizzo: i download non sono ancora inclusi.') }}</p>
             <div v-if="deviceUsage?.available && deviceUsage.debug" class="usage-debug">
               <p>
-                OPNsense ha risposto con <strong>{{ deviceUsage.debug.rows }}</strong> righe e
-                <strong>{{ deviceUsage.debug.addresses }}</strong> indirizzi, ma nessuno corrisponde ai dispositivi Wi-Fi.
+                {{ t('OPNsense ha risposto con {rows} righe e {addresses} indirizzi, ma nessuno corrisponde ai dispositivi Wi-Fi.', { rows: deviceUsage.debug.rows, addresses: deviceUsage.debug.addresses }) }}
               </p>
               <p class="muted small">
-                Se sono appena passati pochi minuti dall'attivazione di NetFlow è normale: Insight aggrega i dati ogni
-                10-15 minuti. Se resta così, copia la risposta qui sotto e mandala.
+                {{ t("Se sono appena passati pochi minuti dall'attivazione di NetFlow è normale: Insight aggrega i dati ogni 10-15 minuti. Se resta così, copia la risposta qui sotto e mandala.") }}
               </p>
               <p v-if="deviceUsage.debug.sample_addresses.length" class="muted small mono">
-                Indirizzi ricevuti: {{ deviceUsage.debug.sample_addresses.join(', ') }}
+                {{ t('Indirizzi ricevuti: {list}', { list: deviceUsage.debug.sample_addresses.join(', ') }) }}
               </p>
               <div class="actions">
-                <button class="ghost small" @click="copyUsageDebug">{{ usageCopied ? 'Copiato' : 'Copia risposta' }}</button>
+                <button class="ghost small" @click="copyUsageDebug">{{ usageCopied ? t('Copiato') : t('Copia risposta') }}</button>
               </div>
               <pre class="raw">{{ deviceUsage.debug.path }}&#10;{{ deviceUsage.debug.sample }}</pre>
             </div>
             <div v-else-if="deviceUsage?.available" class="split">
-              <div><h3 class="small sub">Dispositivi</h3><BarList :items="usageItems" :format="bytes" /></div>
-              <div><h3 class="small sub">Per tipologia</h3><BarList :items="usageTypes" :format="bytes" /></div>
+              <div><h3 class="small sub">{{ t('Dispositivi') }}</h3><BarList :items="usageItems" :format="bytes" /></div>
+              <div><h3 class="small sub">{{ t('Per tipologia') }}</h3><BarList :items="usageTypes" :format="bytes" /></div>
             </div>
             <div v-else class="empty">
               <template v-if="deviceUsage?.reason === 'netflow'">
-                <p>Serve <strong>NetFlow</strong> su OPNsense.</p>
-                <p class="muted small">Reporting → NetFlow: interfaccia LAN, spunta “Capture local”, salva. I dati arrivano in pochi minuti.</p>
+                <p>{{ t('Serve') }} <strong>NetFlow</strong> {{ t('su OPNsense.') }}</p>
+                <p class="muted small">{{ t('Reporting → NetFlow: interfaccia LAN, spunta “Capture local”, salva. I dati arrivano in pochi minuti.') }}</p>
               </template>
               <template v-else-if="deviceUsage?.reason === 'error'">
-                <p>OPNsense ha risposto in modo inatteso.</p>
+                <p>{{ t('OPNsense ha risposto in modo inatteso.') }}</p>
                 <p class="muted small mono">{{ deviceUsage.message }}</p>
               </template>
-              <p v-else class="muted small">Arriva da OPNsense: collegalo in <a href="#" @click.prevent="view = '#settings'">Impostazioni</a>.</p>
+              <p v-else class="muted small">{{ t('Arriva da OPNsense: collegalo in') }} <a href="#" @click.prevent="view = '#settings'">{{ t('Impostazioni') }}</a>.</p>
             </div>
           </template>
 
           <!-- andamento -->
           <template v-else-if="id === 'trend'">
             <div class="section-head">
-              <h2>Andamento <span class="muted small">({{ periodLabel }})</span></h2>
+              <h2>{{ t('Andamento') }} <span class="muted small">({{ periodLabel }})</span></h2>
               <div class="seg">
                 <button :class="{ active: metric === 'down_bps' }" @click="metric = 'down_bps'">Download</button>
                 <button :class="{ active: metric === 'up_bps' }" @click="metric = 'up_bps'">Upload</button>
-                <button :class="{ active: metric === 'clients' }" @click="metric = 'clients'">Client</button>
+                <button :class="{ active: metric === 'clients' }" @click="metric = 'clients'">{{ t('Client') }}</button>
               </div>
             </div>
             <TrafficChart v-if="Object.keys(scopedSeries).length" :series="scopedSeries" :metric="metric" />
-            <p v-else class="muted">I grafici si popolano dopo qualche minuto di raccolta.</p>
+            <p v-else class="muted">{{ t('I grafici si popolano dopo qualche minuto di raccolta.') }}</p>
             <p v-if="metric !== 'clients' && !hasTraffic && currentAp?.method === 'ssh'" class="muted small">
-              Questo AP è letto via SSH: il traffico non è ancora disponibile, guarda il grafico "Client".
+              {{ t('Questo AP è letto via SSH: il traffico non è ancora disponibile, guarda il grafico "Client".') }}
             </p>
           </template>
 
           <!-- client -->
           <template v-else-if="id === 'clients'">
-            <h2 class="mb">{{ currentAp ? `Client connessi a ${currentAp.ap}` : 'Tutti i client connessi' }}</h2>
-            <p class="muted small mb">Clicca un dispositivo per vedere segnale nel tempo e siti che contatta.</p>
+            <h2 class="mb">{{ currentAp ? t('Client connessi a {ap}', { ap: currentAp.ap }) : t('Tutti i client connessi') }}</h2>
+            <p class="muted small mb">{{ t('Clicca un dispositivo per vedere segnale nel tempo e siti che contatta.') }}</p>
             <ClientsTable :clients="scopedClients" :show-ap="!currentAp" :hours="hours" @rename="rename" />
           </template>
 
           <template v-else-if="id === 'ap_events' && currentAp">
-            <h2 class="mb">Chi si è collegato a {{ currentAp.ap }}</h2>
+            <h2 class="mb">{{ t('Chi si è collegato a {ap}', { ap: currentAp.ap }) }}</h2>
             <EventsTable :events="scopedEvents" />
           </template>
         </template>
@@ -553,5 +556,5 @@ const SSH_NA = "La CLI SSH di questo AP non fornisce ancora il dato: in Impostaz
     </main>
   </div>
 
-  <footer class="footer" v-if="health">v{{ health.version }} — Ideato e sviluppato da {{ health.author }}</footer>
+  <footer class="footer" v-if="health">v{{ health.version }} — {{ t('Ideato e sviluppato da {author}', { author: health.author }) }}</footer>
 </template>

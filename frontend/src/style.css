@@ -413,3 +413,5 @@ button.danger:not(.ghost) { color: #fff; background: var(--bad); border-color: v
 .cfg-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
 .cfg-line { display: grid; grid-template-columns: 72px minmax(0, 1fr); align-items: center; gap: 8px; margin-bottom: 4px; }
 .cfg-line select { min-width: 0; width: 100%; }
+
+.lang-btn svg { border-radius: 3px; box-shadow: 0 0 0 1px var(--border); }

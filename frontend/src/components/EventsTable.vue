@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { Event } from '../api'
 import { time } from '../format'
+import { t } from '../i18n'
 
 defineProps<{ events: Event[]; showAp?: boolean }>()
 
@@ -13,16 +14,16 @@ const LABEL: Record<Event['kind'], string> = {
 <template>
   <div class="table-wrap">
     <table>
-      <thead><tr><th>Quando</th><th>Evento</th><th>Dispositivo</th><th v-if="showAp">AP</th><th>Dettagli</th></tr></thead>
+      <thead><tr><th>{{ t('Quando') }}</th><th>{{ t('Evento') }}</th><th>{{ t('Dispositivo') }}</th><th v-if="showAp">AP</th><th>{{ t('Dettagli') }}</th></tr></thead>
       <tbody>
         <tr v-for="e in events" :key="e.id">
           <td class="mono small">{{ time(e.ts) }}</td>
-          <td><span class="ev" :class="e.kind">{{ LABEL[e.kind] }}</span></td>
+          <td><span class="ev" :class="e.kind">{{ t(LABEL[e.kind]) }}</span></td>
           <td>{{ e.name || '—' }}</td>
           <td v-if="showAp">{{ e.ap || '—' }}</td>
           <td class="muted small">{{ e.info || '' }}</td>
         </tr>
-        <tr v-if="!events.length"><td :colspan="showAp ? 5 : 4" class="muted">Nessun evento registrato.</td></tr>
+        <tr v-if="!events.length"><td :colspan="showAp ? 5 : 4" class="muted">{{ t('Nessun evento registrato.') }}</td></tr>
       </tbody>
     </table>
   </div>
