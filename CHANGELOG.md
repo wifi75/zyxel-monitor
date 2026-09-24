@@ -2,6 +2,10 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) — versioni: [SemVer](https://semver.org/lang/it/).
 
+## [0.18.0] - 2026-09-24
+### Modificato
+- Pagina Configurazione rifatta come tabella di confronto: una riga per impostazione, colonna Sito (vale per tutti) e una colonna per AP con il valore attuale; caselle diverse in arancione, modifiche in attesa in viola e applicate insieme con "Applica modifiche"; backup apribili dalla barra.
+
 ## [0.17.0] - 2026-09-24
 ### Aggiunto
 - Impostazioni del sito: orari del Wi-Fi (fascia giornaliera in cui la rete è accesa, con conferma). Completate tutte le 19 impostazioni dell'elenco.

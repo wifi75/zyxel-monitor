@@ -488,3 +488,32 @@ button.danger:not(.ghost) { color: #fff; background: var(--bad); border-color: v
 .cfg-now.diff { color: var(--weak); cursor: help; }
 .cfg-line { grid-template-columns: 72px minmax(0, 1fr) 96px; }
 .cfg-line .cfg-now { margin: 0; text-align: right; color: var(--muted); font-weight: 500; }
+
+/* v0.18: configurazione a tabella di confronto */
+.cfg-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; position: sticky; top: 64px; z-index: 15; }
+.val { display: inline-flex; align-items: center; justify-content: center; gap: 4px; min-width: 110px; padding: 5px 10px;
+       border-radius: 8px; border: 1px solid transparent; font-size: 13px; line-height: 1.3; white-space: nowrap; }
+button.val { cursor: pointer; }
+button.val:hover { border-color: var(--accent); }
+.val.same { background: color-mix(in srgb, var(--muted) 10%, transparent); color: var(--text); }
+.val.diff { background: color-mix(in srgb, var(--amber) 18%, transparent); color: color-mix(in srgb, var(--amber) 70%, var(--text)); font-weight: 600; }
+.val.none { background: transparent; color: var(--muted); border: 1px dashed var(--border); }
+.val.pend { background: color-mix(in srgb, var(--violet) 16%, transparent); color: var(--violet); font-weight: 700; border-color: var(--violet); }
+.val.static { cursor: default; }
+.val .own { color: var(--violet); font-size: 11px; }
+.cmp-card { padding: 0; overflow: hidden; }
+.cmp { border-collapse: separate; border-spacing: 0; }
+.cmp th { background: var(--surface); position: sticky; top: 0; z-index: 2; }
+.cmp th.ap-col, .cmp td.ap-col { text-align: center; }
+.cmp td { padding: 8px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.cmp tbody tr:hover td { background: color-mix(in srgb, var(--accent) 3%, transparent); }
+.cmp .site-col { background: color-mix(in srgb, var(--accent) 5%, var(--surface)); border-left: 1px solid var(--border); border-right: 1px solid var(--border); }
+.cmp-group td { background: var(--bg) !important; font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; padding: 9px 12px; }
+.cmp-set { min-width: 220px; max-width: 320px; }
+.cmp-set span { font-weight: 600; display: block; }
+.cmp-set small { display: block; color: var(--muted); font-size: 11.5px; white-space: normal; }
+.cmp-edit { display: grid; gap: 6px; min-width: 170px; }
+.cmp-edit select, .cmp-edit input, .cmp-edit textarea { width: 100%; }
+.cmp-edit textarea { font: 12px/1.4 ui-monospace, monospace; border: 1px solid var(--border); border-radius: 8px; padding: 6px; }
+.cmp-edit-btns { display: flex; justify-content: flex-end; gap: 6px; }
+@media (max-width: 900px) { .cfg-bar { position: static; } }
