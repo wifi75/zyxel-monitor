@@ -2,6 +2,10 @@ import { addEn } from './index'
 
 // traduzioni inglesi: chiave = testo italiano esatto usato in t()
 addEn({
+  'Band steering': 'Band steering',
+  'Spinge i dispositivi compatibili sulla 5 GHz, più veloce. Standard = suggerisce, forzato = insiste.': 'Pushes capable devices onto the faster 5 GHz band. Standard = suggests, forced = insists.',
+  'Standard': 'Standard',
+  'Forzato': 'Forced',
   'Sicurezza': 'Security',
   'WPA2+WPA3 è il più compatibile. Solo WPA3 esclude i dispositivi più vecchi, che non si collegano più.': 'WPA2 + WPA3 is the most compatible. WPA3 only locks out older devices, which can no longer join.',
   'Solo WPA3: i dispositivi più vecchi (stampanti, domotica, vecchi telefoni) non si collegheranno più. Procedere?': 'WPA3 only: older devices (printers, smart home, old phones) will no longer be able to join. Continue?',

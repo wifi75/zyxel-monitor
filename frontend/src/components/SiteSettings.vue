@@ -70,6 +70,7 @@ function currentText(i: SiteItem): { text: string; detail: string } | null {
   return { text: t('Diverso fra gli AP'), detail }
 }
 
+const CHOICE: Record<string, string> = { disable: 'Spento', standard: 'Standard', force: 'Forzato' }
 const boolValue = (i: SiteItem) => (i.value == null ? '' : i.value ? 'on' : 'off')
 </script>
 
@@ -96,7 +97,7 @@ const boolValue = (i: SiteItem) => (i.value == null ? '' : i.value ? 'on' : 'off
             <select v-else-if="i.kind === 'choice'" :value="i.value == null ? '' : String(i.value)" :disabled="!!busy"
                     @change="save(i, ($event.target as HTMLSelectElement).value || null)">
               <option value="">{{ t('Non gestito') }}</option>
-              <option v-for="c in i.choices" :key="c" :value="c">{{ c === '0' ? t('Disattivata') : i.unit ? `${c} ${i.unit}` : c.toUpperCase().replace('/', ' + ') }}</option>
+              <option v-for="c in i.choices" :key="c" :value="c">{{ c === '0' ? t('Disattivata') : i.unit ? `${c} ${i.unit}` : CHOICE[c] ? t(CHOICE[c]) : c.toUpperCase().replace('/', ' + ') }}</option>
             </select>
             <form v-else-if="i.kind === 'list'" class="site-list" @submit.prevent="saveList(i)">
               <textarea v-model="draft[i.key]" rows="3" placeholder="aa:bb:cc:dd:ee:ff" :disabled="!!busy" />

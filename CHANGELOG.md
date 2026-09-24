@@ -2,6 +2,10 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) — versioni: [SemVer](https://semver.org/lang/it/).
 
+## [0.15.0] - 2026-09-24
+### Aggiunto
+- Impostazioni del sito: band steering (spento, standard, forzato).
+
 ## [0.14.0] - 2026-09-24
 ### Aggiunto
 - Impostazioni del sito: sicurezza della rete (WPA2, WPA2+WPA3, solo WPA3, con conferma).

@@ -205,3 +205,10 @@ def test_security_and_guest():
     assert ci.BY_KEY["guest_name"].read(cfg) == ""          # SSID2 non è sugli slot: rete ospiti spenta
     off = ci.BY_KEY["guest_name"].build("", cfg)
     assert off == ["wlan slot1", "no ssid profile 2", "exit", "wlan slot2", "no ssid profile 2", "exit"]
+
+
+def test_band_steering():
+    from app import config_items as ci
+    cfg = ci.RunningConfig("wlan-ssid-profile SSID1\n ssid WiFi\n bandselect mode disable\n!\nwlan slot1\n ssid profile 1 SSID1\n!\n")
+    assert ci.BY_KEY["band_steering"].read(cfg) == "disable"
+    assert ci.BY_KEY["band_steering"].build("standard", cfg) == ["wlan-ssid-profile SSID1", "bandselect mode standard", "exit"]

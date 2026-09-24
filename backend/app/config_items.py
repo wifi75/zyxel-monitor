@@ -99,6 +99,11 @@ def _rate(cfg: RunningConfig, direction: str) -> int | None:
     return int(m.group(1)) if m else None
 
 
+def _ssid_value(cfg: RunningConfig, prefix: str) -> str | None:
+    p = cfg.ssid_profile()
+    return cfg.value(f"wlan-ssid-profile {p}", prefix) if p else None
+
+
 def _ssid_flag(cfg: RunningConfig, line: str) -> bool:
     p = cfg.ssid_profile()
     return bool(p) and cfg.has(f"wlan-ssid-profile {p}", line)
@@ -257,6 +262,11 @@ ITEMS: list[Item] = [
     Item("rate_up", "rete", "Limite di upload per dispositivo", "int",
          "0 = nessun limite.", unit="kbps", read=lambda c: _rate(c, "uplink"),
          build=lambda v, c: _in_ssid(c, f"uplink-rate-limit {v} kbps")),
+    Item("band_steering", "radio", "Band steering", "choice",
+         "Spinge i dispositivi compatibili sulla 5 GHz, più veloce. Standard = suggerisce, forzato = insiste.",
+         choices=["disable", "standard", "force"],
+         read=lambda c: _ssid_value(c, "bandselect mode"),
+         build=lambda v, c: _in_ssid(c, f"bandselect mode {v}")),
     Item("dot11kv", "rete", "Roaming assistito (802.11k/v)", "bool",
          "Gli AP suggeriscono ai dispositivi l'AP migliore a cui passare.",
          read=lambda c: _ssid_flag(c, "dot11k-v activate"),
