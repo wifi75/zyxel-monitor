@@ -74,11 +74,13 @@ def parse_stations(text: str) -> list[Client]:
 
 def _to_client(d: dict[str, str]) -> Client:
     ts = None
-    if d.get("Time"):
+    # NWA50AX PRO: "2026/09/24 11:29:48"; WAC6103D-I (firmware 6.x): "12:50:36 2026/09/24"
+    for fmt in ("%Y/%m/%d %H:%M:%S", "%H:%M:%S %Y/%m/%d"):
         try:
-            ts = int(dt.datetime.strptime(d["Time"], "%Y/%m/%d %H:%M:%S").timestamp())
+            ts = int(dt.datetime.strptime(d.get("Time", ""), fmt).timestamp())
+            break
         except ValueError:
-            pass
+            continue
     rssi = d.get("RSSI dBm", "")
     return Client(
         mac=d.get("MAC", "").lower(),

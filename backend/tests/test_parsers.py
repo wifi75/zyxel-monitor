@@ -145,3 +145,13 @@ def test_config_items_read_and_build():
     assert ci.BY_KEY["ssid_name"].build("Casa", cfg) == ["wlan-ssid-profile SSID1", "ssid Casa", "exit"]
     assert ci.BY_KEY["snmp_rw"].build(False, cfg) == ["no snmp-server community ZyxelAP rw"]
     assert ci.hostname_commands("ZONA NOTTE", cfg) == ["hostname ZONA-NOTTE"]
+
+
+def test_parse_stations_old_firmware():
+    text = (
+        "Router> show wireless-hal station info\nindex: 0\n  MAC: 08:f9:e0:71:fc:15\n  IPv4: 192.168.1.141\n"
+        "  Slot: 1\n  RSSI dBm: -69\n  Time: 12:50:36 2026/09/24\n  DOT11 features: 11k\n\n  Display SSID: WiFi\n"
+        "Router> exit\n"
+    )
+    c = parse_stations(text)[0]
+    assert c.band == "2.4GHz" and c.connected_at is not None and c.ssid == "WiFi" and c.rssi_dbm == -69
