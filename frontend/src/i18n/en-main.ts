@@ -2,6 +2,9 @@ import { addEn } from './index'
 
 // traduzioni inglesi: chiave = testo italiano esatto usato in t()
 addEn({
+  'Mostra tutti': 'Show all',
+  'Nessun dispositivo con segnale debole': 'No device with a weak signal',
+  'Solo dispositivi con segnale debole (sotto -75 dBm)': 'Only devices with a weak signal (below -75 dBm)',
   'Monitoraggio': 'Monitoring',
   'Gestione': 'Management',
   'Sistema': 'System',

@@ -153,6 +153,15 @@ const hasTraffic = computed(() =>
 
 // ---- KPI ----
 const onlineAps = computed(() => aps.value.filter(a => a.online).length)
+/** dispositivi sotto -75 dBm, dal peggiore */
+const weakList = computed(() => scopedClients.value.filter(c => c.rssi_dbm != null && c.rssi_dbm < -75)
+  .sort((a, b) => (a.rssi_dbm ?? 0) - (b.rssi_dbm ?? 0)))
+/** filtro della tabella client: solo segnale debole */
+const weakOnly = ref(false)
+function showWeak() {
+  weakOnly.value = true
+  window.setTimeout(() => document.querySelector('.clients-anchor')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50)
+}
 const weakClients = computed(() => scopedClients.value.filter(c => c.rssi_dbm != null && c.rssi_dbm < -75).length)
 const newDevices = computed(() => devices.value.filter(d => !d.known))
 function lastPoint(k: 'down_bps' | 'up_bps'): number | null {
@@ -174,7 +183,7 @@ const periodBytes = computed(() => {
 const kpis = computed(() => {
   const ap = currentAp.value
   const list: { label: string; value: string | number; of?: number; icon: IconName;
-    tone: string; warn?: boolean; go?: string; title?: string }[] = [
+    tone: string; warn?: boolean; go?: string; title?: string; action?: () => void }[] = [
     ap
       ? { label: t('Uptime'), value: duration(ap.uptime_s), icon: 'clock', tone: 'blue',
           title: ap.method === 'ssh' && ap.uptime_s == null ? t(SSH_NA) : undefined }
@@ -184,7 +193,11 @@ const kpis = computed(() => {
     { label: t('Download Wi-Fi'), value: bps(currentDown.value), icon: 'down', tone: 'green' },
     { label: t('Upload Wi-Fi'), value: bps(currentUp.value), icon: 'up', tone: 'teal' },
     { label: t('Traffico {period}', { period: periodLabel.value }), value: periodBytes.value ? bytes(periodBytes.value) : '—', icon: 'chart', tone: 'amber' },
-    { label: t('Segnale debole'), value: weakClients.value, icon: 'alert', tone: 'orange', warn: weakClients.value > 0 },
+    { label: t('Segnale debole'), value: weakClients.value, icon: 'alert', tone: 'orange', warn: weakClients.value > 0,
+      title: weakList.value.length
+        ? weakList.value.map(c => `${c.alias || c.hostname || c.ip || c.mac} · ${c.ap} · ${c.rssi_dbm} dBm`).join('\n')
+        : t('Nessun dispositivo con segnale debole'),
+      action: weakList.value.length ? showWeak : undefined },
   ]
   if (!ap) list.push({ label: t('Dispositivi nuovi'), value: newDevices.value.length, icon: 'star', tone: 'pink',
                        warn: newDevices.value.length > 0, go: '#devices' })
@@ -367,7 +380,7 @@ const SSH_NA = "La CLI SSH di questo AP non fornisce ancora il dato: in Impostaz
           <!-- indicatori -->
           <section v-if="id === 'kpis'" class="kpis fill">
             <div v-for="k in kpis" :key="k.label" class="kpi rich" :class="[`tone-${k.tone}`, { clickable: k.go }]"
-                 :title="k.title" @click="k.go && (view = k.go)">
+                 :title="k.title" @click="k.action ? k.action() : k.go && (view = k.go)">
               <div class="kpi-icon"><Icon :name="k.icon" /></div>
               <div class="kpi-text">
                 <span>{{ k.label }}</span>
@@ -584,7 +597,12 @@ const SSH_NA = "La CLI SSH di questo AP non fornisce ancora il dato: in Impostaz
           <template v-else-if="id === 'clients'">
             <h2 class="mb">{{ currentAp ? t('Client connessi a {ap}', { ap: currentAp.ap }) : t('Tutti i client connessi') }}</h2>
             <p class="muted small mb">{{ t('Clicca un dispositivo per vedere segnale nel tempo e siti che contatta.') }}</p>
-            <ClientsTable :clients="scopedClients" :show-ap="!currentAp" :hours="hours" @rename="rename" />
+            <span class="clients-anchor" />
+            <div v-if="weakOnly" class="filter-chip">
+              ⚠ {{ t('Solo dispositivi con segnale debole (sotto -75 dBm)') }}
+              <button class="ghost small" :title="t('Mostra tutti')" @click="weakOnly = false">✕</button>
+            </div>
+            <ClientsTable :clients="weakOnly ? weakList : scopedClients" :show-ap="!currentAp" :hours="hours" @rename="rename" />
           </template>
 
           <template v-else-if="id === 'ap_events' && currentAp">

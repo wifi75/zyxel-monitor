@@ -2,6 +2,10 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) — versioni: [SemVer](https://semver.org/lang/it/).
 
+## [0.18.3] - 2026-09-24
+### Aggiunto
+- Indicatore Segnale debole: elenco dei dispositivi passando col mouse; cliccandolo la tabella dei client mostra solo quelli sotto -75 dBm.
+
 ## [0.18.2] - 2026-09-24
 ### Modificato
 - Tabella di configurazione più leggibile: colonna Sito come pulsante con matita ("lascia all'AP" se non gestito), celle degli AP come testo semplice con ✓ allineato / ⚠ diverso, pallino verde/grigio per le funzioni accese/spente, spiegazioni in un'icona ⓘ, parole concrete (visibile/nascosta, accesi/spenti, sempre acceso).
