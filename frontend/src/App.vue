@@ -474,7 +474,8 @@ const SSH_NA = "La CLI SSH di questo AP non fornisce ancora il dato: in Impostaz
 
           <!-- consumo per dispositivo -->
           <template v-else-if="id === 'usage_devices'">
-            <h2>Consumo per dispositivo <span class="muted small">({{ periodLabel }})</span></h2>
+            <h2>Consumo per dispositivo <span class="muted small">(dati inviati, {{ periodLabel }})</span></h2>
+            <p v-if="deviceUsage?.available && !deviceUsage.debug" class="muted small">NetFlow di OPNsense conta i byte inviati da ogni indirizzo: i download non sono ancora inclusi.</p>
             <div v-if="deviceUsage?.available && deviceUsage.debug" class="usage-debug">
               <p>
                 OPNsense ha risposto con <strong>{{ deviceUsage.debug.rows }}</strong> righe e
