@@ -15,6 +15,7 @@ const error = ref('')
 
 const SECTIONS: { key: string; title: string; icon: IconName; tone: string }[] = [
   { key: 'rete', title: 'Rete Wi-Fi', icon: 'wifi', tone: 'tone-blue' },
+  { key: 'ospiti', title: 'Rete ospiti', icon: 'users', tone: 'tone-pink' },
   { key: 'radio', title: 'Radio e roaming', icon: 'activity', tone: 'tone-violet' },
   { key: 'sistema', title: 'Sistema', icon: 'gear', tone: 'tone-teal' },
 ]
@@ -30,6 +31,8 @@ async function load() {
 onMounted(load)
 
 async function save(i: SiteItem, value: string | number | boolean | string[] | null) {
+  if (i.key === 'security_mode' && value === 'wpa3' &&
+      !window.confirm(t('Solo WPA3: i dispositivi più vecchi (stampanti, domotica, vecchi telefoni) non si collegheranno più. Procedere?'))) return
   if (i.key === 'wifi_password' && value != null &&
       !window.confirm(t('Cambiare la password scollega tutti i dispositivi: andranno ricollegati con la nuova password. Procedere?'))) return
   if (i.key === 'ssid_name' && value != null &&
@@ -93,7 +96,7 @@ const boolValue = (i: SiteItem) => (i.value == null ? '' : i.value ? 'on' : 'off
             <select v-else-if="i.kind === 'choice'" :value="i.value == null ? '' : String(i.value)" :disabled="!!busy"
                     @change="save(i, ($event.target as HTMLSelectElement).value || null)">
               <option value="">{{ t('Non gestito') }}</option>
-              <option v-for="c in i.choices" :key="c" :value="c">{{ c === '0' ? t('Disattivata') : `${c} ${i.unit}` }}</option>
+              <option v-for="c in i.choices" :key="c" :value="c">{{ c === '0' ? t('Disattivata') : i.unit ? `${c} ${i.unit}` : c.toUpperCase().replace('/', ' + ') }}</option>
             </select>
             <form v-else-if="i.kind === 'list'" class="site-list" @submit.prevent="saveList(i)">
               <textarea v-model="draft[i.key]" rows="3" placeholder="aa:bb:cc:dd:ee:ff" :disabled="!!busy" />

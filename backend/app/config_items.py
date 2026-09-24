@@ -175,6 +175,56 @@ def _psk(cfg: RunningConfig) -> str | None:
     return cfg.value(f"wlan-security-profile {p}", "encrypted-wpa-psk") if p else None
 
 
+def _security(cfg: RunningConfig) -> str | None:
+    """wpa2 | wpa3 | wpa2/wpa3 (mode wpa3 + transition-mode) | altro valore della CLI."""
+    p = cfg.security_profile()
+    if not p:
+        return None
+    header = f"wlan-security-profile {p}"
+    mode = cfg.value(header, "mode")
+    if mode == "wpa3" and cfg.has(header, "transition-mode"):
+        return "wpa2/wpa3"
+    return mode
+
+
+def _security_set(v, cfg: RunningConfig) -> list[str]:
+    lines = {"wpa2": ["mode wpa2"], "wpa3": ["mode wpa3", "no transition-mode"],
+             "wpa2/wpa3": ["mode wpa3", "transition-mode"]}[str(v)]
+    return _in_security(cfg, *lines)
+
+
+def _guest_slot_profile(cfg: RunningConfig) -> str | None:
+    for line in cfg.block("wlan slot1"):
+        if m := re.match(r"ssid profile 2 (\S+)", line):
+            return m.group(1)
+    return None
+
+
+def _guest(cfg: RunningConfig) -> str | None:
+    """Nome della rete ospiti se la seconda rete è attiva sugli slot, altrimenti "" (spenta)."""
+    p = _guest_slot_profile(cfg)
+    return (cfg.value(f"wlan-ssid-profile {p}", "ssid") or "") if p else ""
+
+
+GUEST_SSID, GUEST_SEC = "SSID2", "SECURITY2"      # profili già creati da Nebula e non usati
+
+
+def _guest_set(v, cfg: RunningConfig) -> list[str]:
+    """Seconda rete isolata dalla LAN (guest-ssid), con la password della voce "guest_password"."""
+    from .site_config import load     # import qui: site_config importa questo modulo
+    name = str(v or "").strip()
+    slots = [s for s in (1, 2) if f"wlan slot{s}" in cfg.blocks]
+    if not name:
+        return [x for s in slots for x in (f"wlan slot{s}", "no ssid profile 2", "exit")]
+    password = load().get("guest_password")
+    sec = ["mode wpa2", f"wpa-psk {password}"] if password else ["mode none"]
+    return [
+        f"wlan-security-profile {GUEST_SEC}", *sec, "exit",
+        f"wlan-ssid-profile {GUEST_SSID}", f"ssid {name}", f"security {GUEST_SEC}", "guest-ssid", "exit",
+        *[x for s in slots for x in (f"wlan slot{s}", f"ssid profile 2 {GUEST_SSID}", "exit")],
+    ]
+
+
 ITEMS: list[Item] = [
     # --- rete Wi-Fi principale ---
     Item("ssid_name", "rete", "Nome della rete (SSID)", "text",
@@ -184,6 +234,16 @@ ITEMS: list[Item] = [
     Item("wifi_password", "rete", "Password della rete", "password",
          "Da 8 a 63 caratteri. Cambiarla scollega tutti i dispositivi: vanno ricollegati con la nuova password.",
          enforce=False, read=_psk, build=lambda v, c: _in_security(c, f"wpa-psk {v}")),
+    Item("security_mode", "rete", "Sicurezza", "choice",
+         "WPA2+WPA3 è il più compatibile. Solo WPA3 esclude i dispositivi più vecchi, che non si collegano più.",
+         choices=["wpa2", "wpa2/wpa3", "wpa3"], read=_security, build=_security_set),
+    Item("guest_name", "ospiti", "Nome della rete ospiti", "text",
+         "Seconda rete isolata dalla casa: gli ospiti navigano ma non vedono i tuoi dispositivi. Vuoto = spenta.",
+         read=_guest, build=_guest_set),
+    Item("guest_password", "ospiti", "Password della rete ospiti", "password",
+         "Da 8 a 63 caratteri; senza password la rete ospiti è aperta.", enforce=False, read=lambda c: None,
+         build=lambda v, c: [f"wlan-security-profile {GUEST_SEC}", "mode wpa2", f"wpa-psk {v}", "exit"]
+         if _guest_slot_profile(c) else []),
     Item("ssid_hidden", "rete", "Rete nascosta", "bool",
          "Il nome della rete non compare negli elenchi: per collegarsi va scritto a mano.",
          read=lambda c: _ssid_flag(c, "hide"),
@@ -261,6 +321,8 @@ def parse_value(item: Item, raw) -> object:
     s = str(raw).strip()
     if item.kind == "choice" and s not in item.choices:
         raise ValueError("scelta non valida")
+    if item.kind == "text" and item.key == "guest_name" and s == "":
+        return s                                   # nome vuoto = rete ospiti spenta
     if item.kind == "text":
         if not s or len(s) > 32 or not re.fullmatch(r"[\w .@:\-]+", s):
             raise ValueError("testo non valido (max 32 caratteri, niente simboli speciali)")

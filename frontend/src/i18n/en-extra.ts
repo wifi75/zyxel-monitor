@@ -2,6 +2,14 @@ import { addEn } from './index'
 
 // traduzioni inglesi: chiave = testo italiano esatto usato in t()
 addEn({
+  'Sicurezza': 'Security',
+  'WPA2+WPA3 è il più compatibile. Solo WPA3 esclude i dispositivi più vecchi, che non si collegano più.': 'WPA2 + WPA3 is the most compatible. WPA3 only locks out older devices, which can no longer join.',
+  'Solo WPA3: i dispositivi più vecchi (stampanti, domotica, vecchi telefoni) non si collegheranno più. Procedere?': 'WPA3 only: older devices (printers, smart home, old phones) will no longer be able to join. Continue?',
+  'Rete ospiti': 'Guest network',
+  'Nome della rete ospiti': 'Guest network name',
+  'Seconda rete isolata dalla casa: gli ospiti navigano ma non vedono i tuoi dispositivi. Vuoto = spenta.': 'A second network isolated from the home: guests get internet but cannot see your devices. Empty = off.',
+  'Password della rete ospiti': 'Guest network password',
+  'Da 8 a 63 caratteri; senza password la rete ospiti è aperta.': '8 to 63 characters; without a password the guest network is open.',
   'Attuale: {v} su tutti': 'Current: {v} on all',
   'Attuale: diverso fra gli AP': 'Current: differs between APs',
   "Valore attuale sull'AP": 'Current value on the AP',

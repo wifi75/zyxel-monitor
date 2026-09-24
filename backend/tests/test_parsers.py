@@ -189,3 +189,19 @@ def test_parse_config_channels():
         "Router> exit\n"
     )
     assert parse_config_channels(text) == {"2.4GHz": (None, True), "5GHz": (116, False)}
+
+
+def test_security_and_guest():
+    from app import config_items as ci
+    text = (
+        "wlan-security-profile SECURITY1\n mode wpa3\n transition-mode\n!\n"
+        "wlan-ssid-profile SSID1\n ssid WiFi\n security SECURITY1\n!\n"
+        "wlan-ssid-profile SSID2\n ssid Ospiti\n!\n"
+        "wlan slot1\n ap profile R2\n ssid profile 1 SSID1\n!\nwlan slot2\n ap profile R5\n ssid profile 1 SSID1\n!\n"
+    )
+    cfg = ci.RunningConfig(text)
+    assert ci.BY_KEY["security_mode"].read(cfg) == "wpa2/wpa3"
+    assert ci.BY_KEY["security_mode"].build("wpa2", cfg) == ["wlan-security-profile SECURITY1", "mode wpa2", "exit"]
+    assert ci.BY_KEY["guest_name"].read(cfg) == ""          # SSID2 non è sugli slot: rete ospiti spenta
+    off = ci.BY_KEY["guest_name"].build("", cfg)
+    assert off == ["wlan slot1", "no ssid profile 2", "exit", "wlan slot2", "no ssid profile 2", "exit"]
