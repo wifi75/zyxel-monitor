@@ -2,7 +2,7 @@
 from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from . import policy
 from .core import store
@@ -24,24 +24,54 @@ def overview():
         for band in policy.BANDS:
             want, source = policy.effective(rules, ap.id, band)
             have = actual.get(ap.name, {}).get(band)
-            own = rules.get(policy.scope_of(ap.id), {})
-            bands[band] = {"desired": want, "source": source, "actual": have,
-                           "override": own[band] if band in own else "inherit",
-                           "status": policy.status(want, have, (ap.name, band))}
+            own = rules.get(policy.scope_of(ap.id), {}).get(band, {})
+            bands[band] = {
+                "desired": want, "source": source, "actual": have,
+                "status": policy.status(want, have, (ap.name, band)),
+                "override": {f: own.get(f) for f in policy.FIELDS},   # None = come il sito
+            }
         aps.append({"id": ap.id, "name": ap.name, "method": ap.method, "enabled": ap.enabled,
                     "configurable": bool(ap.ssh_password), "bands": bands})
-    return {"site": {b: rules.get(policy.SITE, {}).get(b) for b in policy.BANDS}, "aps": aps}
+    site = {b: {f: rules.get(policy.SITE, {}).get(b, {}).get(f) for f in policy.FIELDS} for b in policy.BANDS}
+    return {"site": site, "aps": aps}
+
+
+CHANNELS = {
+    "2.4GHz": {str(c) for c in range(1, 14)},
+    "5GHz": {str(c) for c in (36, 40, 44, 48, 52, 56, 60, 64, 100, 104, 108, 112, 116, 120, 124, 128, 132, 136, 140)},
+}
+WIDTHS = {"2.4GHz": {"20", "20/40"}, "5GHz": {"20", "20/40", "20/40/80"}}
 
 
 class RuleIn(BaseModel):
     band: Band
-    tx_power: int | None = Field(None, ge=1, le=30)   # None = non gestito
-    inherit: bool = False                            # solo per gli AP: torna al valore del sito
+    field: Literal["tx_power", "channel", "width"]
+    value: int | str | None = None    # None = sito: non gestito / AP: come il sito; "none" = AP: non gestito
+
+
+def _validate(body: RuleIn):
+    v = body.value
+    if v is None:
+        return None
+    if v == "none":
+        return policy.UNMANAGED[body.field]
+    if body.field == "tx_power":
+        if not isinstance(v, int) or not 1 <= v <= 30:
+            raise HTTPException(422, "Potenza fra 1 e 30 dBm")
+        return v
+    v = str(v)
+    allowed = {"auto", *CHANNELS[body.band]} if body.field == "channel" else WIDTHS[body.band]
+    if v not in allowed:
+        raise HTTPException(422, f"Valore non valido per la {body.band}")
+    return v
 
 
 @router.put("/site")
 async def set_site(body: RuleIn):
-    policy.set_rule(policy.SITE, body.band, body.tx_power, inherit=body.tx_power is None)
+    value = _validate(body)
+    if value is not None and value == policy.UNMANAGED[body.field]:
+        value = None       # nel sito "non gestito" è l'assenza della regola
+    policy.set_rule(policy.SITE, body.band, body.field, value)
     return {"results": await policy.apply_all(reason="profilo del sito")}
 
 
@@ -50,7 +80,7 @@ async def set_ap(ap_id: int, body: RuleIn):
     ap = store.get_ap(ap_id)
     if not ap:
         raise HTTPException(404, "Access point non trovato")
-    policy.set_rule(policy.scope_of(ap_id), body.band, body.tx_power, inherit=body.inherit)
+    policy.set_rule(policy.scope_of(ap_id), body.band, body.field, _validate(body))
     return {"results": [await policy.apply_ap(ap, reason="personalizzazione")]}
 
 

@@ -176,7 +176,10 @@ def connect():
 
 
 # colonne aggiunte dopo la prima versione: ADD COLUMN è sicuro su SQLite (non ricrea la tabella)
-LATER_COLUMNS = {"ap_status": {"cpu_pct": "INTEGER", "mem_pct": "INTEGER"}}
+LATER_COLUMNS = {
+    "ap_status": {"cpu_pct": "INTEGER", "mem_pct": "INTEGER"},
+    "radio_policy": {"channel": "TEXT", "width": "TEXT"},
+}
 
 
 def init_db() -> None:

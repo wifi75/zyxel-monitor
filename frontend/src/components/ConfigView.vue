@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { api, type Backup, type PolicyOverview, type PolicyResult } from '../api'
+import { api, type Backup, type PolicyField, type PolicyOverview, type PolicyResult } from '../api'
 import { copyText, time } from '../format'
 import Icon from './Icon.vue'
 
@@ -10,6 +10,24 @@ const emit = defineEmits<{ changed: [] }>()
 const BANDS = ['2.4GHz', '5GHz'] as const
 type Band = typeof BANDS[number]
 const POWERS = [30, 27, 24, 21, 20, 18, 17, 15, 12, 10, 8, 6, 3]
+const CHANNELS: Record<Band, number[]> = {
+  '2.4GHz': [1, 6, 11, 2, 3, 4, 5, 7, 8, 9, 10, 12, 13],
+  '5GHz': [36, 40, 44, 48, 52, 56, 60, 64, 100, 104, 108, 112, 116, 120, 124, 128, 132, 136, 140],
+}
+const WIDTHS: Record<Band, string[]> = { '2.4GHz': ['20', '20/40'], '5GHz': ['20', '20/40', '20/40/80'] }
+const FIELDS: { key: PolicyField; label: string }[] = [
+  { key: 'tx_power', label: 'Potenza' }, { key: 'channel', label: 'Canale' }, { key: 'width', label: 'Larghezza' },
+]
+const powerLabel = (p: number) => (p >= 30 ? 'Massima consentita' : `${p} dBm`)
+const channelLabel = (c: string | number) => (c === 'auto' ? 'Automatico' : `Canale ${c}${Number(c) >= 100 ? ' (DFS, fino a 30 dBm)' : ''}`)
+const widthLabel = (w: string) => `${w} MHz`
+/** testo del valore del sito, per l'opzione "Come il sito" */
+function siteText(b: Band, f: PolicyField): string {
+  const v = data.value?.site[b]?.[f]
+  if (v == null) return 'non gestito'
+  return f === 'tx_power' ? powerLabel(Number(v)) : f === 'channel' ? channelLabel(v) : widthLabel(String(v))
+}
+const val = (e: Event) => (e.target as HTMLSelectElement).value
 
 const data = ref<PolicyOverview | null>(null)
 const results = ref<PolicyResult[]>([])
@@ -38,12 +56,24 @@ async function run(kind: string, fn: () => Promise<{ results: PolicyResult[] }>)
 const bandLabel = (b: string) => b.replace('GHz', ' GHz')
 const bandClass = (b: string) => (b.startsWith('2') ? 'b24' : 'b5')
 
-function setSite(band: Band, value: string) {
-  run(`site-${band}`, () => api.setSitePolicy(band, value === '' ? null : Number(value)))
+/** "" = sito: non gestito; "inherit" = AP: come il sito; "none" = AP: non gestito */
+function toValue(f: PolicyField, v: string): number | string | null {
+  if (v === '' || v === 'inherit') return null
+  if (v === 'none') return 'none'
+  return f === 'tx_power' ? Number(v) : v
 }
-function setAp(apId: number, band: Band, value: string) {
-  const inherit = value === 'inherit'
-  run(`ap-${apId}-${band}`, () => api.setApPolicy(apId, band, inherit || value === 'none' ? null : Number(value), inherit))
+function setSite(band: Band, f: PolicyField, v: string) {
+  run(`site-${band}-${f}`, () => api.setSitePolicy(band, f, toValue(f, v)))
+}
+function setAp(apId: number, band: Band, f: PolicyField, v: string) {
+  run(`ap-${apId}-${band}-${f}`, () => api.setApPolicy(apId, band, f, toValue(f, v)))
+}
+/** valore da mostrare nella select di un AP */
+function apSelect(o: Record<PolicyField, number | string | null>, f: PolicyField): string {
+  const v = o[f]
+  if (v == null) return 'inherit'
+  if (v === -1 || v === 'none') return 'none'
+  return String(v)
 }
 const applyAll = () => run('apply', () => api.applyPolicy())
 const backupAll = () => run('backup', () => api.backupAll())
@@ -102,12 +132,27 @@ const others = computed(() => data.value?.aps.filter(a => !a.configurable || !a.
       <div class="cfg-bands">
         <div v-for="b in BANDS" :key="b" class="cfg-band radio" :class="bandClass(b)">
           <b>{{ bandLabel(b) }}</b>
-          <label>Potenza di trasmissione
-            <select :value="data?.site[b] ?? ''" :disabled="!!busy" @change="setSite(b, ($event.target as HTMLSelectElement).value)">
-              <option value="">Non gestita (decide l'AP / Nebula)</option>
-              <option v-for="p in POWERS" :key="p" :value="p">{{ p === 30 ? 'Massima consentita' : `${p} dBm` }}</option>
-            </select>
-          </label>
+          <div class="cfg-fields">
+            <label>Potenza
+              <select :value="data?.site[b]?.tx_power ?? ''" :disabled="!!busy" @change="setSite(b, 'tx_power', val($event))">
+                <option value="">Non gestita</option>
+                <option v-for="p in POWERS" :key="p" :value="p">{{ powerLabel(p) }}</option>
+              </select>
+            </label>
+            <label>Canale
+              <select :value="data?.site[b]?.channel ?? ''" :disabled="!!busy" @change="setSite(b, 'channel', val($event))">
+                <option value="">Non gestito</option>
+                <option value="auto">Automatico (sceglie l'AP)</option>
+                <option v-for="c in CHANNELS[b]" :key="c" :value="String(c)">{{ channelLabel(c) }}</option>
+              </select>
+            </label>
+            <label>Larghezza
+              <select :value="data?.site[b]?.width ?? ''" :disabled="!!busy" @change="setSite(b, 'width', val($event))">
+                <option value="">Non gestita</option>
+                <option v-for="w in WIDTHS[b]" :key="w" :value="w">{{ widthLabel(w) }}</option>
+              </select>
+            </label>
+          </div>
           <span class="small muted">
             Limite di legge in Italia: {{ b === '2.4GHz' ? '20 dBm' : '23 dBm sui canali 36-48, 30 dBm sui canali 100-140 (DFS)' }};
             l'AP non supera mai il massimo consentito. Meno potenza = celle più piccole, meno “rimbalzi” fra AP vicini.
@@ -127,15 +172,22 @@ const others = computed(() => data.value?.aps.filter(a => !a.configurable || !a.
               <td><Icon name="wifi" :size="16" /></td>
               <td><strong>{{ a.name }}</strong></td>
               <td v-for="b in BANDS" :key="b" class="cfg-cell">
-                <select :value="a.bands[b].override === 'inherit' ? 'inherit' : a.bands[b].override ?? 'none'" :disabled="!!busy"
-                        @change="setAp(a.id, b, ($event.target as HTMLSelectElement).value)">
-                  <option value="inherit">Come il sito{{ data?.site[b] != null ? ` (${data.site[b] === 30 ? 'massima' : `${data.site[b]} dBm`})` : '' }}</option>
-                  <option value="none">Non gestita</option>
-                  <option v-for="p in POWERS" :key="p" :value="p">{{ p === 30 ? 'Massima consentita' : `${p} dBm` }}</option>
-                </select>
+                <div v-for="f in FIELDS" :key="f.key" class="cfg-line">
+                  <span class="muted small">{{ f.label }}</span>
+                  <select :value="apSelect(a.bands[b].override, f.key)" :disabled="!!busy" @change="setAp(a.id, b, f.key, val($event))">
+                    <option value="inherit">Come il sito ({{ siteText(b, f.key) }})</option>
+                    <option value="none">Non gestito</option>
+                    <template v-if="f.key === 'tx_power'"><option v-for="p in POWERS" :key="p" :value="String(p)">{{ powerLabel(p) }}</option></template>
+                    <template v-else-if="f.key === 'channel'">
+                      <option value="auto">Automatico</option>
+                      <option v-for="c in CHANNELS[b]" :key="c" :value="String(c)">{{ channelLabel(c) }}</option>
+                    </template>
+                    <template v-else><option v-for="w in WIDTHS[b]" :key="w" :value="w">{{ widthLabel(w) }}</option></template>
+                  </select>
+                </div>
                 <div class="cfg-state">
                   <span class="chip" :style="{ '--tone': STATUS[a.bands[b].status].tone }">{{ STATUS[a.bands[b].status].label }}</span>
-                  <span class="muted small">reale {{ a.bands[b].actual ?? '—' }} dBm</span>
+                  <span class="muted small">potenza reale {{ a.bands[b].actual ?? '—' }} dBm</span>
                 </div>
               </td>
             </tr>

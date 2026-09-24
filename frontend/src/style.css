@@ -320,7 +320,7 @@ body { background: radial-gradient(1200px 500px at 0 -10%, color-mix(in srgb, va
 
 /* card AP identiche: righe a altezza fissa, contenuto sempre dall'alto */
 .ap-grid { align-items: start; }
-.ap-grid .ap { grid-template-rows: 44px 64px 28px auto; align-content: start; }
+.ap-grid .ap { grid-template-rows: 44px 64px 62px auto; align-content: start; }
 .ap header { height: 44px; overflow: hidden; }
 .ap header h3, .ap header p { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .tile { height: 64px; }
@@ -402,3 +402,14 @@ button.danger:not(.ghost) { color: #fff; background: var(--bad); border-color: v
 
 .ssh-extra { border: 1px dashed var(--border); border-radius: 10px; padding: 10px 12px; }
 .ssh-extra summary { cursor: pointer; font-weight: 600; margin-bottom: 8px; }
+
+/* bande: una per riga, sempre due righe (anche se una banda manca) */
+.ap-bands { grid-template-columns: 1fr; grid-auto-rows: 28px; gap: 6px; height: 62px; }
+.ap-bands .radio { justify-content: flex-start; gap: 10px; }
+.ap-bands .radio b { min-width: 58px; }
+.ap-bands .radio span:last-child { margin-left: auto; }
+
+/* configurazione: tre campi per banda */
+.cfg-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+.cfg-line { display: grid; grid-template-columns: 72px minmax(0, 1fr); align-items: center; gap: 8px; margin-bottom: 4px; }
+.cfg-line select { min-width: 0; width: 100%; }

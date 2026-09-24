@@ -83,7 +83,7 @@ def _to_client(d: dict[str, str]) -> Client:
     return Client(
         mac=d.get("MAC", "").lower(),
         ip=d.get("IPv4") or None,
-        band=d.get("Band") or None,
+        band=d.get("Band") or SLOT_BAND.get(d.get("Slot", "")) or None,
         ssid=d.get("Display SSID") or d.get("SSID") or None,
         rssi_dbm=int(rssi) if re.fullmatch(r"-?\d+", rssi) else None,
         tx_rate=_rate(d.get("TxRate", "")),
@@ -276,6 +276,32 @@ async def collect(host: str, user: str, password: str, port: int = 22) -> ApRead
 
 # banda → slot della CLI ("wlan slotN"), come in "show wireless-hal statistic"
 BAND_SLOT = {"2.4GHz": 1, "5GHz": 2, "6GHz": 3}
+
+
+def slot_profiles(running: str) -> dict[int, str]:
+    """{slot: nome del profilo radio} da "wlan slotN / ap profile NOME" della running-config."""
+    out: dict[int, str] = {}
+    slot: int | None = None
+    for line in running.splitlines():
+        if m := re.match(r"^wlan slot(\d+)\s*$", line):
+            slot = int(m.group(1))
+        elif slot is not None and (m := re.match(r"^\s+ap profile (\S+)", line)):
+            out[slot] = m.group(1)
+        elif line.strip() == "!":
+            slot = None
+    return out
+
+
+def radio_commands(band: str, profile: str, channel: str | None, width: str | None) -> list[str]:
+    """Canale e larghezza nel profilo radio. channel "auto" = scelta automatica (DCS); un numero = canale fisso."""
+    cmds = [f"wlan-radio-profile {profile}"]
+    if channel == "auto":
+        cmds.append("dcs activate")
+    elif channel:
+        cmds += ["no dcs activate", f"{'2g' if band == '2.4GHz' else '5g'}-channel {channel}"]
+    if width:
+        cmds.append(f"ch-width {width}")
+    return [*cmds, "exit"]
 
 
 def power_commands(band: str, dbm: int) -> list[str]:

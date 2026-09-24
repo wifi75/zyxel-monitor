@@ -106,12 +106,14 @@ export interface NebulaSsid {
 }
 
 export type PolicyStatus = 'ok' | 'pending' | 'capped' | 'unknown' | 'unmanaged'
+export type PolicyField = 'tx_power' | 'channel' | 'width'
+export type PolicyRule = { tx_power: number | null; channel: string | null; width: string | null }
 export interface PolicyBand {
   desired: number | null; source: 'ap' | 'site' | 'none'; actual: number | null
-  override: number | null | 'inherit'; status: PolicyStatus
+  override: PolicyRule; status: PolicyStatus
 }
 export interface PolicyOverview {
-  site: Record<string, number | null>
+  site: Record<string, PolicyRule>
   aps: { id: number; name: string; method: string; enabled: boolean; configurable: boolean; bands: Record<string, PolicyBand> }[]
 }
 export interface PolicyResult { ap: string; ok: boolean; message: string }
@@ -182,10 +184,10 @@ export const api = {
 
   // configurazione centralizzata
   policy: () => req<PolicyOverview>('/policy'),
-  setSitePolicy: (band: string, tx_power: number | null) =>
-    req<{ results: PolicyResult[] }>('/policy/site', { method: 'PUT', body: JSON.stringify({ band, tx_power }) }),
-  setApPolicy: (id: number, band: string, tx_power: number | null, inherit: boolean) =>
-    req<{ results: PolicyResult[] }>(`/policy/aps/${id}`, { method: 'PUT', body: JSON.stringify({ band, tx_power, inherit }) }),
+  setSitePolicy: (band: string, field: PolicyField, value: number | string | null) =>
+    req<{ results: PolicyResult[] }>('/policy/site', { method: 'PUT', body: JSON.stringify({ band, field, value }) }),
+  setApPolicy: (id: number, band: string, field: PolicyField, value: number | string | null) =>
+    req<{ results: PolicyResult[] }>(`/policy/aps/${id}`, { method: 'PUT', body: JSON.stringify({ band, field, value }) }),
   applyPolicy: () => req<{ results: PolicyResult[] }>('/policy/apply', { method: 'POST' }),
   backupAll: () => req<{ results: PolicyResult[] }>('/policy/backups', { method: 'POST' }),
   backups: () => req<Backup[]>('/policy/backups'),

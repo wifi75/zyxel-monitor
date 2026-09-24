@@ -116,3 +116,13 @@ def test_parse_cpu_mem():
         "Router> show mem status\nmemory usage: 50%\n"
     )
     assert parse_cpu_mem(text) == (4, 50)
+
+
+def test_radio_profiles_and_commands():
+    from app.collectors.ssh import radio_commands, slot_profiles
+    cfg = "wlan slot1\n ap profile RADIO_SETTING_TYPE_2\n output-power 20dBm\n!\nwlan slot2\n ap profile RADIO_SETTING_TYPE_5\n!\n"
+    assert slot_profiles(cfg) == {1: "RADIO_SETTING_TYPE_2", 2: "RADIO_SETTING_TYPE_5"}
+    assert radio_commands("2.4GHz", "P", "auto", None) == ["wlan-radio-profile P", "dcs activate", "exit"]
+    assert radio_commands("5GHz", "P", "100", "20/40/80") == [
+        "wlan-radio-profile P", "no dcs activate", "5g-channel 100", "ch-width 20/40/80", "exit",
+    ]

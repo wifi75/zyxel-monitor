@@ -362,7 +362,7 @@ const SSH_NA = "La CLI SSH di questo AP non fornisce ancora il dato: in Impostaz
                       :title="r.channel ? `canale ${r.channel}` : 'canale non fornito da questo AP'">
                   <b>{{ r.band.replace('GHz', ' GHz') }}</b>
                   <span :title="r.utilization != null ? `Potenza ${r.tx_power ?? '—'} dBm, canale occupato al ${r.utilization}%` : ''">
-                    ch {{ r.channel ?? '—' }}<template v-if="r.tx_power != null"> · {{ r.tx_power }} dBm</template>
+                    <template v-if="r.channel">canale {{ r.channel }}</template><template v-if="r.channel && r.tx_power != null"> · </template><template v-if="r.tx_power != null">{{ r.tx_power }} dBm</template>
                   </span>
                   <span>{{ r.clients }} client</span>
                 </span>

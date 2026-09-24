@@ -29,35 +29,37 @@ def scope_of(ap_id: int) -> str:
     return f"ap:{ap_id}"
 
 
-def load() -> dict[str, dict[str, int | None]]:
-    """{scope: {banda: dBm}} con solo le righe impostate."""
-    out: dict[str, dict[str, int | None]] = {}
+FIELDS = ("tx_power", "channel", "width")
+# nelle personalizzazioni di un AP: NULL = "come il sito"; questi valori = "non gestito" esplicito
+UNMANAGED = {"tx_power": -1, "channel": "none", "width": "none"}
+
+
+def load() -> dict[str, dict[str, dict]]:
+    """{scope: {banda: {campo: valore}}}; nel sito NULL = non gestito, in un AP NULL = come il sito."""
+    out: dict[str, dict[str, dict]] = {}
     with connect() as db:
-        for r in db.execute("SELECT scope, band, tx_power FROM radio_policy"):
-            out.setdefault(r["scope"], {})[r["band"]] = r["tx_power"]
+        for r in db.execute("SELECT scope, band, tx_power, channel, width FROM radio_policy"):
+            out.setdefault(r["scope"], {})[r["band"]] = {f: r[f] for f in FIELDS}
     return out
 
 
-def set_rule(scope: str, band: str, tx_power: int | None, inherit: bool = False) -> None:
+def set_rule(scope: str, band: str, field: str, value) -> None:
+    """Imposta un solo campo di una regola (value None = sito: non gestito; AP: come il sito)."""
+    if field not in FIELDS:
+        raise ValueError(field)
     with connect() as db:
-        if inherit:
-            db.execute("DELETE FROM radio_policy WHERE scope = ? AND band = ?", (scope, band))
-        else:
-            db.execute(
-                "INSERT INTO radio_policy(scope, band, tx_power) VALUES (?,?,?) "
-                "ON CONFLICT(scope, band) DO UPDATE SET tx_power = excluded.tx_power",
-                (scope, band, tx_power),
-            )
+        db.execute("INSERT OR IGNORE INTO radio_policy(scope, band) VALUES (?, ?)", (scope, band))
+        db.execute(f"UPDATE radio_policy SET {field} = ? WHERE scope = ? AND band = ?", (value, scope, band))
+        db.execute("DELETE FROM radio_policy WHERE tx_power IS NULL AND channel IS NULL AND width IS NULL")
 
 
-def effective(rules: dict, ap_id: int, band: str) -> tuple[int | None, str]:
-    """Valore desiderato e sua origine: "ap" (personalizzato), "site" o "none" (non gestito)."""
-    own = rules.get(scope_of(ap_id), {})
-    if band in own:
-        return own[band], "ap"
-    if band in rules.get(SITE, {}):
-        return rules[SITE][band], "site"
-    return None, "none"
+def effective(rules: dict, ap_id: int, band: str, field: str = "tx_power") -> tuple:
+    """Valore desiderato e origine: "ap" (personalizzato), "site" o "none" (non gestito)."""
+    own = rules.get(scope_of(ap_id), {}).get(band, {}).get(field)
+    if own is not None:
+        return (None, "none") if own == UNMANAGED[field] else (own, "ap")
+    site = rules.get(SITE, {}).get(band, {}).get(field)
+    return (site, "site") if site is not None else (None, "none")
 
 
 def actual_powers() -> dict[str, dict[str, int | None]]:
@@ -88,21 +90,42 @@ def _event(ap: str, info: str) -> None:
 
 
 async def apply_ap(ap: store.ApConfig, only_changed: bool = False, reason: str = "manuale") -> dict:
-    """Applica all'AP le regole effettive di tutte le bande gestite."""
+    """Applica all'AP le regole effettive. La potenza va nello slot; canale e larghezza nel profilo radio
+    dello slot, il cui nome si legge dalla running-config (Nebula li chiama in modo diverso per modello)."""
     if not ap.ssh_password:
         return {"ap": ap.name, "ok": False, "message": "Serve l'accesso SSH per configurare questo AP"}
     rules = load()
     actual = actual_powers().get(ap.name, {})
-    commands, changes = [], []
+    commands, changes, radio = [], [], []
     for band in BANDS:
-        want, _ = effective(rules, ap.id, band)
-        if want is None:
-            continue
+        label = band.replace("GHz", " GHz")
+        want, _ = effective(rules, ap.id, band, "tx_power")
         have = actual.get(band)
-        if only_changed and have == want:
-            continue
-        commands += ssh.power_commands(band, want)
-        changes.append((band, want, have))
+        if want is not None and not (only_changed and have == want):
+            commands += ssh.power_commands(band, want)
+            shown = "massima" if want >= 30 else f"{want} dBm"
+            changes.append(f"{label} potenza {shown}" + (f" (era {have})" if have is not None else ""))
+        ch, _ = effective(rules, ap.id, band, "channel")
+        width, _ = effective(rules, ap.id, band, "width")
+        if (ch or width) and not only_changed:
+            radio.append((band, ch, width))
+    if radio:
+        try:
+            running = await ssh.running_config(ap.host, ap.ssh_user, ap.ssh_password, ap.ssh_port)
+        except Exception as exc:
+            return {"ap": ap.name, "ok": False, "message": f"SSH: {exc}"}
+        profiles = ssh.slot_profiles(running)
+        for band, ch, width in radio:
+            profile = profiles.get(ssh.BAND_SLOT[band])
+            if not profile:
+                return {"ap": ap.name, "ok": False, "message": f"Profilo radio della {band} non trovato"}
+            commands += ssh.radio_commands(band, profile, ch, width)
+            parts = []
+            if ch:
+                parts.append("canale automatico" if ch == "auto" else f"canale {ch}")
+            if width:
+                parts.append(f"larghezza {width} MHz")
+            changes.append(f"{band.replace('GHz', ' GHz')} " + ", ".join(parts))
     if not commands:
         return {"ap": ap.name, "ok": True, "message": "Già allineato"}
     try:
@@ -110,14 +133,14 @@ async def apply_ap(ap: store.ApConfig, only_changed: bool = False, reason: str =
     except Exception as exc:     # rete, credenziali, AP spento
         return {"ap": ap.name, "ok": False, "message": f"SSH: {exc}"}
     if m := ssh.CLI_ERROR.search(out):
-        return {"ap": ap.name, "ok": False, "message": f"La CLI ha rifiutato il comando ({m.group(1)})"}
+        return {"ap": ap.name, "ok": False, "message": f"La CLI ha rifiutato un comando ({m.group(1)})"}
     now = time.time()
-    for band, want, have in changes:
-        _applied[(ap.name, band)] = (want, now, have)
-    desc = ", ".join(
-        f"{b.replace('GHz', ' GHz')} {w} dBm" + (f" (era {h})" if h is not None else "") for b, w, h in changes
-    )
-    _event(ap.name, f"Potenza impostata ({reason}): {desc}")
+    for band in BANDS:
+        want, _ = effective(rules, ap.id, band, "tx_power")
+        if want is not None:
+            _applied[(ap.name, band)] = (want, now, actual.get(band))
+    desc = "; ".join(changes)
+    _event(ap.name, f"Configurazione applicata ({reason}): {desc}")
     return {"ap": ap.name, "ok": True, "message": f"Applicato: {desc}"}
 
 
