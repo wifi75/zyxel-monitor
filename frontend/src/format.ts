@@ -42,3 +42,20 @@ export function signal(dbm: number | null): { label: string; level: 'good' | 'ok
 export function isPrivateMac(mac: string): boolean {
   return (parseInt(mac.slice(0, 2), 16) & 0x02) === 0x02
 }
+
+/** Copia negli appunti. In http (non sicuro) navigator.clipboard non esiste: si usa una textarea temporanea. */
+export async function copyText(text: string): Promise<boolean> {
+  try {
+    if (window.isSecureContext && navigator.clipboard) { await navigator.clipboard.writeText(text); return true }
+  } catch { /* si prova il metodo tradizionale */ }
+  const ta = document.createElement('textarea')
+  ta.value = text
+  ta.setAttribute('readonly', '')
+  ta.style.position = 'fixed'; ta.style.opacity = '0'
+  document.body.appendChild(ta)
+  ta.select()
+  let ok = false
+  try { ok = document.execCommand('copy') } catch { ok = false }
+  ta.remove()
+  return ok
+}

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
 import { api, apForm, type Ap, type ApConfig, type ApTest } from '../api'
-import { duration } from '../format'
+import { copyText, duration } from '../format'
 import ApEditor from './ApEditor.vue'
 import Icon from './Icon.vue'
 
@@ -17,7 +17,7 @@ const notice = ref('')
 const busy = ref('')
 const test = ref<ApTest | null>(null)
 const raw = ref<{ ts: number | null; text: string } | null>(null)
-const copied = ref(false)
+const copied = ref<'' | 'ok' | 'manual'>('')
 
 async function load() {
   try {
@@ -67,10 +67,10 @@ const doReboot = () => {
   run('reboot', async () => { await api.rebootAp(a.id); notice.value = `Riavvio di ${a.name} inviato: torna online in 2-3 minuti.` })
 }
 
-const doRaw = () => run('raw', async () => { raw.value = await api.rawOutput(current.value!.id); copied.value = false })
+const doRaw = () => run('raw', async () => { raw.value = await api.rawOutput(current.value!.id); copied.value = '' })
 async function copyRaw() {
-  await navigator.clipboard?.writeText(raw.value?.text ?? '').catch(() => {})
-  copied.value = true
+  copied.value = (await copyText(raw.value?.text ?? '')) ? 'ok' : 'manual'
+  if (copied.value === 'manual') window.getSelection()?.selectAllChildren(document.querySelector('pre.raw')!)
 }
 
 const doToggle = () => run('toggle', async () => {
@@ -189,7 +189,7 @@ const doDelete = () => {
           </div>
           <template v-if="raw">
             <div class="actions"><span class="muted small grow">{{ raw.ts ? `letto alle ${new Date(raw.ts * 1000).toLocaleTimeString('it-IT')}` : '' }}</span>
-              <button class="ghost small" @click="copyRaw">{{ copied ? 'Copiato' : 'Copia' }}</button>
+              <button class="ghost small" @click="copyRaw">{{ copied === 'ok' ? 'Copiato ✓' : copied === 'manual' ? 'Premi Ctrl+C' : 'Copia' }}</button>
               <button class="ghost small" @click="raw = null">Chiudi</button></div>
             <pre class="raw">{{ raw.text || 'Nessuna lettura riuscita finora.' }}</pre>
           </template>

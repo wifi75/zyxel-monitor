@@ -16,7 +16,7 @@ import LoginView from './components/LoginView.vue'
 import PieChart from './components/PieChart.vue'
 import SettingsView from './components/SettingsView.vue'
 import TrafficChart from './components/TrafficChart.vue'
-import { bps, bytes, duration, signal, time } from './format'
+import { bps, bytes, copyText, duration, signal, time } from './format'
 import type { IconName } from './icons'
 
 const REFRESH_MS = 30_000
@@ -186,8 +186,7 @@ const usageCopied = ref(false)
 async function copyUsageDebug() {
   const d = deviceUsage.value?.debug
   if (!d) return
-  await navigator.clipboard?.writeText(`${d.path}\n${d.sample}`).catch(() => {})
-  usageCopied.value = true
+  usageCopied.value = await copyText(`${d.path}\n${d.sample}`)
 }
 
 /** classe colore per banda radio */

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref } from 'vue'
 import { api, apForm, type Ap, type ApConfig, type ApTest, type GeneralForm } from '../api'
+import { copyText } from '../format'
 import ApEditor from './ApEditor.vue'
 import NebulaPanel from './NebulaPanel.vue'
 
@@ -72,8 +73,7 @@ async function showRaw(a: ApConfig) {
   catch (e) { error.value = (e as Error).message }
 }
 async function copyRaw() {
-  await navigator.clipboard?.writeText(raw.value?.text ?? '').catch(() => {})
-  copied.value = true
+  copied.value = await copyText(raw.value?.text ?? '')
 }
 
 // ---- OPNsense e raccolta ----
