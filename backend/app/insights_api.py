@@ -1,4 +1,6 @@
 """Analisi: dispositivi nuovi, qualità del segnale, roaming, consumo per dispositivo, disposizione dashboard."""
+import asyncio
+import ipaddress
 import json
 import time
 from collections import Counter, defaultdict
@@ -6,6 +8,7 @@ from collections import Counter, defaultdict
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
+from .collectors import names as names_mod
 from .collectors import opnsense
 from .core.db import connect
 from .core.security import current_user
@@ -162,6 +165,14 @@ def roaming(hours: float = 24, ap: str | None = None):
 _usage_cache: dict[float, tuple[float, dict]] = {}
 
 
+def _is_lan(ip: str) -> bool:
+    try:
+        a = ipaddress.ip_address(ip)
+    except ValueError:
+        return False
+    return a.is_private and not a.is_multicast and not a.is_loopback
+
+
 @router.get("/usage/devices")
 async def usage_devices(hours: float = 24):
     hours, since = _since(hours)
@@ -181,14 +192,22 @@ async def usage_devices(hours: float = 24):
         by_ip = {r["last_ip"]: r["mac"] for r in rows if r["last_ip"]}
         hostnames = {r["mac"]: r["hostname"] for r in rows}
         names = _labels(db)
+    # si contano solo gli indirizzi della rete di casa: gli IP pubblici sono i server remoti, il multicast è servizio.
+    # I dispositivi via cavo non passano dagli AP: nome dal DNS inverso, altrimenti l'IP.
+    lan = [(ip, n) for ip, n in per_ip.items() if n > 0 and _is_lan(ip)]
+    wired = dict(zip([ip for ip, _ in lan if ip not in by_ip],
+                     await asyncio.gather(*(names_mod.hostname(ip) for ip, _ in lan if ip not in by_ip)), strict=True))
     items = []
     by_type: Counter[str] = Counter()
-    for ip, n in per_ip.items():
+    for ip, n in lan:
         mac = by_ip.get(ip)
-        if not mac or n <= 0:
-            continue
-        kind = device_type(names.get(mac) or hostnames.get(mac), mac)
-        items.append({"mac": mac, "ip": ip, "name": names.get(mac) or ip, "device_type": kind, "bytes": n})
+        if mac:
+            label = names.get(mac) or ip
+            kind = device_type(names.get(mac) or hostnames.get(mac), mac)
+        else:
+            label = wired.get(ip) or ip
+            kind = "Via cavo"
+        items.append({"mac": mac, "ip": ip, "name": label, "device_type": kind, "bytes": n})
         by_type[kind] += n
     items.sort(key=lambda i: i["bytes"], reverse=True)
     result = {
