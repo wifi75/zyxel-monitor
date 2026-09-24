@@ -78,6 +78,20 @@ const explored = ref<string | null>(null)
 const doExplore = () => run('explore', async () => { explored.value = (await api.exploreAp(current.value!.id)).text; copied.value = '' })
 async function copyExplore() { copied.value = (await copyText(explored.value ?? '')) ? 'ok' : 'manual' }
 
+async function doHybrid(mode: 'cloud' | 'standalone') {
+  const a = current.value!
+  if (mode === 'standalone') {
+    if (!window.confirm(t("Togliere {n} da Nebula? L'AP potrebbe riavviarsi e perdere la configurazione: prima viene salvato un backup. Provalo su un solo AP, con un cavo di rete a portata di mano.", { n: a.name }))) return
+    if (!window.confirm(t('Confermi davvero? Da questo momento {n} non sarà più gestito dal cloud Nebula.', { n: a.name }))) return
+  } else if (!window.confirm(t('Rimettere {n} sotto Nebula? Il cloud tornerà a imporre la sua configurazione.', { n: a.name }))) return
+  run('hybrid', async () => {
+    await api.setHybridMode(a.id, mode)
+    notice.value = mode === 'standalone'
+      ? t('{n} è in gestione locale: backup salvato. Controlla che la rete Wi-Fi sia ancora attiva.', { n: a.name })
+      : t('{n} è di nuovo sotto Nebula.', { n: a.name })
+  })
+}
+
 const doToggle = () => run('toggle', async () => {
   const a = current.value!
   await api.updateAp(a.id, { ...apForm(a), enabled: !a.enabled })
@@ -215,6 +229,14 @@ const doDelete = () => {
           <div class="apm-tool">
             <div class="grow"><strong>{{ current.enabled ? t('Disattiva') : t('Attiva') }}</strong><p class="muted small">{{ t('Un AP disattivato non viene letto e sparisce dalla dashboard.') }}</p></div>
             <button :disabled="!!busy" @click="doToggle">{{ current.enabled ? t('Disattiva') : t('Attiva') }}</button>
+          </div>
+          <div v-if="current.has_ssh_password" class="apm-tool danger-zone">
+            <div class="grow"><strong>{{ t('Gestione Nebula') }}</strong>
+              <p class="muted small">{{ t("Togli questo AP dal cloud Nebula (gestione locale) o rimettilo sotto Nebula. Prima viene salvato un backup della configurazione.") }}</p></div>
+            <div class="actions">
+              <button class="danger" :disabled="!!busy" @click="doHybrid('standalone')">{{ busy === 'hybrid' ? t('Attendi…') : t('Esci da Nebula') }}</button>
+              <button :disabled="!!busy" @click="doHybrid('cloud')">{{ t('Torna a Nebula') }}</button>
+            </div>
           </div>
           <div class="apm-tool danger-zone">
             <div class="grow"><strong>{{ t('Elimina') }}</strong><p class="muted small">{{ t("Toglie l'AP dall'elenco; lo storico resta fino alla scadenza.") }}</p></div>

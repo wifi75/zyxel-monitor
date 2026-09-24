@@ -212,3 +212,13 @@ def test_band_steering():
     cfg = ci.RunningConfig("wlan-ssid-profile SSID1\n ssid WiFi\n bandselect mode disable\n!\nwlan slot1\n ssid profile 1 SSID1\n!\n")
     assert ci.BY_KEY["band_steering"].read(cfg) == "disable"
     assert ci.BY_KEY["band_steering"].build("standard", cfg) == ["wlan-ssid-profile SSID1", "bandselect mode standard", "exit"]
+
+
+def test_scheduled_reboot():
+    from app import config_items as ci
+    cfg = ci.RunningConfig("schedule-reboot\n activate\n sun\n reboot-time 04:00\n!\n")
+    assert ci.BY_KEY["scheduled_reboot"].read(cfg) == "sun-04"
+    assert ci.BY_KEY["scheduled_reboot"].read(ci.RunningConfig("hostname X\n")) == "off"
+    cmds = ci.BY_KEY["scheduled_reboot"].build("daily-04", cfg)
+    assert cmds[0] == "schedule-reboot" and "mon" in cmds and "reboot-time 04:00" in cmds and cmds[-2:] == ["activate", "exit"]
+    assert ci.hybrid_mode(ci.RunningConfig("hybrid-mode cloud\n!\n")) == "cloud"

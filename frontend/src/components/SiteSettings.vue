@@ -70,7 +70,10 @@ function currentText(i: SiteItem): { text: string; detail: string } | null {
   return { text: t('Diverso fra gli AP'), detail }
 }
 
-const CHOICE: Record<string, string> = { disable: 'Spento', standard: 'Standard', force: 'Forzato' }
+const CHOICE: Record<string, string> = {
+  disable: 'Spento', standard: 'Standard', force: 'Forzato', off: 'Spento',
+  'daily-04': 'Ogni giorno alle 4:00', 'sun-04': 'La domenica alle 4:00', 'sat-04': 'Il sabato alle 4:00',
+}
 const boolValue = (i: SiteItem) => (i.value == null ? '' : i.value ? 'on' : 'off')
 </script>
 

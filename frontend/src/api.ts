@@ -200,6 +200,8 @@ export const api = {
   siteItems: () => req<SiteItem[]>('/policy/items'),
   setSiteItem: (key: string, value: string | number | boolean | string[] | null) =>
     req<{ results: PolicyResult[] }>(`/policy/items/${key}`, { method: 'PUT', body: JSON.stringify({ value }) }),
+  setHybridMode: (id: number, mode: 'cloud' | 'standalone') =>
+    req<{ ok: boolean; output: string }>(`/settings/aps/${id}/hybrid-mode`, { method: 'POST', body: JSON.stringify({ mode }) }),
   exploreAp: (id: number) => req<{ text: string }>(`/settings/aps/${id}/explore`, { method: 'POST' }),
   backup: (id: number) => req<Backup & { text: string }>(`/policy/backups/${id}`),
 

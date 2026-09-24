@@ -15,6 +15,7 @@ from . import poller
 from .collectors import opnsense, ssh
 from .core import store
 from .core.config import EDITABLE, get_settings
+from .core.db import connect
 from .core.security import current_user
 
 router = APIRouter(prefix="/api/settings", dependencies=[Depends(current_user)])
@@ -213,6 +214,32 @@ async def explore_ap(ap_id: int):
     except (OSError, ssh.asyncssh.Error, TimeoutError) as exc:
         raise HTTPException(502, f"SSH: {exc}") from None
     return {"text": text}
+
+
+class HybridIn(BaseModel):
+    mode: Literal["cloud", "standalone"]
+
+
+@router.post("/aps/{ap_id}/hybrid-mode")
+async def set_hybrid_mode(ap_id: int, body: HybridIn):
+    """Passa un AP da Nebula (cloud) a gestione locale (standalone) o viceversa. Prima salva un backup."""
+    from . import policy
+    ap = store.get_ap(ap_id)
+    if not ap or not ap.ssh_password:
+        raise HTTPException(409, "Servono le credenziali SSH")
+    backup = await policy.backup_ap(ap)
+    if not backup["ok"]:
+        raise HTTPException(409, f"Backup non riuscito, operazione annullata: {backup['message']}")
+    try:
+        out = await ssh.configure(ap.host, ap.ssh_user, ap.ssh_password, ap.ssh_port, [f"hybrid-mode {body.mode}"])
+    except (OSError, ssh.asyncssh.Error, TimeoutError) as exc:
+        raise HTTPException(502, f"SSH: {exc}") from None
+    if m := ssh.CLI_ERROR.search(out):
+        raise HTTPException(409, f"La CLI ha rifiutato il comando ({m.group(1)})")
+    with connect() as db:
+        db.execute("INSERT INTO events(ts, kind, ap, info) VALUES (?,?,?,?)",
+                   (int(time.time()), "config", ap.name, f"Modalità di gestione: {body.mode} (backup salvato prima)"))
+    return {"ok": True, "output": out[-2000:]}
 
 
 async def _port_open(host: str, port: int, timeout: float = 3) -> bool:

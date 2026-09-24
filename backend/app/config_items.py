@@ -230,6 +230,31 @@ def _guest_set(v, cfg: RunningConfig) -> list[str]:
     ]
 
 
+DAYS = ("mon", "tue", "wed", "thu", "fri", "sat", "sun")
+# preset del riavvio programmato: giorni attivi e ora
+REBOOT_PRESETS = {"daily-04": (DAYS, "04:00"), "sun-04": (("sun",), "04:00"), "sat-04": (("sat",), "04:00")}
+
+
+def _reboot(cfg: RunningConfig) -> str | None:
+    lines = cfg.block("schedule-reboot")
+    if not lines or "activate" not in lines:
+        return "off"
+    days = tuple(d for d in DAYS if d in lines)
+    time_ = next((line.split()[1] for line in lines if line.startswith("reboot-time ")), None)
+    for key, (d, t) in REBOOT_PRESETS.items():
+        if set(d) == set(days) and t == time_:
+            return key
+    return "custom"
+
+
+def _reboot_set(v, cfg: RunningConfig) -> list[str]:
+    if v == "off":
+        return ["schedule-reboot", "no activate", "exit"]
+    days, time_ = REBOOT_PRESETS[str(v)]
+    day_lines = [d if d in days else f"no {d}" for d in DAYS]
+    return ["schedule-reboot", *day_lines, f"reboot-time {time_}", "activate", "exit"]
+
+
 ITEMS: list[Item] = [
     # --- rete Wi-Fi principale ---
     Item("ssid_name", "rete", "Nome della rete (SSID)", "text",
@@ -288,6 +313,9 @@ ITEMS: list[Item] = [
     Item("led_off", "sistema", "LED spenti", "bool", "Utile per gli AP in camera da letto.",
          read=lambda c: "led_suppress enable" in c.top,
          build=lambda v, c: ["led_suppress enable" if v else "led_suppress disable"]),
+    Item("scheduled_reboot", "sistema", "Riavvio programmato", "choice",
+         "Riavvia gli AP a un orario fisso, di notte: utile se dopo giorni di funzionamento rallentano.",
+         choices=["off", "daily-04", "sun-04", "sat-04"], read=_reboot, build=_reboot_set),
     Item("snmp_rw", "sistema", "SNMP in scrittura", "bool",
          "Consente di modificare l'AP via SNMP con la community: meglio spento, la dashboard legge soltanto.",
          read=_snmp_rw, build=_snmp_rw_off),
@@ -299,6 +327,14 @@ ITEMS: list[Item] = [
 ]
 
 BY_KEY = {i.key: i for i in ITEMS}
+
+
+def hybrid_mode(cfg: RunningConfig) -> str | None:
+    """"cloud" (Nebula) o "standalone" dalla prima riga "hybrid-mode" della running-config."""
+    for line in cfg.top:
+        if line.startswith("hybrid-mode "):
+            return line.split()[1]
+    return None
 
 
 def hostname_commands(name: str, cfg: RunningConfig) -> list[str]:

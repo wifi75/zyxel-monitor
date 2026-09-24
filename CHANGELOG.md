@@ -2,6 +2,11 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) — versioni: [SemVer](https://semver.org/lang/it/).
 
+## [0.16.0] - 2026-09-24
+### Aggiunto
+- Impostazioni del sito: riavvio programmato (ogni giorno, sabato o domenica alle 4:00).
+- Gestione AP → Strumenti: uscita da Nebula (gestione locale, hybrid-mode standalone) e ritorno a Nebula, per singolo AP, con backup automatico prima e doppia conferma.
+
 ## [0.15.0] - 2026-09-24
 ### Aggiunto
 - Impostazioni del sito: band steering (spento, standard, forzato).

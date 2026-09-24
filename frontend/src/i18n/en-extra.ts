@@ -2,6 +2,20 @@ import { addEn } from './index'
 
 // traduzioni inglesi: chiave = testo italiano esatto usato in t()
 addEn({
+  'Riavvio programmato': 'Scheduled reboot',
+  'Riavvia gli AP a un orario fisso, di notte: utile se dopo giorni di funzionamento rallentano.': 'Reboots the APs at a fixed time at night: useful if they slow down after days of uptime.',
+  'Ogni giorno alle 4:00': 'Every day at 4:00',
+  'La domenica alle 4:00': 'Sundays at 4:00',
+  'Il sabato alle 4:00': 'Saturdays at 4:00',
+  'Gestione Nebula': 'Nebula management',
+  'Togli questo AP dal cloud Nebula (gestione locale) o rimettilo sotto Nebula. Prima viene salvato un backup della configurazione.': 'Remove this AP from the Nebula cloud (local management) or put it back under Nebula. A configuration backup is saved first.',
+  'Esci da Nebula': 'Leave Nebula',
+  'Torna a Nebula': 'Back to Nebula',
+  "Togliere {n} da Nebula? L'AP potrebbe riavviarsi e perdere la configurazione: prima viene salvato un backup. Provalo su un solo AP, con un cavo di rete a portata di mano.": 'Remove {n} from Nebula? The AP may reboot and lose its configuration: a backup is saved first. Try it on a single AP, with a network cable at hand.',
+  'Confermi davvero? Da questo momento {n} non sarà più gestito dal cloud Nebula.': 'Are you sure? From now on {n} will no longer be managed by the Nebula cloud.',
+  'Rimettere {n} sotto Nebula? Il cloud tornerà a imporre la sua configurazione.': 'Put {n} back under Nebula? The cloud will enforce its configuration again.',
+  '{n} è in gestione locale: backup salvato. Controlla che la rete Wi-Fi sia ancora attiva.': '{n} is now managed locally: backup saved. Check that the Wi-Fi network is still up.',
+  '{n} è di nuovo sotto Nebula.': '{n} is back under Nebula.',
   'Band steering': 'Band steering',
   'Spinge i dispositivi compatibili sulla 5 GHz, più veloce. Standard = suggerisce, forzato = insiste.': 'Pushes capable devices onto the faster 5 GHz band. Standard = suggests, forced = insists.',
   'Standard': 'Standard',
