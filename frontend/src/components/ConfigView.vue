@@ -83,18 +83,27 @@ const CHOICE_LABEL: Record<string, string> = {
   disable: 'Spento', standard: 'Standard', force: 'Forzato', off: 'Spento', wpa2: 'WPA2', wpa3: 'WPA3', 'wpa2/wpa3': 'WPA2 + WPA3',
   'daily-04': 'Ogni giorno 4:00', 'sun-04': 'Domenica 4:00', 'sat-04': 'Sabato 4:00', '0': 'Disattivata',
 }
+/** etichette [spento, acceso] per le voci sì/no: parole concrete invece di "attivo/spento" */
+const BOOL_TEXT: Record<string, [string, string]> = {
+  ssid_hidden: ['visibile', 'nascosta'], led_off: ['accesi', 'spenti'], snmp_rw: ['spento', 'attivo'],
+  load_balancing: ['spento', 'attivo'], dot11kv: ['spento', 'attivo'], dot11r: ['spento', 'attivo'],
+  hostname_sync: ['no', 'sì'],
+}
+/** testo per il valore vuoto, che per alcune voci significa "spento" */
+const EMPTY_TEXT: Record<string, string> = { wifi_schedule: 'sempre acceso', guest_name: 'spenta' }
 function itemText(i: SiteItem, v: unknown): string | null {
   if (v == null) return null
-  if (i.kind === 'password') return v ? t('impostata') : t('nessuna')
-  if (typeof v === 'boolean') return v ? t('attivo') : t('spento')
+  if (i.kind === 'password') return v ? t('impostata') : null      // non trovata = non letta, non "nessuna"
+  if (typeof v === 'boolean') return t((BOOL_TEXT[i.key] ?? ['spento', 'attivo'])[v ? 1 : 0])
   if (Array.isArray(v)) return v.length ? t('{n} bloccati', { n: v.length }) : t('nessuno')
   if (i.kind === 'choice') return CHOICE_LABEL[String(v)] ? t(CHOICE_LABEL[String(v)]) : (i.unit ? `${v} ${i.unit}` : String(v))
-  if (v === '') return t('spento')
+  if (v === '') return t(EMPTY_TEXT[i.key] ?? 'spento')
   return i.unit ? `${v} ${i.unit}` : String(v)
 }
 function itemRow(i: SiteItem): Row {
   const kind: Kind = i.kind === 'bool' || i.kind === 'choice' ? 'select' : i.kind
-  const options: Opt[] | undefined = i.kind === 'bool' ? [{ value: 'true', label: t('Attivo') }, { value: 'false', label: t('Spento') }]
+  const options: Opt[] | undefined = i.kind === 'bool'
+    ? [{ value: 'true', label: itemText(i, true)! }, { value: 'false', label: itemText(i, false)! }]
     : i.kind === 'choice' ? i.choices.map(c => ({ value: c, label: itemText(i, c) ?? c })) : undefined
   const site = i.value == null ? null : i.kind === 'password' ? (i.value ? '••••••••' : null)
     : Array.isArray(i.value) ? i.value.join('\n') : String(i.value)
@@ -126,8 +135,19 @@ function siteLabel(r: Row): string {
     const n = r.site.split('\n').filter(Boolean).length
     return n ? t('{n} bloccati', { n }) : t('nessuno')
   }
-  if (r.site === '') return t('spento')
+  if (r.site === '') return t(EMPTY_TEXT[r.item?.key ?? ''] ?? 'spento')
   return r.unit ? `${r.site} ${r.unit}` : r.site
+}
+
+/** pallino: verde se la funzione è attiva, grigio se spenta, nessuno per i valori numerici/testo */
+const ON_WORDS = new Set(['attivo', 'active', 'on', 'nascosta', 'spenti', 'sì'].map(w => w.toLowerCase()))
+function dot(r: Row, text: string | null): '' | 'on' | 'off' {
+  if (!text || !r.item) return ''
+  const k = r.item.kind
+  if (k !== 'bool' && !(k === 'choice' && r.item.key !== 'rssi_kickout' && r.item.key !== 'security_mode')) return ''
+  const low = text.toLowerCase()
+  if (ON_WORDS.has(low)) return 'on'
+  return [t('spento'), t('Spento'), t('Disattivata'), t('visibile'), t('accesi'), t('no')].map(x => x.toLowerCase()).includes(low) ? 'off' : 'on'
 }
 /** confronto fra valore attuale e valore voluto; la potenza oltre il limite dell'AP conta come uguale */
 function cellState(r: Row, apId: number): 'same' | 'diff' | 'none' {
@@ -352,7 +372,11 @@ async function copyBackup() { copied.value = await copyText(shown.value?.text ??
             <template v-for="g in grouped" :key="g.key">
               <tr class="cmp-group" :style="{ '--tone': g.tone }"><td :colspan="2 + aps.length">{{ g.icon }} {{ t(g.title) }}</td></tr>
               <tr v-for="r in g.rows" :key="r.id" class="cmp-row" :style="{ '--tone': g.tone }">
-                <td class="cmp-set"><span>{{ r.label }}</span><small v-if="r.hint">{{ r.hint }}</small></td>
+                <td class="cmp-set">
+                  <span>{{ r.label }}</span>
+                  <span v-if="r.hint" class="cmp-info" :title="r.hint">ⓘ</span>
+                  <small v-if="r.field === 'tx_power'">{{ r.hint }}</small>
+                </td>
 
                 <td class="site-col">
                   <div v-if="editing === cellKey(r, null)" class="cmp-edit">
@@ -368,9 +392,11 @@ async function copyBackup() { copied.value = await copyText(shown.value?.text ??
                       <button v-if="r.kind !== 'select'" class="primary small" @click="commit(r, null, draft)">OK</button>
                     </div>
                   </div>
-                  <button v-else class="val" :class="pending[cellKey(r, null)] ? 'pend' : r.site == null ? 'none' : 'same'"
+                  <button v-else class="site-cell" :class="pending[cellKey(r, null)] ? 'pend' : r.site == null ? 'none' : 'set'"
                           :title="t('Clicca per cambiare')" @click="startEdit(r, null)">
-                    {{ pending[cellKey(r, null)] ? pendingLabel(pending[cellKey(r, null)]) : siteLabel(r) }}
+                    <span v-if="!pending[cellKey(r, null)] && r.site != null && dot(r, siteLabel(r))" class="dot" :class="dot(r, siteLabel(r))" />
+                    <span class="grow">{{ pending[cellKey(r, null)] ? pendingLabel(pending[cellKey(r, null)]) : r.site == null ? t("lascia all'AP") : siteLabel(r) }}</span>
+                    <span class="pen">✎</span>
                   </button>
                 </td>
 
@@ -383,14 +409,18 @@ async function copyBackup() { copied.value = await copyText(shown.value?.text ??
                     </select>
                     <div class="cmp-edit-btns"><button class="ghost small" @click="editing = null">{{ t('Annulla') }}</button></div>
                   </div>
-                  <button v-else-if="r.perAp && a.configurable" class="val" :class="apClass(r, a.id)"
-                          :title="t('Clicca per personalizzare questo AP')" @click="startEdit(r, a.id)">
+                  <component :is="r.perAp && a.configurable ? 'button' : 'span'" class="ap-cell" :class="[apClass(r, a.id), { click: r.perAp && a.configurable }]"
+                             :title="r.perAp && a.configurable ? t('Clicca per personalizzare questo AP') : t('Vale per tutto il sito: si cambia nella colonna Sito')"
+                             @click="r.perAp && a.configurable && startEdit(r, a.id)">
                     <template v-if="pending[cellKey(r, a.id)]">{{ pendingLabel(pending[cellKey(r, a.id)]) }}</template>
-                    <template v-else>{{ r.current(a.id) ?? '—' }}<span v-if="r.override?.(a.id) && r.override(a.id) !== 'none'" class="own" :title="t('personalizzato')">★</span></template>
-                  </button>
-                  <span v-else class="val static" :class="apClass(r, a.id)" :title="t('Vale per tutto il sito: si cambia nella colonna Sito')">
-                    {{ r.current(a.id) ?? '—' }}
-                  </span>
+                    <template v-else>
+                      <span v-if="dot(r, r.current(a.id))" class="dot" :class="dot(r, r.current(a.id))" />
+                      {{ r.current(a.id) ?? '—' }}
+                      <span v-if="apClass(r, a.id) === 'same'" class="mark ok">✓</span>
+                      <span v-else-if="apClass(r, a.id) === 'diff'" class="mark warn">⚠</span>
+                      <span v-if="r.override?.(a.id) && r.override(a.id) !== 'none'" class="own" :title="t('personalizzato')">★</span>
+                    </template>
+                  </component>
                 </td>
               </tr>
             </template>

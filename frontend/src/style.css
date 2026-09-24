@@ -528,3 +528,32 @@ button.val:hover { border-color: var(--accent); }
 .cfg-close { border: none; font-size: 15px; line-height: 1; padding: 4px 8px; }
 .cfg-results .cfg-close { position: absolute; top: 8px; right: 8px; }
 button.ghost.active { background: var(--accent-soft); color: var(--accent); }
+
+/* v0.18.2: caselle più leggibili */
+.cmp td { padding: 7px 12px; }
+.cmp-set { white-space: nowrap; }
+.cmp-set span { display: inline; }
+.cmp-set small { display: block; }
+.cmp-info { margin-left: 6px; color: var(--muted); cursor: help; font-size: 13px; }
+.cmp-info:hover { color: var(--tone); }
+.site-cell { display: flex; align-items: center; gap: 8px; width: 100%; min-width: 150px; padding: 6px 10px; border-radius: 9px;
+             background: var(--surface); border: 1px solid color-mix(in srgb, var(--tone) 35%, var(--border)); font-weight: 600;
+             text-align: left; cursor: pointer; }
+.site-cell:hover { border-color: var(--tone); box-shadow: 0 0 0 3px color-mix(in srgb, var(--tone) 15%, transparent); }
+.site-cell .pen { color: var(--muted); font-size: 12px; opacity: .6; }
+.site-cell:hover .pen { opacity: 1; color: var(--tone); }
+.site-cell.none { font-weight: 400; font-style: italic; color: var(--muted); border-style: dashed; }
+.site-cell.pend { background: color-mix(in srgb, var(--violet) 14%, transparent); border-color: var(--violet); color: var(--violet); }
+.ap-cell { display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px; border-radius: 7px; border: 1px solid transparent;
+           background: transparent; font-size: 13px; white-space: nowrap; color: var(--text); }
+.ap-cell.click { cursor: pointer; }
+.ap-cell.click:hover { border-color: var(--border); background: var(--surface); }
+.ap-cell.none { color: var(--muted); }
+.ap-cell.diff { background: color-mix(in srgb, var(--amber) 16%, transparent); color: color-mix(in srgb, var(--amber) 75%, var(--text)); font-weight: 600; }
+.ap-cell.pend { background: color-mix(in srgb, var(--violet) 14%, transparent); color: var(--violet); font-weight: 700; }
+.mark { font-size: 12px; font-weight: 700; }
+.mark.ok { color: var(--good); }
+.mark.warn { color: var(--amber); }
+.dot { width: 8px; height: 8px; border-radius: 50%; flex: none; display: inline-block; }
+.dot.on { background: var(--good); box-shadow: 0 0 0 3px color-mix(in srgb, var(--good) 20%, transparent); }
+.dot.off { background: #94a3b8; }

@@ -2,6 +2,16 @@ import { addEn } from './index'
 
 // traduzioni inglesi: chiave = testo italiano esatto usato in t()
 addEn({
+  'visibile': 'visible',
+  'nascosta': 'hidden',
+  'accesi': 'on',
+  'spenti': 'off',
+  'no': 'no',
+  'sì': 'yes',
+  'sempre acceso': 'always on',
+  'spenta': 'off',
+  "lascia all'AP": 'left to the AP',
+
   'Riapplica': 'Re-apply',
   'Riapplica subito a tutti gli AP la configurazione del sito': 'Push the site configuration to every AP now',
   'Mostra solo gli ultimi': 'Show only the latest',
