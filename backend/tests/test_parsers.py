@@ -222,3 +222,13 @@ def test_scheduled_reboot():
     cmds = ci.BY_KEY["scheduled_reboot"].build("daily-04", cfg)
     assert cmds[0] == "schedule-reboot" and "mon" in cmds and "reboot-time 04:00" in cmds and cmds[-2:] == ["activate", "exit"]
     assert ci.hybrid_mode(ci.RunningConfig("hybrid-mode cloud\n!\n")) == "cloud"
+
+
+def test_wifi_schedule():
+    from app import config_items as ci
+    cfg = ci.RunningConfig("wlan-ssid-profile SSID1\n ssid WiFi\n ssid-schedule\n mon enable 07:00 23:00\n!\nwlan slot1\n ssid profile 1 SSID1\n!\n")
+    assert ci.BY_KEY["wifi_schedule"].read(cfg) == "07:00-23:00"
+    cmds = ci.BY_KEY["wifi_schedule"].build("08:00-22:30", cfg)
+    assert cmds[:2] == ["wlan-ssid-profile SSID1", "ssid-schedule"] and "sun enable 08:00 22:30" in cmds
+    assert ci.BY_KEY["wifi_schedule"].build("", cfg) == ["wlan-ssid-profile SSID1", "no ssid-schedule", "exit"]
+    assert ci.parse_value(ci.BY_KEY["wifi_schedule"], "07:00-23:00") == "07:00-23:00"

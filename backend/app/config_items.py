@@ -255,6 +255,30 @@ def _reboot_set(v, cfg: RunningConfig) -> list[str]:
     return ["schedule-reboot", *day_lines, f"reboot-time {time_}", "activate", "exit"]
 
 
+HHMM = r"(?:[01]\d|2[0-3]):[0-5]\d"
+SCHEDULE_RE = re.compile(rf"^({HHMM})-({HHMM})$")
+
+
+def _schedule(cfg: RunningConfig) -> str | None:
+    """Fascia in cui la rete è accesa ("07:00-23:00"), "" se sempre accesa. Letta dal lunedì."""
+    p = cfg.ssid_profile()
+    if not p:
+        return None
+    header = f"wlan-ssid-profile {p}"
+    if not cfg.has(header, "ssid-schedule"):
+        return ""
+    v = cfg.value(header, "mon enable")
+    parts = (v or "").split()
+    return f"{parts[0]}-{parts[1]}" if len(parts) == 2 else "custom"
+
+
+def _schedule_set(v, cfg: RunningConfig) -> list[str]:
+    if not v:
+        return _in_ssid(cfg, "no ssid-schedule")
+    start, end = SCHEDULE_RE.match(str(v)).groups()
+    return _in_ssid(cfg, "ssid-schedule", *[f"{d} enable {start} {end}" for d in DAYS])
+
+
 ITEMS: list[Item] = [
     # --- rete Wi-Fi principale ---
     Item("ssid_name", "rete", "Nome della rete (SSID)", "text",
@@ -274,6 +298,9 @@ ITEMS: list[Item] = [
          "Da 8 a 63 caratteri; senza password la rete ospiti è aperta.", enforce=False, read=lambda c: None,
          build=lambda v, c: [f"wlan-security-profile {GUEST_SEC}", "mode wpa2", f"wpa-psk {v}", "exit"]
          if _guest_slot_profile(c) else []),
+    Item("wifi_schedule", "rete", "Orari del Wi-Fi", "text",
+         "Fascia in cui la rete è accesa, tutti i giorni (es. 07:00-23:00). Fuori orario il Wi-Fi è spento per tutti. "
+         "Vuoto = sempre acceso.", read=_schedule, build=_schedule_set),
     Item("ssid_hidden", "rete", "Rete nascosta", "bool",
          "Il nome della rete non compare negli elenchi: per collegarsi va scritto a mano.",
          read=lambda c: _ssid_flag(c, "hide"),
@@ -367,8 +394,12 @@ def parse_value(item: Item, raw) -> object:
     s = str(raw).strip()
     if item.kind == "choice" and s not in item.choices:
         raise ValueError("scelta non valida")
-    if item.kind == "text" and item.key == "guest_name" and s == "":
-        return s                                   # nome vuoto = rete ospiti spenta
+    if item.kind == "text" and item.key in ("guest_name", "wifi_schedule") and s == "":
+        return s                                   # vuoto = rete ospiti spenta / Wi-Fi sempre acceso
+    if item.key == "wifi_schedule":
+        if not SCHEDULE_RE.match(s):
+            raise ValueError("formato HH:MM-HH:MM, es. 07:00-23:00")
+        return s
     if item.kind == "text":
         if not s or len(s) > 32 or not re.fullmatch(r"[\w .@:\-]+", s):
             raise ValueError("testo non valido (max 32 caratteri, niente simboli speciali)")

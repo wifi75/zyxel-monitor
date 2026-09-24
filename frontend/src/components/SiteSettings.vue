@@ -33,6 +33,8 @@ onMounted(load)
 async function save(i: SiteItem, value: string | number | boolean | string[] | null) {
   if (i.key === 'security_mode' && value === 'wpa3' &&
       !window.confirm(t('Solo WPA3: i dispositivi più vecchi (stampanti, domotica, vecchi telefoni) non si collegheranno più. Procedere?'))) return
+  if (i.key === 'wifi_schedule' && value &&
+      !window.confirm(t('Fuori dalla fascia {v} il Wi-Fi sarà spento per tutti i dispositivi. Procedere?', { v: String(value) }))) return
   if (i.key === 'wifi_password' && value != null &&
       !window.confirm(t('Cambiare la password scollega tutti i dispositivi: andranno ricollegati con la nuova password. Procedere?'))) return
   if (i.key === 'ssid_name' && value != null &&

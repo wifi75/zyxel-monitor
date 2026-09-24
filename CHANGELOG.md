@@ -2,6 +2,10 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) — versioni: [SemVer](https://semver.org/lang/it/).
 
+## [0.17.0] - 2026-09-24
+### Aggiunto
+- Impostazioni del sito: orari del Wi-Fi (fascia giornaliera in cui la rete è accesa, con conferma). Completate tutte le 19 impostazioni dell'elenco.
+
 ## [0.16.0] - 2026-09-24
 ### Aggiunto
 - Impostazioni del sito: riavvio programmato (ogni giorno, sabato o domenica alle 4:00).

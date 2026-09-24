@@ -2,6 +2,9 @@ import { addEn } from './index'
 
 // traduzioni inglesi: chiave = testo italiano esatto usato in t()
 addEn({
+  'Orari del Wi-Fi': 'Wi-Fi schedule',
+  'Fascia in cui la rete è accesa, tutti i giorni (es. 07:00-23:00). Fuori orario il Wi-Fi è spento per tutti. Vuoto = sempre acceso.': 'Daily time window when the network is on (e.g. 07:00-23:00). Outside it Wi-Fi is off for everyone. Empty = always on.',
+  'Fuori dalla fascia {v} il Wi-Fi sarà spento per tutti i dispositivi. Procedere?': 'Outside {v} Wi-Fi will be off for every device. Continue?',
   'Riavvio programmato': 'Scheduled reboot',
   'Riavvia gli AP a un orario fisso, di notte: utile se dopo giorni di funzionamento rallentano.': 'Reboots the APs at a fixed time at night: useful if they slow down after days of uptime.',
   'Ogni giorno alle 4:00': 'Every day at 4:00',
