@@ -1,5 +1,5 @@
 from app.collectors.ssh import (
-    parse_hal_statistic, parse_port_status, parse_stations, parse_traffic, parse_version,
+    parse_hal_radios, parse_hal_statistic, parse_port_status, parse_stations, parse_traffic, parse_version,
 )
 from app.devices import device_type
 from app.poller import site_of
@@ -95,3 +95,11 @@ Router> exit
 def test_parse_hal_statistic_and_port():
     assert parse_hal_statistic(HAL) == {"wlan-1-1": (22887452952, 2483682712), "wlan-2-1": (554871106, 1672752884)}
     assert parse_port_status(HAL) == {"eth0": (2851259939, 21918515539)}
+
+
+def test_parse_hal_radios():
+    text = "Slot: 1\n  TxPower: 20\n  Channel Utilization: 10\nSlot: 2\n  TxPower: 21\n  Channel Utilization: 1\n"
+    assert parse_hal_radios(text) == {
+        "2.4GHz": {"tx_power": 20, "utilization": 10},
+        "5GHz": {"tx_power": 21, "utilization": 1},
+    }

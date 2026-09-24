@@ -189,6 +189,18 @@ async function copyUsageDebug() {
   usageCopied.value = true
 }
 
+// ---- riavvio via SSH (non tocca la configurazione: Nebula non lo annulla) ----
+const rebooting = ref(false)
+async function rebootAp(name: string) {
+  if (!window.confirm(`Riavviare ${name}? Resta offline per 2-3 minuti e i suoi client si spostano sugli altri AP.`)) return
+  rebooting.value = true
+  try {
+    const cfg = (await api.apConfigs()).find(a => a.name === name)
+    if (cfg) await api.rebootAp(cfg.id)
+    window.setTimeout(() => { rebooting.value = false; load() }, 60_000)
+  } catch (e) { rebooting.value = false; loadError.value = (e as Error).message }
+}
+
 /** classe colore per banda radio */
 const bandClass = (band: string) => (band.startsWith('2') ? 'b24' : band.startsWith('5') ? 'b5' : band.startsWith('6') ? 'b6' : '')
 
@@ -304,6 +316,9 @@ const SSH_NA = "La CLI SSH di questo AP non fornisce ancora il dato: in Impostaz
           </p>
           <p v-if="currentAp.error" class="error small">{{ currentAp.error }}</p>
         </div>
+        <button v-if="currentAp.method === 'ssh'" class="ghost small danger" :disabled="rebooting" @click="rebootAp(currentAp.ap)">
+          {{ rebooting ? 'Riavvio inviato…' : 'Riavvia AP' }}
+        </button>
         <div class="radios">
           <span v-for="r in currentAp.radios" :key="r.band" class="radio" :class="bandClass(r.band)">
             {{ r.band }}<template v-if="r.channel"> · canale {{ r.channel }}</template> · {{ r.clients }} client
@@ -353,7 +368,9 @@ const SSH_NA = "La CLI SSH di questo AP non fornisce ancora il dato: in Impostaz
                 <span v-for="r in a.radios" :key="r.band" class="radio" :class="bandClass(r.band)"
                       :title="r.channel ? `canale ${r.channel}` : 'canale non fornito da questo AP'">
                   <b>{{ r.band.replace('GHz', ' GHz') }}</b>
-                  <span>ch {{ r.channel ?? '—' }}</span>
+                  <span v-if="r.channel">ch {{ r.channel }}</span>
+                  <span v-else-if="r.utilization != null" :title="`Potenza ${r.tx_power ?? '—'} dBm, canale occupato al ${r.utilization}%`">{{ r.tx_power ?? '—' }} dBm · {{ r.utilization }}%</span>
+                  <span v-else>ch —</span>
                   <span>{{ r.clients }} client</span>
                 </span>
               </div>

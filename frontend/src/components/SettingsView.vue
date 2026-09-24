@@ -51,6 +51,12 @@ async function run(fn: () => Promise<unknown>) {
   try { await fn(); await load(); emit('changed') } catch (e) { error.value = (e as Error).message }
 }
 
+async function reboot(a: ApConfig) {
+  if (!window.confirm(`Riavviare ${a.name}? Resta offline per 2-3 minuti.`)) return
+  try { await api.rebootAp(a.id); notice.value = `Riavvio di ${a.name} inviato: torna online in 2-3 minuti.` }
+  catch (e) { error.value = (e as Error).message }
+}
+
 async function testRow(a: ApConfig) {
   testing.value = a.id
   try { tests.value[a.id] = await api.testAp({ ...apForm(a), id: a.id }) }
@@ -145,6 +151,7 @@ onMounted(() => { load(); loadGeneral() })
                   <button class="ghost small" :disabled="testing !== null || !a.enabled" @click="testRow(a)">Prova</button>
                   <button class="ghost small" @click="editing = editing === a.id ? null : a.id; notice = ''">Modifica</button>
                   <button v-if="a.method === 'ssh'" class="ghost small" title="Ultimo output della CLI" @click="showRaw(a)">Output CLI</button>
+                  <button v-if="a.method === 'ssh' && a.enabled" class="ghost small" @click="reboot(a)">Riavvia</button>
                   <button class="ghost small" @click="toggle(a)">{{ a.enabled ? 'Disattiva' : 'Attiva' }}</button>
                   <button class="ghost small danger" @click="remove(a)">Elimina</button>
                 </td>

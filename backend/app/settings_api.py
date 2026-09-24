@@ -184,6 +184,21 @@ def raw_output(ap_id: int):
     return {"ts": ts, "text": text}
 
 
+@router.post("/aps/{ap_id}/reboot")
+async def reboot_ap(ap_id: int):
+    """Riavvio via SSH: non tocca la configurazione, quindi Nebula non lo annulla."""
+    ap = store.get_ap(ap_id)
+    if not ap:
+        raise HTTPException(404, "Access point non trovato")
+    if ap.method != "ssh" or not ap.ssh_password:
+        raise HTTPException(409, "Il riavvio è disponibile solo per gli AP letti via SSH con password impostata")
+    try:
+        await ssh.reboot(ap.host, ap.ssh_user, ap.ssh_password, ap.ssh_port)
+    except (OSError, ssh.asyncssh.Error, TimeoutError) as exc:
+        raise HTTPException(502, f"Riavvio non riuscito: {exc}") from None
+    return {"ok": True}
+
+
 async def _port_open(host: str, port: int, timeout: float = 3) -> bool:
     try:
         _, writer = await asyncio.wait_for(asyncio.open_connection(host, port), timeout)

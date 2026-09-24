@@ -1,4 +1,7 @@
-export interface Radio { band: string; channel: number | null; clients: number }
+export interface Radio {
+  band: string; channel: number | null; clients: number
+  tx_power?: number | null; utilization?: number | null
+}
 export interface Ap {
   ap: string; host: string; method: 'snmp' | 'ssh'; online: boolean
   model: string | null; firmware: string | null; uptime_s: number | null
@@ -161,6 +164,7 @@ export const api = {
   layout: () => req<SavedLayout>('/layout'),
   saveLayout: (l: SavedLayout) => req('/layout', { method: 'PUT', body: JSON.stringify(l) }),
   resetLayout: () => req('/layout', { method: 'DELETE' }),
+  rebootAp: (id: number) => req(`/settings/aps/${id}/reboot`, { method: 'POST' }),
   rawOutput: (id: number) => req<{ ts: number | null; text: string }>(`/settings/aps/${id}/raw`),
 
   // Nebula (licenza Pro)

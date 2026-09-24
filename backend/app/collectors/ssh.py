@@ -124,6 +124,24 @@ def parse_traffic(text: str) -> dict[str, tuple[int, int]]:
 
 HAL_SLOT = re.compile(r"^\s*Slot:\s*(\d+)\s*$")
 HAL_BYTES = re.compile(r"^\s*wlan(Received|Transmitted)Byte:\s*(\d+)")
+HAL_RADIO = re.compile(r"^\s*(TxPower|Channel Utilization):\s*(\d+)")
+# slot della radio → banda, come la riporta "show wireless-hal station info"
+SLOT_BAND = {"1": "2.4GHz", "2": "5GHz", "3": "6GHz"}
+
+
+def parse_hal_radios(text: str) -> dict[str, dict[str, int]]:
+    """Potenza (dBm) e occupazione del canale (%) per banda da `show wireless-hal statistic`."""
+    out: dict[str, dict[str, int]] = {}
+    slot: str | None = None
+    for line in text.splitlines():
+        if line.startswith("Router>"):
+            slot = None
+        if m := HAL_SLOT.match(line):
+            slot = m.group(1)
+        elif slot and (m := HAL_RADIO.match(line)):
+            key = "tx_power" if m.group(1) == "TxPower" else "utilization"
+            out.setdefault(SLOT_BAND.get(slot, f"radio{slot}"), {})[key] = int(m.group(2))
+    return out
 
 
 def parse_hal_statistic(text: str) -> dict[str, tuple[int, int]]:
@@ -210,11 +228,24 @@ async def collect(host: str, user: str, password: str, port: int = 22) -> ApRead
 
     model, fw, uptime = parse_version(text)
     clients = parse_stations(text)
+    hal = parse_hal_radios(text)
     radios: dict[str, int] = {}
     for c in clients:
         radios[c.band or "?"] = radios.get(c.band or "?", 0) + 1
     return ApReading(
         online=True, model=model, firmware=fw, uptime_s=uptime, clients=clients,
         traffic={**parse_traffic(text), **parse_port_status(text), **parse_hal_statistic(text)},
-        radios=[Radio(band=b, channel=None, clients=n) for b, n in sorted(radios.items())],
+        radios=[Radio(band=b, channel=None, clients=n, **hal.get(b, {})) for b, n in sorted(radios.items())],
     )
+
+
+async def reboot(host: str, user: str, password: str, port: int = 22) -> None:
+    """Riavvia l'AP con il comando "reboot" della CLI: la connessione cade, quindi non si attende risposta."""
+    async with asyncssh.connect(host, port=port, username=user, password=password, known_hosts=None,
+                                connect_timeout=10) as conn:
+        proc = await conn.create_process(term_type="vt100")
+        proc.stdin.write("reboot\n")
+        try:
+            await asyncio.wait_for(proc.stdout.read(4096), 5)
+        except (TimeoutError, asyncssh.Error, OSError):
+            pass

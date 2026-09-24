@@ -20,6 +20,8 @@ class Radio:
     band: str
     channel: int | None
     clients: int
+    tx_power: int | None = None       # dBm
+    utilization: int | None = None    # % di occupazione del canale
 
 
 @dataclass
