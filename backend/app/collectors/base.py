@@ -35,6 +35,8 @@ class ApReading:
     # nome interfaccia -> (byte ricevuti, byte trasmessi), contatori cumulativi
     traffic: dict[str, tuple[int, int]] = field(default_factory=dict)
     error: str | None = None
+    cpu_pct: int | None = None
+    mem_pct: int | None = None
 
 
 def band_for_radio(idx: int) -> str:

@@ -369,7 +369,7 @@ label.check.inline { display: inline-flex; min-height: 0; margin-right: 10px; fo
                  background: linear-gradient(135deg, var(--accent), var(--violet)); }
 .apm-tabs { justify-self: start; }
 .apm-body { display: grid; gap: 12px; }
-.apm-facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.apm-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
 .apm-facts .tile { height: 70px; }
 .apm-radios { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
 .apm-radio { display: grid; gap: 8px; padding: 12px 14px; border-radius: 12px; font-size: 13px; }

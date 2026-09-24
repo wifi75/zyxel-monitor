@@ -142,6 +142,8 @@ const doDelete = () => {
           <div class="apm-facts">
             <div class="tile tone-blue"><Icon name="clock" :size="16" /><span>Acceso da</span><strong>{{ duration(live?.uptime_s) }}</strong></div>
             <div class="tile tone-violet"><Icon name="users" :size="16" /><span>Client</span><strong>{{ live?.clients ?? '—' }}</strong></div>
+            <div class="tile tone-amber"><Icon name="chart" :size="16" /><span>CPU</span><strong>{{ live?.cpu_pct != null ? `${live.cpu_pct}%` : '—' }}</strong></div>
+            <div class="tile tone-pink"><Icon name="grid" :size="16" /><span>Memoria</span><strong>{{ live?.mem_pct != null ? `${live.mem_pct}%` : '—' }}</strong></div>
             <div class="tile tone-teal"><Icon name="sliders" :size="16" /><span>Firmware</span><strong class="mono small-num">{{ live?.firmware || '—' }}</strong></div>
           </div>
           <h3 class="small sub">Radio</h3>

@@ -7,6 +7,7 @@ export interface Ap {
   model: string | null; firmware: string | null; uptime_s: number | null
   clients: number | null; radios: Radio[]; error: string | null
   last_seen: number | null; updated: number
+  cpu_pct?: number | null; mem_pct?: number | null
 }
 export interface Client {
   mac: string; ap: string; ip: string | null; hostname: string | null; alias: string | null

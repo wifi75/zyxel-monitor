@@ -16,8 +16,7 @@ from .base import ApReading, Client, Radio
 # (formato da verificare, l'ultimo output grezzo resta consultabile dal pannello: last_output)
 COMMANDS = [
     "show version", "show system uptime", "show wireless-hal station info",
-    "show wireless-hal statistic", "show wireless-hal current", "show port status", "show cpu status",
-    "show mem status",
+    "show wireless-hal statistic", "show port status", "show cpu status", "show mem status",
 ]
 last_output: dict[str, tuple[float, str]] = {}
 
@@ -167,6 +166,16 @@ def parse_channels(text: str) -> dict[str, int]:
     return out
 
 
+CPU_NOW = re.compile(r"^\s*CPU utilization:\s*(\d+)\s*%", re.I | re.M)
+MEM_USE = re.compile(r"^\s*memory usage:\s*(\d+)\s*%", re.I | re.M)
+
+
+def parse_cpu_mem(text: str) -> tuple[int | None, int | None]:
+    """`show cpu status` ("CPU utilization: 4 %", prima riga = valore attuale) e `show mem status`."""
+    cpu, mem = CPU_NOW.search(text), MEM_USE.search(text)
+    return (int(cpu.group(1)) if cpu else None, int(mem.group(1)) if mem else None)
+
+
 def parse_hal_statistic(text: str) -> dict[str, tuple[int, int]]:
     """`show wireless-hal statistic` (NWA50AX PRO, firmware 7.12): contatori per radio.
     Slot N diventa "wlan-N-1", come le interfacce SSID lette via SNMP; (ricevuti, trasmessi) dalla radio."""
@@ -257,8 +266,9 @@ async def collect(host: str, user: str, password: str, port: int = 22) -> ApRead
     for c in clients:
         radios[c.band or "?"] = radios.get(c.band or "?", 0) + 1
     channels = parse_channels(text)
+    cpu, mem = parse_cpu_mem(text)
     return ApReading(
-        online=True, model=model, firmware=fw, uptime_s=uptime, clients=clients,
+        online=True, model=model, firmware=fw, uptime_s=uptime, clients=clients, cpu_pct=cpu, mem_pct=mem,
         traffic={**parse_traffic(text), **parse_port_status(text), **parse_hal_statistic(text)},
         radios=[Radio(band=b, channel=channels.get(b), clients=n, **hal.get(b, {})) for b, n in sorted(radios.items())],
     )

@@ -158,6 +158,15 @@ def connect():
         conn.close()
 
 
+# colonne aggiunte dopo la prima versione: ADD COLUMN è sicuro su SQLite (non ricrea la tabella)
+LATER_COLUMNS = {"ap_status": {"cpu_pct": "INTEGER", "mem_pct": "INTEGER"}}
+
+
 def init_db() -> None:
     with connect() as conn:
         conn.executescript(SCHEMA)
+        for table, cols in LATER_COLUMNS.items():
+            have = {r["name"] for r in conn.execute(f"PRAGMA table_info({table})")}
+            for name, kind in cols.items():
+                if name not in have:
+                    conn.execute(f"ALTER TABLE {table} ADD COLUMN {name} {kind}")

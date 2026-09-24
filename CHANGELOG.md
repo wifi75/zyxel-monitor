@@ -2,6 +2,14 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) — versioni: [SemVer](https://semver.org/lang/it/).
 
+## [0.5.0] - 2026-09-24
+### Aggiunto
+- Gestione AP: CPU e memoria degli AP letti via SSH (`show cpu status`, `show mem status`).
+
+### Corretto
+- Pulsanti Copia funzionanti anche con la dashboard in http.
+- Tolto `show wireless-hal current` dalla lettura SSH: sul firmware V7.12 richiede un parametro.
+
 ## [0.4.0] - 2026-09-24
 ### Aggiunto
 - Deploy come stack Portainer da repository Git (`docker-compose.portainer.yml`), aggiornamento con *Pull and redeploy*.

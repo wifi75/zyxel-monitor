@@ -76,9 +76,10 @@ async def poll_once() -> None:
                 )
             db.execute(
                 """INSERT INTO ap_status(ap, host, method, online, model, firmware, uptime_s, clients,
-                                         radios, error, last_seen, updated)
-                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
+                                         radios, error, last_seen, updated, cpu_pct, mem_pct)
+                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)
                    ON CONFLICT(ap) DO UPDATE SET
+                     cpu_pct=excluded.cpu_pct, mem_pct=excluded.mem_pct,
                      host=excluded.host, method=excluded.method, online=excluded.online,
                      model=COALESCE(excluded.model, ap_status.model),
                      firmware=COALESCE(excluded.firmware, ap_status.firmware),
@@ -90,7 +91,7 @@ async def poll_once() -> None:
                     ap.name, ap.host, ap.method, int(r.online), r.model, r.firmware, r.uptime_s,
                     len(r.clients) if r.online else None,
                     json.dumps([vars(x) for x in r.radios]), r.error,
-                    now if r.online else None, now,
+                    now if r.online else None, now, r.cpu_pct, r.mem_pct,
                 ),
             )
             if r.online:
