@@ -2,6 +2,9 @@ import { addEn } from './index'
 
 // traduzioni inglesi: chiave = testo italiano esatto usato in t()
 addEn({
+  'Attuale: {v} su tutti': 'Current: {v} on all',
+  'Attuale: diverso fra gli AP': 'Current: differs between APs',
+  "Valore attuale sull'AP": 'Current value on the AP',
   'impostata': 'set',
   'nessuna': 'none',
   'nessuno': 'none',

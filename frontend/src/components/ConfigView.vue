@@ -31,6 +31,25 @@ function siteText(b: Band, f: PolicyField): string {
 }
 const val = (e: Event) => (e.target as HTMLSelectElement).value
 
+/** valore attuale letto dall'AP, in chiaro */
+function nowText(f: PolicyField, v: number | string | null | undefined): string {
+  if (v == null || v === '') return '—'
+  if (f === 'tx_power') return `${v} dBm`
+  if (f === 'channel') return v === 'auto' ? t('automatico') : t('canale {n}', { n: v })
+  return `${v} MHz`
+}
+/** riepilogo per il profilo del sito: uguale su tutti gli AP o diverso */
+function siteNow(b: Band, f: PolicyField): { text: string; detail: string; diff: boolean } | null {
+  const aps = configurable.value
+  if (!aps.length) return null
+  const vals = aps.map(a => nowText(f, a.bands[b]?.current?.[f]))
+  const detail = aps.map((a, i) => `${a.name}: ${vals[i]}`).join(' · ')
+  const uniq = [...new Set(vals)]
+  return uniq.length === 1
+    ? { text: t('Attuale: {v} su tutti', { v: uniq[0] }), detail, diff: false }
+    : { text: t('Attuale: diverso fra gli AP'), detail, diff: true }
+}
+
 const data = ref<PolicyOverview | null>(null)
 const results = ref<PolicyResult[]>([])
 const busy = ref('')
@@ -139,6 +158,7 @@ const others = computed(() => data.value?.aps.filter(a => !a.configurable || !a.
                 <option value="">{{ t('Non gestita') }}</option>
                 <option v-for="p in POWERS" :key="p" :value="p">{{ powerLabel(p) }}</option>
               </select>
+              <span v-if="siteNow(b, 'tx_power')" class="cfg-now" :class="{ diff: siteNow(b, 'tx_power')!.diff }" :title="siteNow(b, 'tx_power')!.detail">{{ siteNow(b, 'tx_power')!.text }}</span>
             </label>
             <label>{{ t('Canale') }}
               <select :value="data?.site[b]?.channel ?? ''" :disabled="!!busy" @change="setSite(b, 'channel', val($event))">
@@ -146,12 +166,14 @@ const others = computed(() => data.value?.aps.filter(a => !a.configurable || !a.
                 <option value="auto">{{ t("Automatico (sceglie l'AP)") }}</option>
                 <option v-for="c in CHANNELS[b]" :key="c" :value="String(c)">{{ channelLabel(c) }}</option>
               </select>
+              <span v-if="siteNow(b, 'channel')" class="cfg-now" :class="{ diff: siteNow(b, 'channel')!.diff }" :title="siteNow(b, 'channel')!.detail">{{ siteNow(b, 'channel')!.text }}</span>
             </label>
             <label>{{ t('Larghezza') }}
               <select :value="data?.site[b]?.width ?? ''" :disabled="!!busy" @change="setSite(b, 'width', val($event))">
                 <option value="">{{ t('Non gestita') }}</option>
                 <option v-for="w in WIDTHS[b]" :key="w" :value="w">{{ widthLabel(w) }}</option>
               </select>
+              <span v-if="siteNow(b, 'width')" class="cfg-now" :class="{ diff: siteNow(b, 'width')!.diff }" :title="siteNow(b, 'width')!.detail">{{ siteNow(b, 'width')!.text }}</span>
             </label>
           </div>
           <span class="small muted">
@@ -187,10 +209,11 @@ const others = computed(() => data.value?.aps.filter(a => !a.configurable || !a.
                     </template>
                     <template v-else><option v-for="w in WIDTHS[b]" :key="w" :value="w">{{ widthLabel(w) }}</option></template>
                   </select>
+                  <span class="cfg-now" :title="t('Valore attuale sull\'AP')">{{ nowText(f.key, a.bands[b].current?.[f.key]) }}</span>
                 </div>
                 <div class="cfg-state">
                   <span class="chip" :style="{ '--tone': STATUS[a.bands[b].status].tone }">{{ t(STATUS[a.bands[b].status].label) }}</span>
-                  <span class="muted small">{{ t('potenza reale {v} dBm', { v: a.bands[b].actual ?? '—' }) }}</span>
+
                 </div>
               </td>
             </tr>

@@ -15,8 +15,31 @@ router = APIRouter(prefix="/api/policy", dependencies=[Depends(current_user)])
 Band = Literal["2.4GHz", "5GHz"]
 
 
+def _configs() -> dict[str, "config_items.RunningConfig"]:
+    """Running-config di ogni AP letta al ciclo di lettura SSH (nessuna connessione in più)."""
+    out = {}
+    for ap in store.list_aps(enabled_only=True):
+        _, text = ssh.last_output.get(ap.host, (None, ""))
+        start = text.find("show running-config")
+        if start >= 0:
+            out[ap.name] = config_items.RunningConfig(text[start:])
+    return out
+
+
+def _radio_now(cfg, band: str) -> dict:
+    """Canale ("auto" o numero) e larghezza attuali di una banda, dal profilo radio dello slot."""
+    slot, key = (1, "2g-channel") if band == "2.4GHz" else (2, "5g-channel")
+    prof = cfg.radio_profile(slot) if cfg else None
+    if not prof:
+        return {"channel": None, "width": None}
+    header = f"wlan-radio-profile {prof}"
+    auto = cfg.has(header, "dcs activate")
+    return {"channel": "auto" if auto else cfg.value(header, key), "width": cfg.value(header, "ch-width")}
+
+
 @router.get("")
 def overview():
+    configs = _configs()
     rules = policy.load()
     actual = policy.actual_powers()
     aps = []
@@ -30,6 +53,7 @@ def overview():
                 "desired": want, "source": source, "actual": have,
                 "status": policy.status(want, have, (ap.name, band)),
                 "override": {f: own.get(f) for f in policy.FIELDS},   # None = come il sito
+                "current": {"tx_power": have, **_radio_now(configs.get(ap.name), band)},
             }
         aps.append({"id": ap.id, "name": ap.name, "method": ap.method, "enabled": ap.enabled,
                     "configurable": bool(ap.ssh_password), "bands": bands})
@@ -92,13 +116,7 @@ def list_items():
         v = values.get(i.key)
         return (v is not None) if i.kind == "password" else v
 
-    # valori attuali letti dagli AP, dalla running-config raccolta a ogni ciclo di lettura SSH
-    configs: dict[str, config_items.RunningConfig] = {}
-    for ap in store.list_aps(enabled_only=True):
-        _, text = ssh.last_output.get(ap.host, (None, ""))
-        start = text.find("show running-config")
-        if start >= 0:
-            configs[ap.name] = config_items.RunningConfig(text[start:])
+    configs = _configs()    # valori attuali letti dagli AP
 
     def current(i):
         per_ap = {}

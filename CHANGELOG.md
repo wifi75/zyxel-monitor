@@ -2,6 +2,10 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) — versioni: [SemVer](https://semver.org/lang/it/).
 
+## [0.13.0] - 2026-09-24
+### Aggiunto
+- Configurazione radio: valore attuale letto dagli AP accanto a potenza, canale e larghezza di ogni AP, e riepilogo nel profilo del sito (uguale su tutti o diverso, dettaglio passando col mouse).
+
 ## [0.12.0] - 2026-09-24
 ### Aggiunto
 - Impostazioni del sito: sotto ogni voce il valore attuale letto dagli AP (uguale per tutti o diverso, con il dettaglio passando col mouse). "Non gestito" significa che la dashboard non impone nulla e resta il valore dell'AP.
