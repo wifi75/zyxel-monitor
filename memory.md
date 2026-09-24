@@ -31,6 +31,12 @@
 ## Stato
 - v0.2.0 (2026-09-23): prima versione pubblica su github.com/wifi75/zyxel-monitor.
 - v0.3.0 (2026-09-23): sezione Internet, DNS bloccati, siti per dispositivo. Nulla in sospeso in locale.
-- In locale il server gira sul Mac (192.168.1.232:8000), avviato a mano con uvicorn: non è un servizio.
-- Controlli prima di ogni commit: `ruff check backend`, `pytest backend/tests`, `npm run build` (include vue-tsc).
+- v0.4.0 (2026-09-24): gestione AP e impostazioni dal pannello, dashboard a griglia, dispositivi, segnale, roaming, storico linea, NetFlow, AP SSH completi.
+- Produzione: stack Portainer da Git (`docker-compose.portainer.yml`, porta 8200 con `PORT`), aggiornamento con *Pull and redeploy*; la pagina si ricarica da sola.
+- AP, credenziali e OPNsense stanno nel DB (pannello), non più nel `.env`: il `.env` serve solo al primo avvio.
+- NWA50AX PRO (fw V7.12) via SSH: traffico da `show wireless-hal statistic` (slot 1 = 2.4, 2 = 5 GHz) e `show port status`; nessun contatore in `show interface`. `reboot` senza argomenti riavvia.
+- NetFlow Insight `FlowSourceAddrTotals` = byte **inviati** per indirizzo: i download non sono per dispositivo.
+- Nebula OpenAPI: solo Pro; non esistono endpoint per potenza radio e canali. L'utente ha licenza Base.
+- Controlli prima di ogni commit: `ruff check backend`, `(cd backend && pytest tests)`, `npm run build` (include vue-tsc): un errore di tipi blocca il deploy su Portainer.
+- Versioning: bump a ogni blocco di lavoro chiuso, l'utente legge la versione nel piè di pagina per sapere dove si trova.
 Vedi [TODO.md](TODO.md).
