@@ -164,6 +164,20 @@ button.ghost.active { background: var(--accent-soft); color: var(--accent); bord
 .bar-list .value { font-variant-numeric: tabular-nums; font-weight: 600; }
 .bar-list .bar { grid-column: 2 / 4; height: 4px; border-radius: 2px; background: var(--grid); overflow: hidden; }
 .bar-list .bar span { display: block; height: 100%; border-radius: 2px; background: var(--accent); }
+.roam-pairs p { margin: 0 0 8px; }
+.roam-pairs ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px;
+  grid-template-columns: minmax(48px, max-content) auto minmax(24px, 1fr) minmax(24px, 1fr) auto minmax(48px, max-content) auto; }
+.roam-pairs li { display: grid; grid-column: 1 / -1; grid-template-columns: subgrid; align-items: center; font-size: 13px; }
+.roam-pairs .ap { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.roam-pairs .ap.left { text-align: right; }
+.roam-pairs .n { color: var(--muted); font-size: 12px; text-align: center; font-variant-numeric: tabular-nums; }
+.roam-pairs .half { display: flex; align-items: center; height: 16px; }
+.roam-pairs .half span { height: 8px; }
+.roam-pairs .to-left { justify-content: flex-end; }
+.roam-pairs .to-left span { background: color-mix(in srgb, var(--accent) 40%, transparent); border-radius: 4px 0 0 4px; }
+.roam-pairs .to-right { border-left: 1px solid var(--border); }
+.roam-pairs .to-right span { background: var(--accent); border-radius: 0 4px 4px 0; }
+.roam-pairs .tot { display: flex; align-items: center; justify-content: flex-end; gap: 6px; font-variant-numeric: tabular-nums; }
 
 /* v0.5: dashboard a griglia stile Zabbix (grid-layout-plus) */
 .dash-tools { display: flex; justify-content: flex-end; align-items: center; gap: 8px; flex-wrap: wrap; }

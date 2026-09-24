@@ -7,6 +7,7 @@ import {
 import ApManager from './components/ApManager.vue'
 import ConfigView from './components/ConfigView.vue'
 import BarList from './components/BarList.vue'
+import RoamPairs from './components/RoamPairs.vue'
 import ClientsTable from './components/ClientsTable.vue'
 import Dashboard from './components/Dashboard.vue'
 import DevicesView from './components/DevicesView.vue'
@@ -231,7 +232,7 @@ const gbByAp = computed(() =>
 const blockedItems = computed(() =>
   (internet.value?.dns?.top_blocked ?? []).map(i => ({ label: i.domain, value: i.queries, title: i.list })))
 const siteItems = computed(() => (sites.value?.items ?? []).map(i => ({ label: i.site, value: i.queries })))
-const roamItems = computed(() => (roaming.value?.pairs ?? []).map(p => ({ label: `${p.from} → ${p.to}`, value: p.count })))
+const roamPairs = computed(() => roaming.value?.pairs ?? [])
 const usageItems = computed(() => (deviceUsage.value?.items ?? []).map(i => ({ label: i.name, value: i.bytes, title: i.ip })))
 const usageTypes = computed(() => (deviceUsage.value?.by_type ?? []).map(i => ({ label: i.type, value: i.bytes })))
 
@@ -526,9 +527,9 @@ const SSH_NA = "La CLI SSH di questo AP non fornisce ancora il dato: in Impostaz
           <!-- roaming -->
           <template v-else-if="id === 'roaming'">
             <h2>{{ t('Roaming') }} <span class="muted small">({{ periodLabel }})</span></h2>
-            <p v-if="!roamItems.length" class="muted small">{{ t('Nessuno spostamento fra access point nel periodo.') }}</p>
+            <p v-if="!roamPairs.length" class="muted small">{{ t('Nessuno spostamento fra access point nel periodo.') }}</p>
             <template v-else>
-              <BarList :items="roamItems" />
+              <RoamPairs :pairs="roamPairs" :threshold="roaming?.threshold ?? 4" />
               <h3 class="small sub">{{ t('Chi si sposta di più') }}</h3>
               <ul class="rows">
                 <li v-for="d in roaming?.devices ?? []" :key="d.mac">

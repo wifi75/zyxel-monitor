@@ -102,6 +102,11 @@ addEn({
   'Chi si sposta di più': 'Most frequent roamers',
   'Rimbalza fra AP: valuta di ridurre la potenza radio in Nebula': 'Bouncing between APs: consider lowering radio power in Nebula',
   'rimbalza': 'bouncing',
+  '{n} spostamento': '{n} move',
+  '{n} spostamenti': '{n} moves',
+  "ogni barra punta all'access point di arrivo": 'each bar points to the destination access point',
+  'I dispositivi vanno e tornano fra questi due AP: valuta di ridurre la potenza radio di uno dei due':
+    'Devices keep going back and forth between these two APs: consider lowering the radio power of one of them',
   'Consumo per dispositivo': 'Usage by device',
   'dati inviati, {period}': 'data sent, {period}',
   'NetFlow di OPNsense conta i byte inviati da ogni indirizzo: i download non sono ancora inclusi.': 'OPNsense NetFlow counts the bytes sent by each address: downloads are not included yet.',

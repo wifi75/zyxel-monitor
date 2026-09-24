@@ -2,6 +2,10 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) — versioni: [SemVer](https://semver.org/lang/it/).
 
+## [0.18.4] - 2026-09-24
+### Modificato
+- Pannello Roaming a coppie: andata e ritorno fra due access point sulla stessa riga (una riga per coppia invece che per direzione), con la barra che punta all'AP di arrivo e il totale della coppia. La coppia è segnata "rimbalza" quando tutte e due le direzioni arrivano alla soglia già usata per i dispositivi.
+
 ## [0.18.3] - 2026-09-24
 ### Aggiunto
 - Indicatore Segnale debole: elenco dei dispositivi passando col mouse; cliccandolo la tabella dei client mostra solo quelli sotto -75 dBm.
