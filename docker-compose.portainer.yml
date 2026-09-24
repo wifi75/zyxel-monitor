@@ -1,0 +1,20 @@
+# Stack Portainer da repository Git: "Pull and redeploy" ricompila dal codice aggiornato.
+# Le variabili del .env vanno nella sezione "Environment variables" dello stack (Portainer le scrive in stack.env).
+services:
+  zyxel-monitor:
+    build: .
+    image: zyxel-monitor:latest
+    pull_policy: build         # ricompila a ogni deploy anche se l'immagine esiste già
+    container_name: zyxel-monitor
+    restart: unless-stopped
+    # rete host: il container raggiunge gli AP in LAN e legge la tabella ARP del server
+    network_mode: host
+    env_file: stack.env
+    environment:
+      TZ: Europe/Rome          # gli AP riportano orari locali
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "${PORT:-8000}"]
+    volumes:
+      - dati:/data
+
+volumes:
+  dati:
