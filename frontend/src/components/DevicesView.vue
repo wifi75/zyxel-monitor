@@ -26,6 +26,13 @@ const shown = computed(() => {
 
 const name = (d: Device) => d.alias || d.hostname || d.last_ip || d.mac
 
+/** colore stabile per tipologia */
+const TONES: Record<string, string> = {
+  Energia: 'var(--amber)', Domotica: 'var(--teal)', Smartphone: 'var(--violet)', 'TV e media': 'var(--pink)',
+  Microcontrollori: 'var(--blue)', Computer: 'var(--green)', Altro: 'var(--muted)',
+}
+const tone = (t: string) => TONES[t] ?? 'var(--orange)'
+
 async function run(fn: () => Promise<unknown>) {
   try { await fn(); error.value = ''; emit('changed') } catch (e) { error.value = (e as Error).message }
 }
@@ -56,26 +63,30 @@ function forget(d: Device) {
       <p v-if="error" class="error">{{ error }}</p>
       <div class="table-wrap">
         <table>
-          <thead><tr><th /><th>Dispositivo</th><th>Tipo</th><th>Ultimo AP</th><th>Visto la prima volta</th><th>Ultima volta</th><th /></tr></thead>
+          <thead><tr>
+            <th /><th>Dispositivo</th><th>Tipo</th><th>IP</th><th>MAC</th><th>AP</th><th>Prima volta</th><th>Ultima volta</th><th />
+          </tr></thead>
           <tbody>
             <tr v-for="d in shown" :key="d.mac" :class="{ unknown: !d.known }">
               <td><span class="status" :class="d.online ? 'on' : 'idle'" :title="d.online ? 'connesso' : 'non connesso'" /></td>
-              <td>
-                <strong>{{ name(d) }}</strong> <span v-if="!d.known" class="badge ko">nuovo</span>
-                <div class="muted small mono">{{ d.last_ip || '—' }} · {{ d.mac }}<span v-if="isPrivateMac(d.mac)"> · privato</span></div>
+              <td class="dev-name">
+                <strong :title="name(d)">{{ name(d) }}</strong>
+                <span v-if="!d.known" class="badge ko">nuovo</span>
               </td>
-              <td>{{ d.device_type }}</td>
-              <td>{{ d.last_ap || '—' }}</td>
-              <td class="small">{{ time(d.first_seen) }}</td>
-              <td class="small">{{ d.online ? 'adesso' : `${since(d.last_seen)} fa` }}</td>
+              <td><span class="chip" :style="{ '--tone': tone(d.device_type) }">{{ d.device_type }}</span></td>
+              <td class="mono small">{{ d.last_ip || '—' }}</td>
+              <td class="mono small">{{ d.mac }}<span v-if="isPrivateMac(d.mac)" class="muted" title="MAC privato (randomizzato)"> ⓟ</span></td>
+              <td><span v-if="d.last_ap" class="chip ap-chip">{{ d.last_ap }}</span><span v-else class="muted">—</span></td>
+              <td class="small nowrap">{{ time(d.first_seen) }}</td>
+              <td class="small nowrap" :class="{ 'ok-text': d.online }">{{ d.online ? 'adesso' : `${since(d.last_seen)} fa` }}</td>
               <td class="row-actions">
-                <button v-if="!d.known" class="ghost small" @click="setKnown(d, true)">Riconosci</button>
-                <button v-else class="ghost small" @click="setKnown(d, false)">Segna come nuovo</button>
+                <button v-if="!d.known" class="ghost small primary-text" @click="setKnown(d, true)">Riconosci</button>
+                <button v-else class="ghost small" title="Segna come nuovo" @click="setKnown(d, false)">Nuovo</button>
                 <button class="ghost small" @click="emit('rename', d)">Rinomina</button>
-                <button class="ghost small danger" @click="forget(d)">Dimentica</button>
+                <button class="ghost small danger" title="Dimentica" @click="forget(d)">×</button>
               </td>
             </tr>
-            <tr v-if="!shown.length"><td colspan="7" class="muted">Nessun dispositivo.</td></tr>
+            <tr v-if="!shown.length"><td colspan="9" class="muted">Nessun dispositivo.</td></tr>
           </tbody>
         </table>
       </div>

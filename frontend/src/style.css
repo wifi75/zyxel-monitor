@@ -332,3 +332,15 @@ body { background: radial-gradient(1200px 500px at 0 -10%, color-mix(in srgb, va
 .usage-debug { display: grid; gap: 8px; }
 .usage-debug p { margin: 0; }
 .usage-debug pre.raw { max-height: 180px; }
+
+/* tabella dispositivi */
+.chip { display: inline-block; padding: 2px 9px; border-radius: 99px; font-size: 12px; font-weight: 600; white-space: nowrap;
+        --tone: var(--accent); color: color-mix(in srgb, var(--tone) 85%, var(--text)); background: color-mix(in srgb, var(--tone) 14%, transparent); }
+.ap-chip { --tone: var(--blue); }
+.dev-name { max-width: 260px; }
+.dev-name strong { display: inline-block; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: middle; }
+.nowrap { white-space: nowrap; }
+.primary-text { color: var(--accent); font-weight: 600; }
+table td { vertical-align: middle; }
+tbody tr:nth-child(even) td { background: color-mix(in srgb, var(--bg) 60%, transparent); }
+tr.unknown td { background: color-mix(in srgb, var(--weak) 10%, transparent) !important; }
