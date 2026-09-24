@@ -92,7 +92,7 @@ const BOOL_TEXT: Record<string, [string, string]> = {
   hostname_sync: ['no', 'sì'],
 }
 /** testo per il valore vuoto, che per alcune voci significa "spento" */
-const EMPTY_TEXT: Record<string, string> = { wifi_schedule: 'sempre acceso', guest_name: 'spenta', ssid_5g: 'come la 2.4 GHz' }
+const EMPTY_TEXT: Record<string, string> = { wifi_schedule: 'sempre acceso', guest_name: 'spenta' }
 function itemText(i: SiteItem, v: unknown): string | null {
   if (v == null) return null
   if (i.kind === 'password') return v ? t('impostata') : null      // non trovata = non letta, non "nessuna"
@@ -201,7 +201,7 @@ function startEdit(r: Row, apId: number | null) {
     : (r.override?.(apId) ?? 'inherit')
 }
 /** voci in cui un valore vuoto ha un significato ("spento"), non "non gestito" */
-const EMPTY_MEANS_OFF = new Set(['guest_name', 'wifi_schedule', 'ssid_5g'])
+const EMPTY_MEANS_OFF = new Set(['guest_name', 'wifi_schedule'])
 function commit(r: Row, apId: number | null, value: string) {
   const k = cellKey(r, apId)
   if (r.kind === 'password' && value === '') { editing.value = null; return }   // nessuna nuova password

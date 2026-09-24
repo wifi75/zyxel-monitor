@@ -290,11 +290,9 @@ def _slot_ssid(c: RunningConfig, slot: int) -> str | None:
 
 
 def _ssid_5g(c: RunningConfig) -> str | None:
-    """Nome della rete sulla 5 GHz; "" = stessa rete della 2.4 GHz."""
-    p5, p2 = _slot_ssid(c, 2), c.ssid_profile()
-    if not p5 or not p2:
-        return None
-    return "" if p5 == p2 else c.value(f"wlan-ssid-profile {p5}", "ssid")
+    """Nome della rete sulla 5 GHz (uguale a quello della 2.4 GHz se le bande condividono il profilo)."""
+    p5 = _slot_ssid(c, 2)
+    return c.value(f"wlan-ssid-profile {p5}", "ssid") if p5 else None
 
 
 def _ssid_5g_set(v: object, c: RunningConfig) -> list[str]:
@@ -303,7 +301,11 @@ def _ssid_5g_set(v: object, c: RunningConfig) -> list[str]:
     if not p2 or not _slot_ssid(c, 2):
         return []
     if not v:
-        return ["wlan slot2", f"ssid profile 1 {p2}", "exit"]
+        return []
+    if v == c.value(f"wlan-ssid-profile {p2}", "ssid"):          # stesso nome: una rete sola sulle due bande
+        return [] if _slot_ssid(c, 2) == p2 else ["wlan slot2", f"ssid profile 1 {p2}", "exit"]
+    if _slot_ssid(c, 2) == SSID_5G:                              # già separata: cambia solo il nome
+        return [f"wlan-ssid-profile {SSID_5G}", f"ssid {v}", "exit"]
     body = [x for x in c.block(f"wlan-ssid-profile {p2}") if not x.startswith("ssid ") and x != "ssid-schedule"]
     return [f"wlan-ssid-profile {SSID_5G}", f"ssid {v}", *body, "exit",
             "wlan slot2", f"ssid profile 1 {SSID_5G}", "exit"]
@@ -311,13 +313,14 @@ def _ssid_5g_set(v: object, c: RunningConfig) -> list[str]:
 
 ITEMS: list[Item] = [
     # --- rete Wi-Fi principale ---
-    Item("ssid_name", "rete", "Nome della rete (SSID)", "text",
-         "Cambiarlo scollega tutti i dispositivi: vanno ricollegati alla rete con il nuovo nome.",
+    Item("ssid_name", "rete", "Nome rete 2.4 GHz (SSID)", "text",
+         "Se la 5 GHz ha lo stesso nome è un'unica rete e cambia anche lei. "
+         "Cambiarlo scollega i dispositivi: vanno ricollegati col nuovo nome.",
          read=lambda c: c.value(f"wlan-ssid-profile {c.ssid_profile()}", "ssid") if c.ssid_profile() else None,
          build=lambda v, c: _in_ssid(c, f"ssid {v}")),
-    Item("ssid_5g", "rete", "Nome diverso per i 5 GHz (facoltativo)", "text",
-         "Vuoto = stessa rete su 2.4 e 5 GHz. Con un nome diverso la 5 GHz diventa una rete a parte "
-         "(stessa password): il band steering non serve più.",
+    Item("ssid_5g", "rete", "Nome rete 5 GHz (SSID)", "text",
+         "Stesso nome della 2.4 GHz = un'unica rete (consigliato). Nome diverso = due reti separate "
+         "con la stessa password; il band steering non serve più.",
          read=_ssid_5g, build=_ssid_5g_set),
     Item("wifi_password", "rete", "Password della rete", "password",
          "Da 8 a 63 caratteri. Cambiarla scollega tutti i dispositivi: vanno ricollegati con la nuova password.",
