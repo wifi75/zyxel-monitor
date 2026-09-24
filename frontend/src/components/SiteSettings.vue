@@ -23,12 +23,15 @@ const bySection = computed(() => Object.fromEntries(SECTIONS.map(s => [s.key, it
 async function load() {
   try {
     items.value = await api.siteItems()
-    draft.value = Object.fromEntries(items.value.map(i => [i.key, i.value == null ? '' : String(i.value)]))
+    draft.value = Object.fromEntries(items.value.map(i => [i.key,
+      i.value == null || i.kind === 'password' ? '' : Array.isArray(i.value) ? i.value.join('\n') : String(i.value)]))
   } catch (e) { error.value = (e as Error).message }
 }
 onMounted(load)
 
-async function save(i: SiteItem, value: string | number | boolean | null) {
+async function save(i: SiteItem, value: string | number | boolean | string[] | null) {
+  if (i.key === 'wifi_password' && value != null &&
+      !window.confirm(t('Cambiare la password scollega tutti i dispositivi: andranno ricollegati con la nuova password. Procedere?'))) return
   if (i.key === 'ssid_name' && value != null &&
       !window.confirm(t('Cambiare il nome della rete scollega tutti i dispositivi: andranno ricollegati alla rete "{n}". Procedere?', { n: String(value) }))) return
   busy.value = i.key; error.value = ''
@@ -38,8 +41,12 @@ async function save(i: SiteItem, value: string | number | boolean | null) {
 
 /** select per le voci sì/no: "" = non gestito */
 function saveBool(i: SiteItem, v: string) { save(i, v === '' ? null : v === 'on') }
+function saveList(i: SiteItem) {
+  const macs = draft.value[i.key].split(/[\s,;]+/).map(m => m.trim()).filter(Boolean)
+  save(i, macs)
+}
 function saveText(i: SiteItem) {
-  const v = draft.value[i.key].trim()
+  const v = i.kind === 'password' ? draft.value[i.key] : draft.value[i.key].trim()
   save(i, v === '' ? null : i.kind === 'int' ? Number(v) : v)
 }
 const boolValue = (i: SiteItem) => (i.value == null ? '' : i.value ? 'on' : 'off')
@@ -68,8 +75,14 @@ const boolValue = (i: SiteItem) => (i.value == null ? '' : i.value ? 'on' : 'off
               <option value="">{{ t('Non gestito') }}</option>
               <option v-for="c in i.choices" :key="c" :value="c">{{ c === '0' ? t('Disattivata') : `${c} ${i.unit}` }}</option>
             </select>
+            <form v-else-if="i.kind === 'list'" class="site-list" @submit.prevent="saveList(i)">
+              <textarea v-model="draft[i.key]" rows="3" placeholder="aa:bb:cc:dd:ee:ff" :disabled="!!busy" />
+              <button class="ghost small" :disabled="!!busy">{{ busy === i.key ? t('Applico…') : t('Applica') }}</button>
+            </form>
             <form v-else class="site-input" @submit.prevent="saveText(i)">
-              <input v-model="draft[i.key]" :type="i.kind === 'int' ? 'number' : 'text'" :placeholder="t('Non gestito')" :disabled="!!busy" />
+              <input v-model="draft[i.key]" :type="i.kind === 'int' ? 'number' : i.kind === 'password' ? 'password' : 'text'"
+                     :autocomplete="i.kind === 'password' ? 'new-password' : 'off'"
+                     :placeholder="i.kind === 'password' ? (i.value ? t('impostata — scrivi per cambiarla') : t('Non gestita')) : t('Non gestito')" :disabled="!!busy" />
               <span v-if="i.unit" class="muted small">{{ i.unit }}</span>
               <button class="ghost small" :disabled="!!busy">{{ busy === i.key ? t('Applico…') : t('Applica') }}</button>
             </form>

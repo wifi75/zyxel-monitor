@@ -118,8 +118,8 @@ export interface PolicyOverview {
 }
 export interface PolicyResult { ap: string; ok: boolean; message: string }
 export interface SiteItem {
-  key: string; section: string; label: string; kind: 'text' | 'int' | 'bool' | 'choice'; help: string
-  choices: string[]; unit: string; value: string | number | boolean | null
+  key: string; section: string; label: string; kind: 'text' | 'int' | 'bool' | 'choice' | 'password' | 'list'; help: string
+  choices: string[]; unit: string; value: string | number | boolean | string[] | null
 }
 export interface Backup { id: number; ap: string; ts: number; size: number }
 
@@ -196,7 +196,7 @@ export const api = {
   backupAll: () => req<{ results: PolicyResult[] }>('/policy/backups', { method: 'POST' }),
   backups: () => req<Backup[]>('/policy/backups'),
   siteItems: () => req<SiteItem[]>('/policy/items'),
-  setSiteItem: (key: string, value: string | number | boolean | null) =>
+  setSiteItem: (key: string, value: string | number | boolean | string[] | null) =>
     req<{ results: PolicyResult[] }>(`/policy/items/${key}`, { method: 'PUT', body: JSON.stringify({ value }) }),
   exploreAp: (id: number) => req<{ text: string }>(`/settings/aps/${id}/explore`, { method: 'POST' }),
   backup: (id: number) => req<Backup & { text: string }>(`/policy/backups/${id}`),

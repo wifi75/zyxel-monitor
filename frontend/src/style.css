@@ -474,3 +474,8 @@ button.danger:not(.ghost) { color: #fff; background: var(--bad); border-color: v
 .site-input { display: flex; align-items: center; gap: 6px; }
 .site-input input { min-width: 0; flex: 1; }
 @media (max-width: 640px) { .site-row { flex-wrap: wrap; } .site-ctrl { width: 100%; } }
+
+.site-list { display: grid; gap: 6px; }
+.site-list textarea { font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; resize: vertical; min-height: 64px;
+                      border: 1px solid var(--border); border-radius: 8px; padding: 6px 8px; background: var(--surface); color: var(--text); }
+.site-list button { justify-self: end; }

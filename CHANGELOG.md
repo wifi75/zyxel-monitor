@@ -2,6 +2,13 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) — versioni: [SemVer](https://semver.org/lang/it/).
 
+## [0.11.0] - 2026-09-24
+### Aggiunto
+- Impostazioni del sito: password della rete (applicata solo quando la cambi, mai mostrata), rete nascosta, dispositivi bloccati per MAC.
+
+### Modificato
+- Salvando un'impostazione si applica solo quella: ogni ingresso in un profilo ricarica le radio dell'AP per qualche secondo, quindi si inviano solo le differenze.
+
 ## [0.10.1] - 2026-09-24
 ### Corretto
 - AP con firmware 6.x (WAC6103D-I, NWA1123-AC PRO) letti via SSH: orario di connessione dei client nel formato "ora data".

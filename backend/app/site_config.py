@@ -41,8 +41,12 @@ def _event(ap: str, info: str) -> None:
         db.execute("INSERT INTO events(ts, kind, ap, info) VALUES (?,?,?,?)", (int(time.time()), "config", ap, info))
 
 
-async def apply_ap(ap: store.ApConfig, reason: str = "manuale") -> dict:
+async def apply_ap(ap: store.ApConfig, reason: str = "manuale", only: set[str] | None = None) -> dict:
+    """only = voci da applicare (quella appena cambiata); None = controllo periodico delle voci da mantenere.
+    Ogni ingresso in un profilo ricarica le radio dell'AP per qualche secondo: si inviano solo le differenze."""
     wanted = load()
+    if only is not None:
+        wanted = {k: v for k, v in wanted.items() if k in only}
     if not wanted:
         return {"ap": ap.name, "ok": True, "message": "Nessuna impostazione del sito"}
     if not ap.ssh_password:
@@ -54,11 +58,11 @@ async def apply_ap(ap: store.ApConfig, reason: str = "manuale") -> dict:
     commands, changed = [], []
     for key, value in wanted.items():
         item = ci.BY_KEY.get(key)
-        if not item:
+        if not item or (only is None and not item.enforce):
             continue
         if key == "hostname_sync":
             cmds = ci.hostname_commands(ap.name, cfg) if value else []
-        elif ci.same(item, value, item.read(cfg)):
+        elif item.enforce and ci.same(item, value, item.read(cfg)):
             continue
         else:
             cmds = item.build(value, cfg)
@@ -78,9 +82,9 @@ async def apply_ap(ap: store.ApConfig, reason: str = "manuale") -> dict:
     return {"ap": ap.name, "ok": True, "message": f"Applicato: {desc}"}
 
 
-async def apply_all(reason: str = "manuale") -> list[dict]:
+async def apply_all(reason: str = "manuale", only: set[str] | None = None) -> list[dict]:
     aps = [a for a in store.list_aps(enabled_only=True) if a.ssh_password]
-    return list(await asyncio.gather(*(apply_ap(a, reason) for a in aps)))
+    return list(await asyncio.gather(*(apply_ap(a, reason, only) for a in aps)))
 
 
 async def enforce() -> None:

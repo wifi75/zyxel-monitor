@@ -71,6 +71,7 @@ class Item:
     read: Callable[[RunningConfig], object] = lambda c: None
     build: Callable[[object, RunningConfig], list[str]] = lambda v, c: []
     per_ap: bool = False               # il valore dipende dall'AP (es. nome)
+    enforce: bool = True               # False: si applica solo quando viene cambiata (es. password)
 
 
 def _in_ssid(cfg: RunningConfig, *lines: str) -> list[str]:
@@ -146,12 +147,50 @@ def _lb_set(v, cfg: RunningConfig) -> list[str]:
     return [f"{'' if v else 'no '}load-balancing slot{s} activate" for s in (1, 2)]
 
 
+MAC_RE = re.compile(r"^([0-9a-f]{2}:){5}[0-9a-f]{2}$")
+
+
+def _blocked(cfg: RunningConfig) -> list[str]:
+    """MAC nel profilo di blocco della rete principale (azione "deny")."""
+    p = cfg.ssid_profile()
+    prof = cfg.value(f"wlan-ssid-profile {p}", "macfilter") if p else None
+    if not prof:
+        return []
+    return sorted(line.split()[0].lower() for line in cfg.block(f"wlan-macfilter-profile {prof}")
+                  if MAC_RE.match(line.split()[0].lower()))
+
+
+def _blocked_set(v, cfg: RunningConfig) -> list[str]:
+    p = cfg.ssid_profile()
+    prof = cfg.value(f"wlan-ssid-profile {p}", "macfilter") if p else None
+    if not prof:
+        return []
+    want, have = set(v), set(_blocked(cfg))
+    lines = [m for m in sorted(want - have)] + [f"no {m}" for m in sorted(have - want)]
+    return [f"wlan-macfilter-profile {prof}", "filter-action deny", *lines, "exit"] if lines else []
+
+
+def _psk(cfg: RunningConfig) -> str | None:
+    p = cfg.security_profile()
+    return cfg.value(f"wlan-security-profile {p}", "encrypted-wpa-psk") if p else None
+
+
 ITEMS: list[Item] = [
     # --- rete Wi-Fi principale ---
     Item("ssid_name", "rete", "Nome della rete (SSID)", "text",
          "Cambiarlo scollega tutti i dispositivi: vanno ricollegati alla rete con il nuovo nome.",
          read=lambda c: c.value(f"wlan-ssid-profile {c.ssid_profile()}", "ssid") if c.ssid_profile() else None,
          build=lambda v, c: _in_ssid(c, f"ssid {v}")),
+    Item("wifi_password", "rete", "Password della rete", "password",
+         "Da 8 a 63 caratteri. Cambiarla scollega tutti i dispositivi: vanno ricollegati con la nuova password.",
+         enforce=False, read=_psk, build=lambda v, c: _in_security(c, f"wpa-psk {v}")),
+    Item("ssid_hidden", "rete", "Rete nascosta", "bool",
+         "Il nome della rete non compare negli elenchi: per collegarsi va scritto a mano.",
+         read=lambda c: _ssid_flag(c, "hide"),
+         build=lambda v, c: _in_ssid(c, "hide" if v else "no hide")),
+    Item("mac_block", "rete", "Dispositivi bloccati (MAC)", "list",
+         "Un indirizzo MAC per riga: questi dispositivi non possono collegarsi alla rete.",
+         read=_blocked, build=_blocked_set),
     Item("rate_down", "rete", "Limite di download per dispositivo", "int",
          "0 = nessun limite.", unit="kbps", read=lambda c: _rate(c, "downlink"),
          build=lambda v, c: _in_ssid(c, f"downlink-rate-limit {v} kbps")),
@@ -202,6 +241,18 @@ def parse_value(item: Item, raw) -> object:
     """Valore dal pannello → tipo dell'impostazione (ValueError se non valido)."""
     if item.kind == "bool":
         return bool(raw)
+    if item.kind == "list":
+        items = raw if isinstance(raw, list) else str(raw).replace(",", "\n").split()
+        macs = sorted({m.strip().lower().replace("-", ":") for m in items if m.strip()})
+        bad = [m for m in macs if not MAC_RE.match(m)]
+        if bad:
+            raise ValueError(f"MAC non valido: {bad[0]}")
+        return macs
+    if item.kind == "password":
+        s = str(raw)
+        if not 8 <= len(s) <= 63 or any(ch in s for ch in "\n\r\t") or s != s.strip():
+            raise ValueError("da 8 a 63 caratteri, senza spazi iniziali o finali")
+        return s
     if item.kind == "int":
         v = int(raw)
         if not 0 <= v <= 10_000_000:
@@ -219,6 +270,8 @@ def parse_value(item: Item, raw) -> object:
 def same(item: Item, want, have) -> bool:
     if have is None:
         return False
+    if item.kind == "list":
+        return sorted(want or []) == sorted(have or [])
     if item.kind in ("int", "choice"):
         try:
             return int(want) == int(have)

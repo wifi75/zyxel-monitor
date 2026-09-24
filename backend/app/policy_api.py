@@ -87,12 +87,15 @@ async def set_ap(ap_id: int, body: RuleIn):
 @router.get("/items")
 def list_items():
     values = site_config.load()
+    def shown(i):   # la password non esce mai dal server: si dice solo se è impostata
+        v = values.get(i.key)
+        return (v is not None) if i.kind == "password" else v
     return [{"key": i.key, "section": i.section, "label": i.label, "kind": i.kind, "help": i.help,
-             "choices": i.choices, "unit": i.unit, "value": values.get(i.key)} for i in config_items.ITEMS]
+             "choices": i.choices, "unit": i.unit, "value": shown(i)} for i in config_items.ITEMS]
 
 
 class ItemIn(BaseModel):
-    value: int | str | bool | None = None      # None = non gestito
+    value: int | str | bool | list[str] | None = None      # None = non gestito
 
 
 @router.put("/items/{key}")
@@ -107,7 +110,7 @@ async def set_item(key: str, body: ItemIn):
     site_config.set_value(key, value)
     if value is None:
         return {"results": []}
-    return {"results": await site_config.apply_all(reason=item.label)}
+    return {"results": await site_config.apply_all(reason=item.label, only={key})}
 
 
 @router.post("/items/apply")

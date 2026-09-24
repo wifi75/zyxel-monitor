@@ -155,3 +155,22 @@ def test_parse_stations_old_firmware():
     )
     c = parse_stations(text)[0]
     assert c.band == "2.4GHz" and c.connected_at is not None and c.ssid == "WiFi" and c.rssi_dbm == -69
+
+
+def test_password_hide_macblock():
+    from app import config_items as ci
+    text = (
+        "wlan-security-profile SECURITY1\n mode wpa2\n encrypted-wpa-psk ABC=\n!\n"
+        "wlan-macfilter-profile BLOCKED1\n filter-action deny\n aa:bb:cc:dd:ee:ff\n!\n"
+        "wlan-ssid-profile SSID1\n ssid WiFi\n security SECURITY1\n macfilter BLOCKED1\n!\n"
+        "wlan slot1\n ap profile R2\n ssid profile 1 SSID1\n!\n"
+    )
+    cfg = ci.RunningConfig(text)
+    assert ci.BY_KEY["ssid_hidden"].read(cfg) is False
+    assert ci.BY_KEY["mac_block"].read(cfg) == ["aa:bb:cc:dd:ee:ff"]
+    assert ci.BY_KEY["mac_block"].build(["11:22:33:44:55:66"], cfg) == [
+        "wlan-macfilter-profile BLOCKED1", "filter-action deny", "11:22:33:44:55:66", "no aa:bb:cc:dd:ee:ff", "exit"]
+    assert ci.BY_KEY["wifi_password"].build("segreta123", cfg) == [
+        "wlan-security-profile SECURITY1", "wpa-psk segreta123", "exit"]
+    assert ci.parse_value(ci.BY_KEY["mac_block"], "AA-BB-CC-DD-EE-FF, 11:22:33:44:55:66") == [
+        "11:22:33:44:55:66", "aa:bb:cc:dd:ee:ff"]

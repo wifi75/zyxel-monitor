@@ -2,6 +2,14 @@ import { addEn } from './index'
 
 // traduzioni inglesi: chiave = testo italiano esatto usato in t()
 addEn({
+  'impostata — scrivi per cambiarla': 'set — type to change it',
+  'Un indirizzo MAC per riga: questi dispositivi non possono collegarsi alla rete.': 'One MAC address per line: these devices cannot join the network.',
+  'Dispositivi bloccati (MAC)': 'Blocked devices (MAC)',
+  'Il nome della rete non compare negli elenchi: per collegarsi va scritto a mano.': 'The network name is not broadcast: it must be typed in by hand to join.',
+  'Rete nascosta': 'Hidden network',
+  'Cambiare la password scollega tutti i dispositivi: andranno ricollegati con la nuova password. Procedere?': 'Changing the password disconnects every device: they will have to rejoin with the new password. Continue?',
+  'Da 8 a 63 caratteri. Cambiarla scollega tutti i dispositivi: vanno ricollegati con la nuova password.': '8 to 63 characters. Changing it disconnects every device: they must rejoin with the new password.',
+  'Password della rete': 'Network password',
   'Impostazioni del sito': 'Site settings',
   '(valgono per tutti gli AP, controllate ogni 15 minuti)': '(apply to every AP, checked every 15 minutes)',
   'Rete Wi-Fi': 'Wi-Fi network',
