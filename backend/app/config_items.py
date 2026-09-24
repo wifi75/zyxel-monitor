@@ -315,7 +315,7 @@ ITEMS: list[Item] = [
          "Cambiarlo scollega tutti i dispositivi: vanno ricollegati alla rete con il nuovo nome.",
          read=lambda c: c.value(f"wlan-ssid-profile {c.ssid_profile()}", "ssid") if c.ssid_profile() else None,
          build=lambda v, c: _in_ssid(c, f"ssid {v}")),
-    Item("ssid_5g", "rete", "Nome rete 5 GHz", "text",
+    Item("ssid_5g", "rete", "Nome diverso per i 5 GHz (facoltativo)", "text",
          "Vuoto = stessa rete su 2.4 e 5 GHz. Con un nome diverso la 5 GHz diventa una rete a parte "
          "(stessa password): il band steering non serve più.",
          read=_ssid_5g, build=_ssid_5g_set),

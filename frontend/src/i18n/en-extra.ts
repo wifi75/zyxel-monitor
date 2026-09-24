@@ -113,7 +113,7 @@ addEn({
   'Applico…': 'Applying…',
   'Cambiare il nome della rete scollega tutti i dispositivi: andranno ricollegati alla rete "{n}". Procedere?': 'Renaming the network disconnects every device: they will have to rejoin "{n}". Continue?',
   'Nome della rete (SSID)': 'Network name (SSID)',
-  'Nome rete 5 GHz': '5 GHz network name',
+  'Nome diverso per i 5 GHz (facoltativo)': 'Different 5 GHz name (optional)',
   'come la 2.4 GHz': 'same as 2.4 GHz',
   'Arrivano da': 'Arriving from',
   'Vanno verso': 'Leaving to',
