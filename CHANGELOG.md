@@ -2,6 +2,13 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) — versioni: [SemVer](https://semver.org/lang/it/).
 
+## [0.6.0] - 2026-09-24
+### Aggiunto
+- Pagina **Configurazione**: configurazione centralizzata della potenza radio per banda, con profilo del sito valido per tutti gli AP e personalizzazione per singolo AP.
+- Applicazione immediata via SSH a tutti gli AP e riallineamento automatico se un AP torna indietro (riavvio o sincronizzazione di Nebula); segnalato "limitato dall'AP" quando l'AP non accetta il valore.
+- Backup della configurazione completa (running-config) di ogni AP, consultabile, copiabile e scaricabile.
+- Eventi "Configurazione" nello storico per ogni modifica applicata.
+
 ## [0.5.0] - 2026-09-24
 ### Aggiunto
 - Gestione AP: CPU e memoria degli AP letti via SSH (`show cpu status`, `show mem status`).

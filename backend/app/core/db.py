@@ -133,6 +133,23 @@ CREATE TABLE IF NOT EXISTS line_samples (
 );
 CREATE INDEX IF NOT EXISTS ix_line_ts ON line_samples(gateway, ts);
 
+-- configurazione centralizzata delle radio: scope 'site' (vale per tutti) o 'ap:<id>' (personalizzazione)
+CREATE TABLE IF NOT EXISTS radio_policy (
+    scope    TEXT NOT NULL,
+    band     TEXT NOT NULL,              -- 2.4GHz | 5GHz
+    tx_power INTEGER,                    -- dBm; NULL = non gestito
+    PRIMARY KEY (scope, band)
+);
+
+-- copie della running-config degli AP (rete di sicurezza prima di modifiche o del distacco da Nebula)
+CREATE TABLE IF NOT EXISTS config_backups (
+    id   INTEGER PRIMARY KEY AUTOINCREMENT,
+    ap   TEXT NOT NULL,
+    ts   INTEGER NOT NULL,
+    text TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS ix_backups_ap ON config_backups(ap, ts);
+
 -- impostazioni salvate dal pannello: hanno la precedenza sul .env
 CREATE TABLE IF NOT EXISTS settings (
     key   TEXT PRIMARY KEY,

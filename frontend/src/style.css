@@ -383,3 +383,19 @@ label.check.inline { display: inline-flex; min-height: 0; margin-right: 10px; fo
 .apm-tool button { min-width: 110px; }
 .apm-tool.danger-zone { border-color: color-mix(in srgb, var(--bad) 35%, var(--border)); }
 button.danger:not(.ghost) { color: #fff; background: var(--bad); border-color: var(--bad); }
+
+/* pagina Configurazione centralizzata */
+.cfg { display: grid; gap: 16px; }
+.cfg-hero { display: flex; align-items: center; gap: 14px;
+            background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 10%, var(--surface)), var(--surface) 70%); }
+.cfg-hero h2 { font-size: 20px; }
+.cfg-hero p { margin: 4px 0 0; max-width: 820px; }
+.cfg-results { display: grid; gap: 6px; }
+.cfg-result { display: flex; align-items: center; gap: 10px; }
+.cfg-bands { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+.cfg-band { display: grid; gap: 10px; padding: 14px 16px; border-radius: 12px; }
+.cfg-band b { font-size: 16px; }
+.cfg-band label { color: var(--text); }
+.cfg-cell select { min-width: 190px; }
+.cfg-state { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
+.ev.config { color: var(--violet); }

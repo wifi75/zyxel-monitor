@@ -17,7 +17,7 @@ export interface Client {
 }
 export interface Event {
   id: number; ts: number
-  kind: 'connect' | 'disconnect' | 'roam' | 'ap_down' | 'ap_up' | 'new_device' | 'wan_down' | 'wan_up'
+  kind: 'connect' | 'disconnect' | 'roam' | 'ap_down' | 'ap_up' | 'new_device' | 'wan_down' | 'wan_up' | 'config'
   mac: string | null; name: string | null; ap: string | null; info: string | null
 }
 export interface TrafficPoint { ts: number; down_bps: number | null; up_bps: number | null; clients: number | null }
@@ -105,6 +105,18 @@ export interface NebulaSsid {
   guestNetwork: boolean; enabledBands: string[]; has_wpa_key: boolean
 }
 
+export type PolicyStatus = 'ok' | 'pending' | 'capped' | 'unknown' | 'unmanaged'
+export interface PolicyBand {
+  desired: number | null; source: 'ap' | 'site' | 'none'; actual: number | null
+  override: number | null | 'inherit'; status: PolicyStatus
+}
+export interface PolicyOverview {
+  site: Record<string, number | null>
+  aps: { id: number; name: string; method: string; enabled: boolean; configurable: boolean; bands: Record<string, PolicyBand> }[]
+}
+export interface PolicyResult { ap: string; ok: boolean; message: string }
+export interface Backup { id: number; ap: string; ts: number; size: number }
+
 export interface WidgetPos { i: string; x: number; y: number; w: number; h: number }
 export type ViewKind = 'overview' | 'ap'
 export type SavedLayout = Partial<Record<ViewKind, WidgetPos[]>>
@@ -167,6 +179,17 @@ export const api = {
   resetLayout: () => req('/layout', { method: 'DELETE' }),
   rebootAp: (id: number) => req(`/settings/aps/${id}/reboot`, { method: 'POST' }),
   rawOutput: (id: number) => req<{ ts: number | null; text: string }>(`/settings/aps/${id}/raw`),
+
+  // configurazione centralizzata
+  policy: () => req<PolicyOverview>('/policy'),
+  setSitePolicy: (band: string, tx_power: number | null) =>
+    req<{ results: PolicyResult[] }>('/policy/site', { method: 'PUT', body: JSON.stringify({ band, tx_power }) }),
+  setApPolicy: (id: number, band: string, tx_power: number | null, inherit: boolean) =>
+    req<{ results: PolicyResult[] }>(`/policy/aps/${id}`, { method: 'PUT', body: JSON.stringify({ band, tx_power, inherit }) }),
+  applyPolicy: () => req<{ results: PolicyResult[] }>('/policy/apply', { method: 'POST' }),
+  backupAll: () => req<{ results: PolicyResult[] }>('/policy/backups', { method: 'POST' }),
+  backups: () => req<Backup[]>('/policy/backups'),
+  backup: (id: number) => req<Backup & { text: string }>(`/policy/backups/${id}`),
 
   // Nebula (licenza Pro)
   nebulaStatus: () => req<NebulaStatus>('/nebula/status'),

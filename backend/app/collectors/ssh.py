@@ -274,6 +274,49 @@ async def collect(host: str, user: str, password: str, port: int = 22) -> ApRead
     )
 
 
+# banda → slot della CLI ("wlan slotN"), come in "show wireless-hal statistic"
+BAND_SLOT = {"2.4GHz": 1, "5GHz": 2, "6GHz": 3}
+
+
+def power_commands(band: str, dbm: int) -> list[str]:
+    """Potenza di una radio: "wlan slotN / output-power XXdBm". Non si usa "write": con Nebula attivo
+    la configurazione permanente la gestisce il cloud, e il sistema la riapplica se viene sovrascritta."""
+    return [f"wlan slot{BAND_SLOT[band]}", f"output-power {dbm}dBm", "exit"]
+
+
+async def _session(host: str, user: str, password: str, port: int, lines: list[str], timeout: float = 40) -> str:
+    async with asyncssh.connect(host, port=port, username=user, password=password, known_hosts=None,
+                                connect_timeout=10) as conn:
+        proc = await conn.create_process(term_type="vt100", term_size=(200, 5000))
+        proc.stdin.write("\n".join([*lines, "exit"]) + "\n")
+        chunks: list[str] = []
+
+        async def reader():
+            while data := await proc.stdout.read(65536):
+                chunks.append(data)
+
+        try:
+            await asyncio.wait_for(reader(), timeout)
+        except TimeoutError:
+            pass
+        proc.close()
+        return "".join(chunks).replace("\r", "")
+
+
+async def configure(host: str, user: str, password: str, port: int, commands: list[str]) -> str:
+    """Esegue comandi in "configure terminal" e restituisce l'output (gli errori della CLI restano nel testo)."""
+    return await _session(host, user, password, port, ["configure terminal", *commands, "exit"])
+
+
+async def running_config(host: str, user: str, password: str, port: int = 22) -> str:
+    text = await _session(host, user, password, port, ["show running-config"])
+    start = text.find("Router> show running-config")
+    return text[start:] if start >= 0 else text
+
+
+CLI_ERROR = re.compile(r"(Parse error|command not found|ERROR:|Invalid)", re.I)
+
+
 async def reboot(host: str, user: str, password: str, port: int = 22) -> None:
     """Riavvia l'AP con il comando "reboot" della CLI: la connessione cade, quindi non si attende risposta."""
     async with asyncssh.connect(host, port=port, username=user, password=password, known_hosts=None,

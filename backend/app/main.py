@@ -16,6 +16,7 @@ from .core.version import APP_AUTHOR, APP_NAME, APP_VERSION
 from .poller import run_forever
 from .insights_api import router as insights_router
 from .nebula_api import router as nebula_router
+from .policy_api import router as policy_router
 from .settings_api import router as settings_router
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
@@ -43,6 +44,7 @@ app.include_router(router)
 app.include_router(settings_router)
 app.include_router(insights_router)
 app.include_router(nebula_router)
+app.include_router(policy_router)
 
 if STATIC_DIR.exists():
     app.mount("/assets", StaticFiles(directory=STATIC_DIR / "assets"), name="assets")

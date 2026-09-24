@@ -5,6 +5,7 @@ import {
   type Internet, type Roaming, type SignalByAp, type Sites, type Traffic, type Usage,
 } from './api'
 import ApManager from './components/ApManager.vue'
+import ConfigView from './components/ConfigView.vue'
 import BarList from './components/BarList.vue'
 import ClientsTable from './components/ClientsTable.vue'
 import Dashboard from './components/Dashboard.vue'
@@ -256,6 +257,7 @@ const SSH_NA = "La CLI SSH di questo AP non fornisce ancora il dato: in Impostaz
           <span class="status" :class="a.online ? 'on' : 'off'" /> {{ a.ap }} <span class="pill">{{ a.clients ?? 0 }}</span>
         </button>
         <button :class="{ active: view === '#aps' }" @click="view = '#aps'">Gestione AP</button>
+        <button :class="{ active: view === '#config' }" @click="view = '#config'">Configurazione</button>
         <button :class="{ active: view === '#devices' }" @click="view = '#devices'">
           Dispositivi <span v-if="newDevices.length" class="pill alert" title="Dispositivi nuovi da riconoscere">{{ newDevices.length }}</span>
         </button>
@@ -287,6 +289,8 @@ const SSH_NA = "La CLI SSH di questo AP non fornisce ancora il dato: in Impostaz
     </form>
 
     <SettingsView v-if="view === '#settings'" :status="aps" @changed="reloadSoon" />
+
+    <ConfigView v-else-if="view === '#config'" @changed="reloadSoon" />
 
     <ApManager v-else-if="view === '#aps'" :status="aps" @changed="reloadSoon" />
 
