@@ -29,7 +29,7 @@ export interface Internet {
   dns: null | { total: number; blocked: number; blocked_pct: number; since: number;
     top_blocked: { domain: string; queries: number; list: string }[] }
 }
-export interface Health { version: string; author: string; name: string }
+export interface Health { version: string; author: string; name: string; build?: string }
 
 /** campi segreti: l'API dice solo se sono impostati (has_*), vuoti nel modulo = invariati */
 export type Secret = 'snmp_community' | 'snmp_auth_pass' | 'snmp_priv_pass' | 'ssh_password'

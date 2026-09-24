@@ -1,7 +1,9 @@
 """Endpoint REST della dashboard."""
+import hashlib
 import json
 import time
 from collections import defaultdict
+from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
@@ -17,9 +19,22 @@ from .poller import INTERNET, internet_state
 router = APIRouter(prefix="/api")
 
 
+def _build_id() -> str:
+    """Impronta dell'interfaccia servita: Vite rinomina gli asset a ogni build, quindi index.html cambia
+    a ogni deploy anche a parità di versione. La pagina aperta la confronta per ricaricarsi da sola."""
+    index = Path(__file__).resolve().parent.parent / "static" / "index.html"
+    try:
+        return hashlib.sha1(index.read_bytes()).hexdigest()[:12]
+    except OSError:
+        return APP_VERSION
+
+
+BUILD_ID = _build_id()
+
+
 @router.get("/health")
 def health():
-    return {"status": "ok", "name": APP_NAME, "version": APP_VERSION, "author": APP_AUTHOR}
+    return {"status": "ok", "name": APP_NAME, "version": APP_VERSION, "author": APP_AUTHOR, "build": BUILD_ID}
 
 
 # ---------- autenticazione ----------

@@ -87,12 +87,41 @@ function reloadSoon() {
 watch(hours, load)
 watch(view, loadScoped)
 
+// ---- aggiornamento automatico: dopo un nuovo deploy la pagina aperta si ricarica da sola ----
+const updating = ref(false)
+const serverDown = ref(false)
+let checkTimer: number | undefined
+
+async function checkUpdate() {
+  clearTimeout(checkTimer)
+  try {
+    const h = await api.health()
+    serverDown.value = false
+    if (!health.value?.build) health.value = h
+    else if (h.build && h.build !== health.value.build && !updating.value) {
+      updating.value = true
+      window.setTimeout(() => window.location.reload(), 5000)
+    }
+  } catch {
+    serverDown.value = true      // durante un redeploy il server sparisce per qualche decina di secondi
+  }
+  checkTimer = window.setTimeout(checkUpdate, serverDown.value ? 10_000 : 60_000)
+}
+const onVisible = () => { if (!document.hidden) checkUpdate() }
+const reloadNow = () => window.location.reload()
+
 onMounted(async () => {
   health.value = await api.health().catch(() => null)
   if (logged.value) await afterLogin()
   timer = window.setInterval(() => logged.value && load(), REFRESH_MS)
+  checkTimer = window.setTimeout(checkUpdate, 60_000)
+  document.addEventListener('visibilitychange', onVisible)
 })
-onBeforeUnmount(() => clearInterval(timer))
+onBeforeUnmount(() => {
+  clearInterval(timer)
+  clearTimeout(checkTimer)
+  document.removeEventListener('visibilitychange', onVisible)
+})
 
 // ---- vista corrente: tutto o un solo AP ----
 const currentAp = computed(() => aps.value.find(a => a.ap === view.value) ?? null)
@@ -174,6 +203,12 @@ const SSH_NA = "La CLI SSH di questo AP non fornisce ancora il dato: in Impostaz
 </script>
 
 <template>
+  <div v-if="updating" class="update-bar">
+    È disponibile una nuova versione: la pagina si aggiorna tra pochi secondi…
+    <button class="ghost small" @click="reloadNow">Aggiorna ora</button>
+  </div>
+  <div v-else-if="serverDown" class="update-bar down">Server non raggiungibile (aggiornamento in corso?): riprovo tra pochi secondi…</div>
+
   <LoginView v-if="!logged" @done="afterLogin" />
 
   <div v-else class="shell">

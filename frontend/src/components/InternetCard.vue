@@ -10,8 +10,11 @@ const emit = defineEmits<{ settings: [] }>()
 
 const metric = ref<'down_bps' | 'up_bps' | 'delay' | 'loss'>('down_bps')
 const gateway = computed(() => props.internet?.gateways[0] ?? null)
-const series = computed<Record<string, TrafficPoint[]>>(() =>
-  props.internet?.available ? { Internet: props.internet.series } : {})
+const series = computed(() => {
+  const out: Record<string, TrafficPoint[]> = {}
+  if (props.internet?.available) out.Internet = props.internet.series
+  return out
+})
 const now = computed(() => [...(props.internet?.series ?? [])].reverse().find(x => x.down_bps != null) ?? null)
 const quality = computed(() => props.internet?.quality ?? [])
 const hasQuality = computed(() => quality.value.some(p => p.delay_ms != null))
