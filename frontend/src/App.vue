@@ -7,6 +7,7 @@ import ClientsTable from './components/ClientsTable.vue'
 import EventsTable from './components/EventsTable.vue'
 import LoginView from './components/LoginView.vue'
 import PieChart from './components/PieChart.vue'
+import SettingsView from './components/SettingsView.vue'
 import TrafficChart from './components/TrafficChart.vue'
 import { bps, bytes, duration } from './format'
 
@@ -15,7 +16,7 @@ const REFRESH_MS = 30_000
 const health = ref<Health | null>(null)
 const logged = ref(!!auth.token)
 const defaultPassword = ref(false)
-/** '' = panoramica generale, '#events' = eventi, altrimenti nome dell'AP */
+/** '' = panoramica generale, '#events' = eventi, '#settings' = impostazioni, altrimenti nome dell'AP */
 const view = ref('')
 
 const aps = ref<Ap[]>([])
@@ -55,6 +56,12 @@ async function afterLogin() {
 }
 
 function logout() { auth.clear(); logged.value = false }
+
+/** dopo una modifica nel pannello: subito, e di nuovo quando la lettura ripartita è finita */
+function reloadSoon() {
+  load()
+  window.setTimeout(load, 8000)
+}
 
 async function loadSites() {
   const ap = aps.value.some(a => a.ap === view.value) ? view.value : undefined
@@ -175,6 +182,7 @@ async function changePassword() {
           <option :value="24">24 ore</option><option :value="168">7 giorni</option>
         </select>
         <span class="muted small" v-if="lastUpdate">agg. {{ lastUpdate.toLocaleTimeString('it-IT') }}</span>
+        <button class="ghost" :class="{ active: view === '#settings' }" @click="view = '#settings'">Impostazioni</button>
         <button class="ghost" @click="showPwd = !showPwd">Password</button>
         <button class="ghost" @click="logout">Esci</button>
       </div>
@@ -192,8 +200,11 @@ async function changePassword() {
       <span v-if="pwdMsg" class="error">{{ pwdMsg }}</span>
     </form>
 
+    <!-- IMPOSTAZIONI -->
+    <SettingsView v-if="view === '#settings'" :status="aps" @changed="reloadSoon" />
+
     <!-- EVENTI (tutti) -->
-    <main v-if="view === '#events'">
+    <main v-else-if="view === '#events'">
       <section class="card"><h2 class="mb">Storico collegamenti</h2><EventsTable :events="events" show-ap /></section>
     </main>
 
@@ -272,7 +283,7 @@ async function changePassword() {
           <p v-else-if="sites?.available" class="muted">Nessuna richiesta nel periodo per questi dispositivi.</p>
           <div v-else class="empty">
             <p>Gli access point non vedono i siti visitati: questo dato arriva dal <strong>DNS della rete</strong>.</p>
-            <p class="muted small">Configura OPNSENSE_URL, OPNSENSE_KEY e OPNSENSE_SECRET nel file .env: i dati arrivano entro un minuto.</p>
+            <p class="muted small">Collega OPNsense in <a href="#" @click.prevent="view = '#settings'">Impostazioni</a>: i dati arrivano entro un minuto.</p>
           </div>
         </div>
         <div class="card">

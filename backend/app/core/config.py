@@ -1,6 +1,9 @@
-"""Configurazione letta da variabili d'ambiente / file .env."""
+"""Configurazione letta da variabili d'ambiente / file .env, con le modifiche fatte dal pannello."""
+import sqlite3
+from contextlib import closing
 from dataclasses import dataclass
 from functools import lru_cache
+from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -49,6 +52,27 @@ class Settings(BaseSettings):
         return out
 
 
+# impostazioni modificabili dal pannello: il valore salvato nel DB vale più del .env
+EDITABLE = (
+    "opnsense_url", "opnsense_key", "opnsense_secret", "opnsense_verify_tls", "opnsense_wan_if",
+    "local_domain", "poll_interval", "retention_days",
+)
+
+
+def _db_overrides(db_path: str) -> dict[str, str]:
+    path = Path(db_path)
+    if not path.exists():
+        return {}
+    try:
+        with closing(sqlite3.connect(path, timeout=10)) as conn:
+            rows = conn.execute("SELECT key, value FROM settings").fetchall()
+    except sqlite3.Error:        # tabella non ancora creata
+        return {}
+    return {k: v for k, v in rows if k in EDITABLE}
+
+
 @lru_cache
 def get_settings() -> Settings:
-    return Settings()
+    base = Settings()
+    overrides = _db_overrides(base.db_path)
+    return Settings(**overrides) if overrides else base

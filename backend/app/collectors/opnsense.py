@@ -18,8 +18,9 @@ import truststore
 from ..core.config import get_settings
 
 
-def _get(path: str, timeout: float = 20) -> dict:
-    s = get_settings()
+def fetch(path: str, s=None, timeout: float = 20) -> dict:
+    """GET sull'API di OPNsense; `s` permette di provare impostazioni non ancora salvate."""
+    s = s or get_settings()
     req = urllib.request.Request(f"{s.opnsense_url.rstrip('/')}/api/{path}")
     token = b64encode(f"{s.opnsense_key}:{s.opnsense_secret}".encode()).decode()
     req.add_header("Authorization", f"Basic {token}")
@@ -38,7 +39,7 @@ def enabled() -> bool:
 
 async def leases() -> dict[str, tuple[str, str | None]]:
     """{mac: (ip, hostname)} dai lease Kea DHCPv4."""
-    data = await asyncio.to_thread(_get, "kea/leases4/search?rowCount=2000&current=1")
+    data = await asyncio.to_thread(fetch, "kea/leases4/search?rowCount=2000&current=1")
     out = {}
     for r in data.get("rows", []):
         mac = (r.get("hwaddr") or "").lower()
@@ -49,7 +50,7 @@ async def leases() -> dict[str, tuple[str, str | None]]:
 
 async def dns_queries() -> list[dict]:
     """Ultime query DNS (max 1000): {time, client, domain, action}."""
-    data = await asyncio.to_thread(_get, "unbound/overview/searchQueries?rowCount=1000&current=1")
+    data = await asyncio.to_thread(fetch, "unbound/overview/searchQueries?rowCount=1000&current=1")
     return [
         {"time": int(r["time"]), "client": r.get("client") or "", "domain": r.get("domain") or "",
          "action": r.get("action") or ""}
@@ -59,7 +60,7 @@ async def dns_queries() -> list[dict]:
 
 async def dns_totals(top: int = 10) -> dict:
     """Totali DNS di Unbound: richieste, bloccate, domini più bloccati."""
-    d = await asyncio.to_thread(_get, f"unbound/overview/totals/{top}")
+    d = await asyncio.to_thread(fetch, f"unbound/overview/totals/{top}")
     return {
         "total": int(d.get("total") or 0),
         "blocked": int((d.get("blocked") or {}).get("total") or 0),
@@ -73,7 +74,7 @@ async def dns_totals(top: int = 10) -> dict:
 
 
 async def gateways() -> list[dict]:
-    d = await asyncio.to_thread(_get, "routes/gateway/status")
+    d = await asyncio.to_thread(fetch, "routes/gateway/status")
     return [
         {"name": g.get("name"), "online": (g.get("status_translated") or "").lower() == "online",
          "status": g.get("status_translated"), "delay": g.get("delay"), "loss": g.get("loss"),
@@ -84,7 +85,7 @@ async def gateways() -> list[dict]:
 
 async def interface_bytes(name: str) -> tuple[int, int] | None:
     """(byte ricevuti, byte trasmessi) dell'interfaccia OPNsense `name` (es. "wan", "opt1")."""
-    d = await asyncio.to_thread(_get, "diagnostics/traffic/interface")
+    d = await asyncio.to_thread(fetch, "diagnostics/traffic/interface")
     i = (d.get("interfaces") or {}).get(name)
     if not i:
         return None

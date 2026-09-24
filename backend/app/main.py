@@ -11,8 +11,10 @@ from fastapi.staticfiles import StaticFiles
 from .api import router
 from .core.db import init_db
 from .core.security import ensure_default_user
+from .core.store import seed_from_env
 from .core.version import APP_AUTHOR, APP_NAME, APP_VERSION
 from .poller import run_forever
+from .settings_api import router as settings_router
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 
@@ -23,6 +25,7 @@ STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
 async def lifespan(_: FastAPI):
     init_db()
     ensure_default_user()
+    seed_from_env()
     task = asyncio.create_task(run_forever())
     yield
     task.cancel()
@@ -35,6 +38,7 @@ app = FastAPI(
     lifespan=lifespan,
 )
 app.include_router(router)
+app.include_router(settings_router)
 
 if STATIC_DIR.exists():
     app.mount("/assets", StaticFiles(directory=STATIC_DIR / "assets"), name="assets")

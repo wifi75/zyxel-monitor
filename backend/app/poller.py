@@ -8,22 +8,29 @@ import ipaddress
 
 from .collectors import names, opnsense, snmp, ssh
 from .collectors.base import ApReading
-from .core.config import AccessPoint, get_settings
+from .core import store
+from .core.config import get_settings
 from .core.db import connect
 
 log = logging.getLogger("poller")
 
+# svegliato dal pannello: dopo una modifica la lettura riparte subito, senza aspettare il ciclo
+_wake = asyncio.Event()
 
-async def read_ap(ap: AccessPoint) -> ApReading:
-    s = get_settings()
+
+def poll_now() -> None:
+    _wake.set()
+
+
+async def read_ap(ap: store.ApConfig) -> ApReading:
     if ap.method == "snmp":
-        return await snmp.collect(ap.host, s.snmp_community)
-    return await ssh.collect(ap.host, s.ssh_user, s.ssh_password)
+        return await snmp.collect(ap.host, snmp.auth_args(ap))
+    return await ssh.collect(ap.host, ap.ssh_user, ap.ssh_password, ap.ssh_port)
 
 
 async def poll_once() -> None:
-    get_settings.cache_clear()   # rilegge il .env: una password corretta vale senza riavvio
-    aps = get_settings().access_points()
+    get_settings.cache_clear()   # rilegge .env e impostazioni del pannello
+    aps = store.list_aps(enabled_only=True)
     readings = await asyncio.gather(*(read_ap(ap) for ap in aps))
     now = int(time.time())
 
@@ -53,6 +60,10 @@ async def poll_once() -> None:
         aliases = {row["mac"]: row["name"] for row in db.execute("SELECT mac, name FROM aliases")}
         prev_status = {row["ap"]: row["online"] for row in db.execute("SELECT ap, online FROM ap_status")}
         prev_clients = {row["mac"]: dict(row) for row in db.execute("SELECT * FROM clients")}
+        # AP eliminati o disattivati dal pannello: spariscono dalla dashboard
+        names_now = [ap.name for ap in aps]
+        marks = ", ".join("?" * len(names_now)) or "''"
+        db.execute(f"DELETE FROM ap_status WHERE ap NOT IN ({marks})", names_now)
 
         # --- stato AP ---
         for ap, r in zip(aps, readings, strict=True):
@@ -211,10 +222,10 @@ def prune() -> None:
 
 
 async def run_forever() -> None:
-    interval = get_settings().poll_interval
     last_prune = 0.0
     while True:
         started = time.monotonic()
+        _wake.clear()
         try:
             await poll_once()
             if time.time() - last_prune > 3600:
@@ -222,4 +233,8 @@ async def run_forever() -> None:
                 last_prune = time.time()
         except Exception:
             log.exception("errore nel ciclo di raccolta")
-        await asyncio.sleep(max(5, interval - (time.monotonic() - started)))
+        wait = max(5, get_settings().poll_interval - (time.monotonic() - started))
+        try:
+            await asyncio.wait_for(_wake.wait(), wait)
+        except TimeoutError:
+            pass

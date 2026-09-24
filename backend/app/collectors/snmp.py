@@ -32,7 +32,9 @@ async def _run(args: list[str], timeout: float = 25) -> dict[str, str]:
         proc.kill()
         raise RuntimeError("timeout SNMP") from None
     if proc.returncode != 0:
-        raise RuntimeError(err.decode().strip() or "errore SNMP")
+        # net-snmp al primo avvio scrive "Created directory: ..." prima del vero errore
+        lines = [x for x in err.decode().splitlines() if x.strip() and not x.startswith("Created directory")]
+        raise RuntimeError(" ".join(lines) or "errore SNMP")
     result = {}
     for line in out.decode(errors="replace").splitlines():
         oid, _, value = line.partition(" ")
@@ -63,17 +65,33 @@ def _datetime(value: str) -> int | None:
         return None
 
 
-async def collect(host: str, community: str) -> ApReading:
-    base = ["-v2c", "-c", community, "-On", "-Oq", "-Ox", "-Ot", "-t", "3", "-r", "2", host]
+def auth_args(ap) -> list[str]:
+    """Parametri di autenticazione net-snmp per v1, v2c o v3 (utente, autenticazione, cifratura)."""
+    if ap.snmp_version != "3":
+        return ["-v", ap.snmp_version, "-c", ap.snmp_community or "public"]
+    args = ["-v3", "-u", ap.snmp_user]
+    if not ap.snmp_auth_pass:
+        return [*args, "-l", "noAuthNoPriv"]
+    args += ["-a", ap.snmp_auth_proto, "-A", ap.snmp_auth_pass]
+    if not ap.snmp_priv_pass:
+        return [*args, "-l", "authNoPriv"]
+    return [*args, "-l", "authPriv", "-x", ap.snmp_priv_proto, "-X", ap.snmp_priv_pass]
+
+
+async def collect(host: str, auth: list[str]) -> ApReading:
+    base = [*auth, "-On", "-Oq", "-Ox", "-Ot", "-t", "3", "-r", "2", host]
+    walk = "snmpwalk" if auth[:2] == ["-v", "1"] else "snmpbulkwalk"   # GETBULK non esiste in v1
     try:
         info, zy, names, ins, outs = await asyncio.gather(
             _run(["snmpget", *base, HOST_UPTIME, SYS_UPTIME, f"{ZY}.1.11.0", f"{ZY}.1.6.0"]),
-            _run(["snmpbulkwalk", *base, f"{ZY}.5"]),
-            _run(["snmpbulkwalk", *base, IF_NAME]),
-            _run(["snmpbulkwalk", *base, IF_IN]),
-            _run(["snmpbulkwalk", *base, IF_OUT]),
+            _run([walk, *base, f"{ZY}.5"]),
+            _run([walk, *base, IF_NAME]),
+            _run([walk, *base, IF_IN]),
+            _run([walk, *base, IF_OUT]),
         )
-    except RuntimeError as exc:
+    except FileNotFoundError:
+        return ApReading(online=False, error="Comandi SNMP non installati sul server (pacchetto snmp)")
+    except (RuntimeError, OSError) as exc:
         return ApReading(online=False, error=str(exc))
 
     reading = ApReading(

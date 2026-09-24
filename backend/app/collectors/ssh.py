@@ -15,9 +15,9 @@ from .base import ApReading, Client, Radio
 COMMANDS = ["show version", "show wireless-hal station info"]
 
 
-async def _shell(host: str, user: str, password: str, timeout: float = 30) -> str:
+async def _shell(host: str, user: str, password: str, port: int = 22, timeout: float = 30) -> str:
     async with asyncssh.connect(
-        host, username=user, password=password,
+        host, port=port, username=user, password=password,
         known_hosts=None,            # AP in LAN, chiave che cambia al reset
         connect_timeout=10,
     ) as conn:
@@ -110,18 +110,18 @@ def parse_version(text: str) -> tuple[str | None, str | None, int | None]:
 # RETRY_AFTER secondi, altrimenti l'AP blocca l'IP del server come tentativo di forza bruta.
 # Il nuovo tentativo serve perché un AP ancora "in blocco" rifiuta anche la password giusta.
 RETRY_AFTER = 600
-REJECTED_MSG = "Password SSH rifiutata: correggila nel file .env (nuovo tentativo tra 10 minuti)"
+REJECTED_MSG = "Password SSH rifiutata: correggila in Impostazioni (nuovo tentativo tra 10 minuti)"
 _rejected: dict[str, tuple[str, float]] = {}
 
 
-async def collect(host: str, user: str, password: str) -> ApReading:
+async def collect(host: str, user: str, password: str, port: int = 22) -> ApReading:
     if not password:
-        return ApReading(online=False, error="SSH_PASSWORD non impostata nel file .env")
+        return ApReading(online=False, error="Password SSH non impostata: aggiungila in Impostazioni")
     rej = _rejected.get(host)
     if rej and rej[0] == password and time.monotonic() - rej[1] < RETRY_AFTER:
         return ApReading(online=False, error=REJECTED_MSG)
     try:
-        text = await _shell(host, user, password)
+        text = await _shell(host, user, password, port)
     except asyncssh.PermissionDenied:
         _rejected[host] = (password, time.monotonic())
         return ApReading(online=False, error=REJECTED_MSG)

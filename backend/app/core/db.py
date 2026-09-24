@@ -81,6 +81,32 @@ CREATE TABLE IF NOT EXISTS aliases (
     mac  TEXT PRIMARY KEY,
     name TEXT NOT NULL
 );
+
+-- access point gestiti dal pannello (al primo avvio importati dal .env)
+CREATE TABLE IF NOT EXISTS access_points (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    name            TEXT NOT NULL,
+    host            TEXT NOT NULL,
+    method          TEXT NOT NULL,              -- snmp | ssh
+    enabled         INTEGER NOT NULL DEFAULT 1,
+    snmp_version    TEXT NOT NULL DEFAULT '2c', -- 1 | 2c | 3
+    snmp_community  TEXT NOT NULL DEFAULT '',
+    snmp_user       TEXT NOT NULL DEFAULT '',
+    snmp_auth_proto TEXT NOT NULL DEFAULT 'SHA',
+    snmp_auth_pass  TEXT NOT NULL DEFAULT '',
+    snmp_priv_proto TEXT NOT NULL DEFAULT 'AES',
+    snmp_priv_pass  TEXT NOT NULL DEFAULT '',
+    ssh_port        INTEGER NOT NULL DEFAULT 22,
+    ssh_user        TEXT NOT NULL DEFAULT '',
+    ssh_password    TEXT NOT NULL DEFAULT ''
+);
+CREATE UNIQUE INDEX IF NOT EXISTS ux_access_points_name ON access_points(name);
+
+-- impostazioni salvate dal pannello: hanno la precedenza sul .env
+CREATE TABLE IF NOT EXISTS settings (
+    key   TEXT PRIMARY KEY,
+    value TEXT NOT NULL
+);
 """
 
 

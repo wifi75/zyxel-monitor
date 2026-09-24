@@ -27,6 +27,39 @@ export interface Internet {
 }
 export interface Health { version: string; author: string; name: string }
 
+/** campi segreti: l'API dice solo se sono impostati (has_*), vuoti nel modulo = invariati */
+export type Secret = 'snmp_community' | 'snmp_auth_pass' | 'snmp_priv_pass' | 'ssh_password'
+export interface ApConfig {
+  id: number; name: string; host: string; method: 'snmp' | 'ssh'; enabled: boolean
+  snmp_version: '1' | '2c' | '3'; snmp_user: string; snmp_auth_proto: string; snmp_priv_proto: string
+  ssh_port: number; ssh_user: string
+  has_snmp_community: boolean; has_snmp_auth_pass: boolean; has_snmp_priv_pass: boolean; has_ssh_password: boolean
+}
+export interface ApForm extends Omit<ApConfig, 'id' | `has_${Secret}`>, Record<Secret, string> {
+  id: number | null; copy_from: number | null; apply_to_all: boolean
+}
+export function apForm(a: ApConfig | null): ApForm {
+  return {
+    id: a?.id ?? null, name: a?.name ?? '', host: a?.host ?? '', method: a?.method ?? 'snmp', enabled: a?.enabled ?? true,
+    snmp_version: a?.snmp_version ?? '2c', snmp_user: a?.snmp_user ?? '', snmp_auth_proto: a?.snmp_auth_proto ?? 'SHA',
+    snmp_priv_proto: a?.snmp_priv_proto ?? 'AES', ssh_port: a?.ssh_port ?? 22, ssh_user: a?.ssh_user ?? 'admin',
+    snmp_community: '', snmp_auth_pass: '', snmp_priv_pass: '', ssh_password: '', copy_from: null, apply_to_all: false,
+  }
+}
+export interface ApTest {
+  online: boolean; model: string | null; firmware: string | null; uptime_s: number | null
+  clients: number; traffic: boolean; error: string | null; hint: string | null; ms: number
+}
+export interface Detect {
+  suggested: 'snmp' | 'ssh' | null; snmp_ok: boolean; ssh_open: boolean; model: string | null
+  used_default_community: boolean; message: string
+}
+export interface GeneralSettings {
+  opnsense_url: string; opnsense_key: string; has_opnsense_secret: boolean; opnsense_verify_tls: boolean
+  opnsense_wan_if: string; local_domain: string; poll_interval: number; retention_days: number
+}
+export interface GeneralForm extends GeneralSettings { opnsense_secret: string }
+
 const TOKEN_KEY = 'zm_token'
 export const auth = {
   get token() { return localStorage.getItem(TOKEN_KEY) },
@@ -67,4 +100,17 @@ export const api = {
   traffic: (hours: number) => req<Traffic>(`/traffic?hours=${hours}`),
   setAlias: (mac: string, name: string) =>
     req(`/clients/${encodeURIComponent(mac)}/alias`, { method: 'PUT', body: JSON.stringify({ name }) }),
+
+  // pannello impostazioni
+  apConfigs: () => req<ApConfig[]>('/settings/aps'),
+  createAp: (f: ApForm) => req<ApConfig & { copied: number }>('/settings/aps', { method: 'POST', body: JSON.stringify(f) }),
+  updateAp: (id: number, f: ApForm) =>
+    req<ApConfig & { copied: number }>(`/settings/aps/${id}`, { method: 'PUT', body: JSON.stringify(f) }),
+  deleteAp: (id: number) => req(`/settings/aps/${id}`, { method: 'DELETE' }),
+  testAp: (f: ApForm) => req<ApTest>('/settings/aps/test', { method: 'POST', body: JSON.stringify(f) }),
+  detectAp: (f: ApForm) => req<Detect>('/settings/aps/detect', { method: 'POST', body: JSON.stringify(f) }),
+  general: () => req<GeneralSettings>('/settings/general'),
+  saveGeneral: (f: GeneralForm) => req<GeneralSettings>('/settings/general', { method: 'PUT', body: JSON.stringify(f) }),
+  testOpnsense: (f: GeneralForm) =>
+    req<{ ok: boolean; message: string }>('/settings/opnsense/test', { method: 'POST', body: JSON.stringify(f) }),
 }
