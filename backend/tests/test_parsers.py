@@ -179,3 +179,13 @@ def test_password_hide_macblock():
 def test_parse_channels_show_wlan():
     text = "Router> show wlan all\nslot1:\n  Channel: 6\nslot2:\n  channel 44\nRouter> exit\n"
     assert parse_channels(text) == {"2.4GHz": 6, "5GHz": 44}
+
+
+def test_parse_config_channels():
+    from app.collectors.ssh import parse_config_channels
+    text = (
+        "Router> show running-config\n!\nwlan-radio-profile R2\n 2g-channel 6\n dcs activate\n!\n"
+        "wlan-radio-profile R5\n 5g-channel 116\n!\nwlan slot1\n ap profile R2\n!\nwlan slot2\n ap profile R5\n!\n"
+        "Router> exit\n"
+    )
+    assert parse_config_channels(text) == {"2.4GHz": (None, True), "5GHz": (116, False)}

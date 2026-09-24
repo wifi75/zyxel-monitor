@@ -1,6 +1,6 @@
 export interface Radio {
   band: string; channel: number | null; clients: number
-  tx_power?: number | null; utilization?: number | null
+  tx_power?: number | null; utilization?: number | null; channel_auto?: boolean | null
 }
 export interface Ap {
   ap: string; host: string; method: 'snmp' | 'ssh'; online: boolean
@@ -120,6 +120,7 @@ export interface PolicyResult { ap: string; ok: boolean; message: string }
 export interface SiteItem {
   key: string; section: string; label: string; kind: 'text' | 'int' | 'bool' | 'choice' | 'password' | 'list'; help: string
   choices: string[]; unit: string; value: string | number | boolean | string[] | null
+  current: Record<string, string | number | boolean | string[] | null>
 }
 export interface Backup { id: number; ap: string; ts: number; size: number }
 

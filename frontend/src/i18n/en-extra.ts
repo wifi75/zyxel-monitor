@@ -2,6 +2,16 @@ import { addEn } from './index'
 
 // traduzioni inglesi: chiave = testo italiano esatto usato in t()
 addEn({
+  'impostata': 'set',
+  'nessuna': 'none',
+  'nessuno': 'none',
+  'attivo': 'on',
+  'spento': 'off',
+  'disattivata': 'off',
+  'Attuale: {v} (tutti e {n} gli AP)': 'Current: {v} (all {n} APs)',
+  'Diverso fra gli AP': 'Differs between APs',
+  'automatico': 'auto',
+  'canale auto': 'auto channel',
   'impostata — scrivi per cambiarla': 'set — type to change it',
   'Un indirizzo MAC per riga: questi dispositivi non possono collegarsi alla rete.': 'One MAC address per line: these devices cannot join the network.',
   'Dispositivi bloccati (MAC)': 'Blocked devices (MAC)',

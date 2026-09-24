@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
 from . import config_items, policy, site_config
+from .collectors import ssh
 from .core import store
 from .core.db import connect
 from .core.security import current_user
@@ -90,8 +91,25 @@ def list_items():
     def shown(i):   # la password non esce mai dal server: si dice solo se è impostata
         v = values.get(i.key)
         return (v is not None) if i.kind == "password" else v
+
+    # valori attuali letti dagli AP, dalla running-config raccolta a ogni ciclo di lettura SSH
+    configs: dict[str, config_items.RunningConfig] = {}
+    for ap in store.list_aps(enabled_only=True):
+        _, text = ssh.last_output.get(ap.host, (None, ""))
+        start = text.find("show running-config")
+        if start >= 0:
+            configs[ap.name] = config_items.RunningConfig(text[start:])
+
+    def current(i):
+        per_ap = {}
+        for name, cfg in configs.items():
+            v = i.read(cfg)
+            per_ap[name] = (v is not None) if i.kind == "password" else v
+        return per_ap
+
     return [{"key": i.key, "section": i.section, "label": i.label, "kind": i.kind, "help": i.help,
-             "choices": i.choices, "unit": i.unit, "value": shown(i)} for i in config_items.ITEMS]
+             "choices": i.choices, "unit": i.unit, "value": shown(i), "current": current(i)}
+            for i in config_items.ITEMS]
 
 
 class ItemIn(BaseModel):

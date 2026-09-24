@@ -357,7 +357,7 @@ const SSH_NA = "La CLI SSH di questo AP non fornisce ancora il dato: in Impostaz
 
         <div class="radios">
           <span v-for="r in currentAp.radios" :key="r.band" class="radio" :class="bandClass(r.band)">
-            {{ r.band }}<template v-if="r.channel"> · {{ t('canale {n}', { n: r.channel }) }}</template> · {{ t('{n} client', { n: r.clients }) }}
+            {{ r.band }}<template v-if="r.channel"> · {{ t('canale {n}', { n: r.channel }) }}</template><template v-else-if="r.channel_auto"> · {{ t('canale auto') }}</template> · {{ t('{n} client', { n: r.clients }) }}
           </span>
         </div>
       </section>
@@ -405,7 +405,7 @@ const SSH_NA = "La CLI SSH di questo AP non fornisce ancora il dato: in Impostaz
                       :title="r.channel ? t('canale {n}', { n: r.channel }) : t('canale non fornito da questo AP')">
                   <b>{{ r.band.replace('GHz', ' GHz') }}</b>
                   <span :title="r.utilization != null ? t('Potenza {power} dBm, canale occupato al {util}%', { power: r.tx_power ?? '—', util: r.utilization }) : ''">
-                    <template v-if="r.channel">{{ t('canale {n}', { n: r.channel }) }}</template><template v-if="r.channel && r.tx_power != null"> · </template><template v-if="r.tx_power != null">{{ r.tx_power }} dBm</template>
+                    <template v-if="r.channel">{{ t('canale {n}', { n: r.channel }) }}</template><template v-else-if="r.channel_auto">{{ t('canale auto') }}</template><template v-if="(r.channel || r.channel_auto) && r.tx_power != null"> · </template><template v-if="r.tx_power != null">{{ r.tx_power }} dBm</template>
                   </span>
                   <span>{{ t('{n} client', { n: r.clients }) }}</span>
                 </span>

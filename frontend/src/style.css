@@ -479,3 +479,6 @@ button.danger:not(.ghost) { color: #fff; background: var(--bad); border-color: v
 .site-list textarea { font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; resize: vertical; min-height: 64px;
                       border: 1px solid var(--border); border-radius: 8px; padding: 6px 8px; background: var(--surface); color: var(--text); }
 .site-list button { justify-self: end; }
+
+.site-current { margin: 4px 0 0 !important; font-size: 12px; font-weight: 600; color: var(--tone); }
+.site-current.diff { color: var(--weak); cursor: help; }

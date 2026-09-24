@@ -2,6 +2,14 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) — versioni: [SemVer](https://semver.org/lang/it/).
 
+## [0.12.0] - 2026-09-24
+### Aggiunto
+- Impostazioni del sito: sotto ogni voce il valore attuale letto dagli AP (uguale per tutti o diverso, con il dettaglio passando col mouse). "Non gestito" significa che la dashboard non impone nulla e resta il valore dell'AP.
+- Canale degli AP via SSH letto dal profilo radio della configurazione: numero se fisso, "automatico" se lo sceglie l'AP (DCS).
+
+### Modificato
+- Tolto show wlan all dalla lettura SSH: non riporta il canale.
+
 ## [0.11.1] - 2026-09-24
 ### Aggiunto
 - AP via SSH: lettura del canale da show wlan all (formato da confermare con l'Output CLI).

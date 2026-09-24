@@ -22,6 +22,7 @@ class Radio:
     clients: int
     tx_power: int | None = None       # dBm
     utilization: int | None = None    # % di occupazione del canale
+    channel_auto: bool | None = None  # canale scelto dall'AP (DCS)
 
 
 @dataclass

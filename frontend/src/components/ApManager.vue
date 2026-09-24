@@ -156,7 +156,7 @@ const doDelete = () => {
             <div v-for="r in live?.radios ?? []" :key="r.band" class="apm-radio radio" :class="bandClass(r.band)">
               <b>{{ bandLabel(r.band) }}</b>
               <dl>
-                <div><dt>{{ t('Canale') }}</dt><dd>{{ r.channel ?? '—' }}</dd></div>
+                <div><dt>{{ t('Canale') }}</dt><dd>{{ r.channel ?? (r.channel_auto ? t('automatico') : '—') }}</dd></div>
                 <div><dt>{{ t('Potenza') }}</dt><dd>{{ r.tx_power != null ? `${r.tx_power} dBm` : '—' }}</dd></div>
                 <div><dt>{{ t('Canale occupato') }}</dt><dd>{{ r.utilization != null ? `${r.utilization}%` : '—' }}</dd></div>
                 <div><dt>Client</dt><dd>{{ r.clients }}</dd></div>

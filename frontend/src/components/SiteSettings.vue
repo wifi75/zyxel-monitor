@@ -49,6 +49,24 @@ function saveText(i: SiteItem) {
   const v = i.kind === 'password' ? draft.value[i.key] : draft.value[i.key].trim()
   save(i, v === '' ? null : i.kind === 'int' ? Number(v) : v)
 }
+/** valore attuale sugli AP: uguale per tutti, diverso, o non ancora letto */
+function currentText(i: SiteItem): { text: string; detail: string } | null {
+  const entries = Object.entries(i.current ?? {})
+  if (!entries.length) return null
+  const fmt = (v: unknown): string => {
+    if (v == null) return '—'
+    if (i.kind === 'password') return v ? t('impostata') : t('nessuna')
+    if (typeof v === 'boolean') return v ? t('attivo') : t('spento')
+    if (Array.isArray(v)) return v.length ? v.join(', ') : t('nessuno')
+    if (i.kind === 'choice' && String(v) === '0') return t('disattivata')
+    return i.unit ? `${v} ${i.unit}` : String(v)
+  }
+  const values = [...new Set(entries.map(([, v]) => fmt(v)))]
+  const detail = entries.map(([ap, v]) => `${ap}: ${fmt(v)}`).join(' · ')
+  if (values.length === 1) return { text: t('Attuale: {v} (tutti e {n} gli AP)', { v: values[0], n: entries.length }), detail }
+  return { text: t('Diverso fra gli AP'), detail }
+}
+
 const boolValue = (i: SiteItem) => (i.value == null ? '' : i.value ? 'on' : 'off')
 </script>
 
@@ -63,6 +81,8 @@ const boolValue = (i: SiteItem) => (i.value == null ? '' : i.value ? 'on' : 'off
           <div class="grow">
             <strong>{{ t(i.label) }}</strong>
             <p class="muted small">{{ t(i.help) }}</p>
+            <p v-if="currentText(i)" class="site-current" :class="{ diff: currentText(i)!.text === t('Diverso fra gli AP') }"
+               :title="currentText(i)!.detail">{{ currentText(i)!.text }}</p>
           </div>
           <div class="site-ctrl">
             <select v-if="i.kind === 'bool'" :value="boolValue(i)" :disabled="!!busy" @change="saveBool(i, ($event.target as HTMLSelectElement).value)">

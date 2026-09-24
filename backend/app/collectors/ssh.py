@@ -16,7 +16,9 @@ from .base import ApReading, Client, Radio
 # (formato da verificare, l'ultimo output grezzo resta consultabile dal pannello: last_output)
 COMMANDS = [
     "show version", "show system uptime", "show wireless-hal station info",
-    "show wireless-hal statistic", "show port status", "show cpu status", "show mem status", "show wlan all",
+    "show wireless-hal statistic", "show port status", "show cpu status", "show mem status",
+    # il canale non compare in nessun comando di stato: si legge dal profilo radio della configurazione
+    "show running-config",
 ]
 last_output: dict[str, tuple[float, str]] = {}
 
@@ -171,6 +173,26 @@ def parse_channels(text: str) -> dict[str, int]:
     return out
 
 
+def parse_config_channels(text: str) -> dict[str, tuple[int | None, bool]]:
+    """Dalla running-config: per banda (canale del profilo radio, scelta automatica DCS attiva).
+    Con DCS attivo il numero è solo quello di partenza: il canale reale lo sceglie l'AP."""
+    from ..config_items import RunningConfig
+    start = text.find("show running-config")
+    if start < 0:
+        return {}
+    cfg = RunningConfig(text[start:])
+    out: dict[str, tuple[int | None, bool]] = {}
+    for slot, band, key in ((1, "2.4GHz", "2g-channel"), (2, "5GHz", "5g-channel")):
+        prof = cfg.radio_profile(slot)
+        if not prof:
+            continue
+        header = f"wlan-radio-profile {prof}"
+        ch = cfg.value(header, key)
+        is_auto = cfg.has(header, "dcs activate") and not cfg.has(header, "no dcs activate")
+        out[band] = (int(ch) if ch and ch.isdigit() and not is_auto else None, is_auto)
+    return out
+
+
 CPU_NOW = re.compile(r"^\s*CPU utilization:\s*(\d+)\s*%", re.I | re.M)
 MEM_USE = re.compile(r"^\s*memory usage:\s*(\d+)\s*%", re.I | re.M)
 
@@ -271,11 +293,16 @@ async def collect(host: str, user: str, password: str, port: int = 22) -> ApRead
     for c in clients:
         radios[c.band or "?"] = radios.get(c.band or "?", 0) + 1
     channels = parse_channels(text)
+    auto: dict[str, bool] = {}
+    for band, (ch, is_auto) in parse_config_channels(text).items():
+        channels.setdefault(band, ch)
+        auto[band] = is_auto
     cpu, mem = parse_cpu_mem(text)
     return ApReading(
         online=True, model=model, firmware=fw, uptime_s=uptime, clients=clients, cpu_pct=cpu, mem_pct=mem,
         traffic={**parse_traffic(text), **parse_port_status(text), **parse_hal_statistic(text)},
-        radios=[Radio(band=b, channel=channels.get(b), clients=n, **hal.get(b, {})) for b, n in sorted(radios.items())],
+        radios=[Radio(band=b, channel=channels.get(b), channel_auto=auto.get(b), clients=n, **hal.get(b, {}))
+                for b, n in sorted(radios.items())],
     )
 
 
