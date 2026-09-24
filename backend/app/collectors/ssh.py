@@ -95,7 +95,7 @@ def _to_client(d: dict[str, str]) -> Client:
 
 IFACE_START = re.compile(r"^\s*(?:(?:interface\s*)?name\s*[:=]\s*)?(eth\d+|wlan-\d+-\d+)\b", re.I)
 # eco del comando: "Router> show interface wlan-1-1" apre il blocco di quell'interfaccia
-SHOW_IFACE = re.compile(r"show interface (eth\d+|wlan-\d+-\d+)", re.I)
+SHOW_IFACE = re.compile(r"show interface (eth\d+|wlan-\d+-\d+)\b", re.I)
 BYTES = re.compile(r"\b(rx|tx)[ _-]?(?:bytes|octets)\s*[:=]?\s*(\d+)", re.I)
 
 
