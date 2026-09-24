@@ -279,12 +279,46 @@ def _schedule_set(v, cfg: RunningConfig) -> list[str]:
     return _in_ssid(cfg, "ssid-schedule", *[f"{d} enable {start} {end}" for d in DAYS])
 
 
+SSID_5G = "SSID5G"
+
+
+def _slot_ssid(c: RunningConfig, slot: int) -> str | None:
+    for line in c.block(f"wlan slot{slot}"):
+        if m := re.match(r"ssid profile 1 (\S+)", line):
+            return m.group(1)
+    return None
+
+
+def _ssid_5g(c: RunningConfig) -> str | None:
+    """Nome della rete sulla 5 GHz; "" = stessa rete della 2.4 GHz."""
+    p5, p2 = _slot_ssid(c, 2), c.ssid_profile()
+    if not p5 or not p2:
+        return None
+    return "" if p5 == p2 else c.value(f"wlan-ssid-profile {p5}", "ssid")
+
+
+def _ssid_5g_set(v: object, c: RunningConfig) -> list[str]:
+    """Nome separato: copia del profilo 2.4 GHz (stessa password e opzioni) col nome nuovo, sulla 5 GHz."""
+    p2 = c.ssid_profile()
+    if not p2 or not _slot_ssid(c, 2):
+        return []
+    if not v:
+        return ["wlan slot2", f"ssid profile 1 {p2}", "exit"]
+    body = [x for x in c.block(f"wlan-ssid-profile {p2}") if not x.startswith("ssid ") and x != "ssid-schedule"]
+    return [f"wlan-ssid-profile {SSID_5G}", f"ssid {v}", *body, "exit",
+            "wlan slot2", f"ssid profile 1 {SSID_5G}", "exit"]
+
+
 ITEMS: list[Item] = [
     # --- rete Wi-Fi principale ---
     Item("ssid_name", "rete", "Nome della rete (SSID)", "text",
          "Cambiarlo scollega tutti i dispositivi: vanno ricollegati alla rete con il nuovo nome.",
          read=lambda c: c.value(f"wlan-ssid-profile {c.ssid_profile()}", "ssid") if c.ssid_profile() else None,
          build=lambda v, c: _in_ssid(c, f"ssid {v}")),
+    Item("ssid_5g", "rete", "Nome rete 5 GHz", "text",
+         "Vuoto = stessa rete su 2.4 e 5 GHz. Con un nome diverso la 5 GHz diventa una rete a parte "
+         "(stessa password): il band steering non serve più.",
+         read=_ssid_5g, build=_ssid_5g_set),
     Item("wifi_password", "rete", "Password della rete", "password",
          "Da 8 a 63 caratteri. Cambiarla scollega tutti i dispositivi: vanno ricollegati con la nuova password.",
          enforce=False, read=_psk, build=lambda v, c: _in_security(c, f"wpa-psk {v}")),

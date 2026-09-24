@@ -576,3 +576,17 @@ button.ghost.active { background: var(--accent-soft); color: var(--accent); }
                font-weight: 600; color: color-mix(in srgb, var(--orange) 80%, var(--text)); background: color-mix(in srgb, var(--orange) 12%, transparent); }
 .filter-chip button { margin-left: auto; border: none; }
 .kpi.rich[title] { white-space: normal; }
+
+/* v0.19.0: roaming per access point */
+.roam-row { display: grid; grid-template-columns: minmax(90px, 130px) 1fr 1fr; gap: 12px; align-items: center;
+            padding: 7px 0; border-top: 1px solid var(--border); font-size: 13px; }
+.roam-row.head { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); border-top: none; }
+.roam-row strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.roam-ap .flow { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+.roam-ap .tot { font-weight: 700; font-variant-numeric: tabular-nums; min-width: 38px; }
+.roam-ap .tot.in { color: var(--accent); } .roam-ap .tot.out { color: var(--weak); }
+.roam-ap .chip { font-size: 12px; padding: 1px 8px; border-radius: 10px; white-space: nowrap;
+                 background: color-mix(in srgb, var(--accent) 12%, transparent); }
+.roam-ap .chip.out { background: color-mix(in srgb, var(--weak) 14%, transparent); }
+.roam-ap .chip.bounce { outline: 1px solid var(--bad); }
+@media (max-width: 600px) { .roam-row { grid-template-columns: 1fr; gap: 4px; } .roam-row.head { display: none; } }
