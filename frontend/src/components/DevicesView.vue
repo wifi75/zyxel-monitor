@@ -53,9 +53,9 @@ function forget(d: Device) {
           <button :class="{ active: filter === 'online' }" @click="filter = 'online'">Connessi <span class="pill">{{ counts.online }}</span></button>
           <button :class="{ active: filter === 'all' }" @click="filter = 'all'">Tutti <span class="pill">{{ counts.all }}</span></button>
         </div>
-        <input v-model="search" class="search" placeholder="Cerca nome, IP, MAC, AP…" />
         <button v-if="counts.new" class="ghost" @click="allKnown">Riconosci tutti</button>
       </div>
+      <input v-model="search" class="search dev-search" placeholder="Cerca nome, IP, MAC, AP…" />
       <p class="muted small mb">
         Ogni dispositivo che si collega per la prima volta finisce tra i <strong>nuovi</strong> finché non lo riconosci:
         così ti accorgi subito di chi usa il Wi-Fi. I MAC “privati” cambiano nel tempo e possono ripresentarsi come nuovi.

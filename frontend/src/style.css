@@ -344,3 +344,4 @@ body { background: radial-gradient(1200px 500px at 0 -10%, color-mix(in srgb, va
 table td { vertical-align: middle; }
 tbody tr:nth-child(even) td { background: color-mix(in srgb, var(--bg) 60%, transparent); }
 tr.unknown td { background: color-mix(in srgb, var(--weak) 10%, transparent) !important; }
+.dev-search { display: block; width: 100%; margin-bottom: 10px; }
