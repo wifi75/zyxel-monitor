@@ -122,7 +122,10 @@ const grouped = computed(() => GROUPS.map(g => ({ ...g, rows: rows.value.filter(
 function siteLabel(r: Row): string {
   if (r.site == null) return t('non gestito')
   if (r.kind === 'select') return r.options?.find(o => o.value === r.site)?.label ?? r.site
-  if (r.kind === 'list') return t('{n} bloccati', { n: r.site.split('\n').filter(Boolean).length })
+  if (r.kind === 'list') {
+    const n = r.site.split('\n').filter(Boolean).length
+    return n ? t('{n} bloccati', { n }) : t('nessuno')
+  }
   if (r.site === '') return t('spento')
   return r.unit ? `${r.site} ${r.unit}` : r.site
 }
@@ -140,8 +143,17 @@ function cellState(r: Row, apId: number): 'same' | 'diff' | 'none' {
     const wantText = r.field === 'channel' ? channelLabel(want) : `${want} MHz`
     return now === wantText ? 'same' : 'diff'
   }
-  if (r.site == null) return 'none'
-  return now == null || now === siteLabel(r) || r.kind === 'password' ? 'same' : 'diff'
+  if (r.site == null || !r.item) return 'none'
+  if (r.kind === 'password') return 'same'
+  const name = aps.value.find(a => a.id === apId)?.name
+  const cur = name ? r.item.current?.[name] : undefined
+  if (cur === undefined || cur === null) return 'same'          // non ancora letto
+  return norm(cur) === norm(r.item.value) ? 'same' : 'diff'
+}
+/** valore confrontabile: liste ordinate, booleani e numeri come testo */
+function norm(v: unknown): string {
+  if (Array.isArray(v)) return [...v].map(x => String(x).toLowerCase()).sort().join(',')
+  return String(v)
 }
 /** stato di una casella AP: in attesa, non gestita (arancione se gli AP non sono d'accordo) o confronto */
 function apClass(r: Row, apId: number): string {
@@ -166,9 +178,13 @@ function startEdit(r: Row, apId: number | null) {
     : apId === null ? (r.kind === 'password' ? '' : r.site ?? (r.kind === 'select' ? 'unmanaged' : ''))
     : (r.override?.(apId) ?? 'inherit')
 }
+/** voci in cui un valore vuoto ha un significato ("spento"), non "non gestito" */
+const EMPTY_MEANS_OFF = new Set(['guest_name', 'wifi_schedule'])
 function commit(r: Row, apId: number | null, value: string) {
   const k = cellKey(r, apId)
-  const v = value === '' || value === 'unmanaged' ? null : value
+  if (r.kind === 'password' && value === '') { editing.value = null; return }   // nessuna nuova password
+  const keepEmpty = value === '' && (r.kind === 'list' || (r.item && EMPTY_MEANS_OFF.has(r.item.key)))
+  const v = value === 'unmanaged' || (value === '' && !keepEmpty) ? null : value
   const original = apId === null ? r.site : (r.override?.(apId) ?? 'inherit')
   if ((v ?? '') === (original ?? '') && !(r.kind === 'password' && v)) delete pending.value[k]
   else pending.value[k] = { row: r, apId, value: v }
@@ -181,7 +197,11 @@ function pendingLabel(p: Pending): string {
   if (p.value == null || p.value === 'none') return t('non gestito')
   if (p.row.kind === 'password') return '••••••••'
   if (p.row.kind === 'select') return p.row.options?.find(o => o.value === p.value)?.label ?? p.value
-  if (p.row.kind === 'list') return t('{n} bloccati', { n: p.value.split(/\s+/).filter(Boolean).length })
+  if (p.row.kind === 'list') {
+    const n = p.value.split(/\s+/).filter(Boolean).length
+    return n ? t('{n} bloccati', { n }) : t('nessuno')
+  }
+  if (p.value === '') return t('spento')
   return p.row.unit ? `${p.value} ${p.row.unit}` : p.value
 }
 
@@ -198,29 +218,48 @@ async function applyAll() {
   if (warnings.length && !window.confirm([...new Set(warnings)].map(w => t(w)).join('\n') + '\n\n' + t('Procedere?'))) return
   busy.value = 'apply'; error.value = ''
   const out: PolicyResult[] = []
+  // 1) si salvano tutte le regole senza applicarle; 2) un solo giro per AP: ogni ingresso in un profilo
+  //    ricarica le radio, quindi applicare una modifica alla volta farebbe cadere il Wi-Fi più volte
+  let radio = false
+  const itemKeys: string[] = []
   try {
     for (const p of list) {
       const r = p.row
-      let res: { results: PolicyResult[] }
       if (r.field && r.band) {
         const f = r.field
         const conv = (v: string | null) => (v == null || v === 'inherit' ? null : v === 'none' ? 'none' : f === 'tx_power' ? Number(v) : v)
-        res = p.apId === null ? await api.setSitePolicy(r.band, f, conv(p.value)) : await api.setApPolicy(p.apId, r.band, f, conv(p.value))
+        if (p.apId === null) await api.setSitePolicy(r.band, f, conv(p.value), false)
+        else await api.setApPolicy(p.apId, r.band, f, conv(p.value), false)
+        radio = true
       } else {
         const i = r.item!
         const v = p.value == null ? null : i.kind === 'bool' ? p.value === 'true' : i.kind === 'int' ? Number(p.value)
           : i.kind === 'list' ? p.value.split(/[\s,;]+/).filter(Boolean) : p.value
-        res = await api.setSiteItem(i.key, v)
+        await api.setSiteItem(i.key, v, false)
+        if (v != null) itemKeys.push(i.key)
       }
-      out.push(...res.results.map(x => ({ ...x, message: `${r.label}: ${x.message}` })))
       delete pending.value[cellKey(r, p.apId)]
     }
+    if (radio) out.push(...(await api.applyPolicy()).results.map(x => ({ ...x, message: `${t('Radio')}: ${x.message}` })))
+    if (itemKeys.length) out.push(...(await api.applyItems(itemKeys)).results)
   } catch (e) { error.value = (e as Error).message }
   finally { results.value = out; busy.value = ''; await load(); emit('changed'); refreshSoon() }
 }
 
+/** riapplica subito a tutti gli AP la configurazione del sito (senza aspettare il controllo periodico) */
+async function reapplyAll() {
+  busy.value = 'reapply'; error.value = ''
+  try {
+    const [a, b] = await Promise.all([api.applyPolicy(), api.applyItems()])
+    results.value = [...a.results.map(x => ({ ...x, message: `${t('Radio')}: ${x.message}` })), ...b.results]
+    await load(); emit('changed'); refreshSoon()
+  } catch (e) { error.value = (e as Error).message } finally { busy.value = '' }
+}
+
 // ---------- backup ----------
 const showBackups = ref(false)
+const allBackups = ref(false)
+const visibleBackups = computed(() => (allBackups.value ? backups.value : backups.value.slice(0, 8)))
 const shown = ref<Backup & { text: string } | null>(null)
 const copied = ref(false)
 async function backupAll() {
@@ -252,7 +291,9 @@ async function copyBackup() { copied.value = await copyText(shown.value?.text ??
       <span class="val diff">{{ t('diverso') }}</span>
       <span class="val none">{{ t('non gestito') }}</span>
       <span class="val pend">{{ t('in attesa') }}</span>
-      <button class="ghost" @click="showBackups = !showBackups">💾 {{ t('Backup') }}</button>
+      <button class="ghost" :class="{ active: showBackups }" @click="showBackups = !showBackups">💾 {{ t('Backup') }}</button>
+      <button class="ghost" :disabled="!!busy" :title="t('Riapplica subito a tutti gli AP la configurazione del sito')" @click="reapplyAll">
+        {{ busy === 'reapply' ? t('Applico…') : '↻ ' + t('Riapplica') }}</button>
       <button v-if="pendingCount" class="ghost" :disabled="!!busy" @click="cancelAll">{{ t('Annulla') }}</button>
       <button class="primary" :disabled="!pendingCount || !!busy" @click="applyAll">
         {{ busy === 'apply' ? t('Applico…') : t('Applica modifiche ({n})', { n: pendingCount }) }}
@@ -264,20 +305,21 @@ async function copyBackup() { copied.value = await copyText(shown.value?.text ??
       <div v-for="(r, n) in results" :key="n" class="cfg-result">
         <span class="status" :class="r.ok ? 'on' : 'off'" /><strong>{{ r.ap }}</strong><span class="muted small">{{ r.message }}</span>
       </div>
-      <button class="ghost small" @click="results = []">{{ t('Chiudi') }}</button>
+      <button class="ghost small cfg-close" :title="t('Chiudi')" @click="results = []">✕</button>
     </div>
 
     <!-- backup, apribili dalla barra -->
     <section v-if="showBackups" class="card">
       <div class="section-head">
-        <h2>{{ t('Backup delle configurazioni') }}</h2>
+        <h2>💾 {{ t('Backup delle configurazioni') }}</h2>
         <button :disabled="!!busy" @click="backupAll">{{ busy === 'backup' ? t('Salvo…') : t('Salva backup di tutti') }}</button>
+        <button class="ghost small cfg-close" :title="t('Chiudi')" @click="showBackups = false; shown = null">✕</button>
       </div>
       <div class="table-wrap">
         <table>
           <thead><tr><th>{{ t('Quando') }}</th><th>Access point</th><th>{{ t('Dimensione') }}</th><th /></tr></thead>
           <tbody>
-            <template v-for="b in backups" :key="b.id">
+            <template v-for="b in visibleBackups" :key="b.id">
               <tr>
                 <td class="small">{{ time(b.ts) }}</td><td><strong>{{ b.ap }}</strong></td>
                 <td class="small">{{ (b.size / 1024).toFixed(1) }} KB</td>
@@ -294,6 +336,8 @@ async function copyBackup() { copied.value = await copyText(shown.value?.text ??
           </tbody>
         </table>
       </div>
+      <button v-if="backups.length > 8" class="ghost small" @click="allBackups = !allBackups">
+        {{ allBackups ? t('Mostra solo gli ultimi') : t('Mostra tutti ({n})', { n: backups.length }) }}</button>
     </section>
 
     <!-- tabella di confronto -->
@@ -306,8 +350,8 @@ async function copyBackup() { copied.value = await copyText(shown.value?.text ??
           </tr></thead>
           <tbody>
             <template v-for="g in grouped" :key="g.key">
-              <tr class="cmp-group"><td :colspan="2 + aps.length" :style="{ color: g.tone }">{{ g.icon }} {{ t(g.title) }}</td></tr>
-              <tr v-for="r in g.rows" :key="r.id">
+              <tr class="cmp-group" :style="{ '--tone': g.tone }"><td :colspan="2 + aps.length">{{ g.icon }} {{ t(g.title) }}</td></tr>
+              <tr v-for="r in g.rows" :key="r.id" class="cmp-row" :style="{ '--tone': g.tone }">
                 <td class="cmp-set"><span>{{ r.label }}</span><small v-if="r.hint">{{ r.hint }}</small></td>
 
                 <td class="site-col">

@@ -190,16 +190,19 @@ export const api = {
 
   // configurazione centralizzata
   policy: () => req<PolicyOverview>('/policy'),
-  setSitePolicy: (band: string, field: PolicyField, value: number | string | null) =>
-    req<{ results: PolicyResult[] }>('/policy/site', { method: 'PUT', body: JSON.stringify({ band, field, value }) }),
-  setApPolicy: (id: number, band: string, field: PolicyField, value: number | string | null) =>
-    req<{ results: PolicyResult[] }>(`/policy/aps/${id}`, { method: 'PUT', body: JSON.stringify({ band, field, value }) }),
+  setSitePolicy: (band: string, field: PolicyField, value: number | string | null, apply = true) =>
+    req<{ results: PolicyResult[] }>(`/policy/site?apply=${apply}`, { method: 'PUT', body: JSON.stringify({ band, field, value }) }),
+  setApPolicy: (id: number, band: string, field: PolicyField, value: number | string | null, apply = true) =>
+    req<{ results: PolicyResult[] }>(`/policy/aps/${id}?apply=${apply}`, { method: 'PUT', body: JSON.stringify({ band, field, value }) }),
   applyPolicy: () => req<{ results: PolicyResult[] }>('/policy/apply', { method: 'POST' }),
   backupAll: () => req<{ results: PolicyResult[] }>('/policy/backups', { method: 'POST' }),
   backups: () => req<Backup[]>('/policy/backups'),
   siteItems: () => req<SiteItem[]>('/policy/items'),
-  setSiteItem: (key: string, value: string | number | boolean | string[] | null) =>
-    req<{ results: PolicyResult[] }>(`/policy/items/${key}`, { method: 'PUT', body: JSON.stringify({ value }) }),
+  setSiteItem: (key: string, value: string | number | boolean | string[] | null, apply = true) =>
+    req<{ results: PolicyResult[] }>(`/policy/items/${key}?apply=${apply}`, { method: 'PUT', body: JSON.stringify({ value }) }),
+  /** keys: voci da applicare (anche la password); senza = tutte quelle da mantenere */
+  applyItems: (keys?: string[]) =>
+    req<{ results: PolicyResult[] }>('/policy/items/apply', { method: 'POST', body: JSON.stringify({ keys: keys ?? null }) }),
   setHybridMode: (id: number, mode: 'cloud' | 'standalone') =>
     req<{ ok: boolean; output: string }>(`/settings/aps/${id}/hybrid-mode`, { method: 'POST', body: JSON.stringify({ mode }) }),
   exploreAp: (id: number) => req<{ text: string }>(`/settings/aps/${id}/explore`, { method: 'POST' }),

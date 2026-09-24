@@ -517,3 +517,14 @@ button.val:hover { border-color: var(--accent); }
 .cmp-edit textarea { font: 12px/1.4 ui-monospace, monospace; border: 1px solid var(--border); border-radius: 8px; padding: 6px; }
 .cmp-edit-btns { display: flex; justify-content: flex-end; gap: 6px; }
 @media (max-width: 900px) { .cfg-bar { position: static; } }
+
+/* gruppi della tabella di configurazione: un colore per scheda */
+.cmp-group td { background: color-mix(in srgb, var(--tone) 12%, var(--surface)) !important; color: var(--tone);
+                border-left: 4px solid var(--tone); }
+.cmp-row td:first-child { border-left: 4px solid color-mix(in srgb, var(--tone) 45%, transparent);
+                          background: color-mix(in srgb, var(--tone) 4%, var(--surface)); }
+.cmp-row:hover td { background: color-mix(in srgb, var(--tone) 7%, var(--surface)); }
+.cfg-results { position: relative; padding-right: 44px; }
+.cfg-close { border: none; font-size: 15px; line-height: 1; padding: 4px 8px; }
+.cfg-results .cfg-close { position: absolute; top: 8px; right: 8px; }
+button.ghost.active { background: var(--accent-soft); color: var(--accent); }

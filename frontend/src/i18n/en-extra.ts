@@ -2,6 +2,11 @@ import { addEn } from './index'
 
 // traduzioni inglesi: chiave = testo italiano esatto usato in t()
 addEn({
+  'Riapplica': 'Re-apply',
+  'Riapplica subito a tutti gli AP la configurazione del sito': 'Push the site configuration to every AP now',
+  'Mostra solo gli ultimi': 'Show only the latest',
+  'Mostra tutti ({n})': 'Show all ({n})',
+
   'Massima': 'Maximum',
   'max di legge 20 dBm': 'legal max 20 dBm',
   'max 23 dBm, 30 sui canali DFS': 'max 23 dBm, 30 on DFS channels',

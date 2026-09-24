@@ -2,6 +2,14 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) — versioni: [SemVer](https://semver.org/lang/it/).
 
+## [0.18.1] - 2026-09-24
+### Corretto
+- Applica modifiche: tutte le regole vengono salvate e poi applicate con un solo giro per AP (prima le radio si ricaricavano una volta per ogni modifica).
+- Le voci sì/no gestite non risultano più sempre "diverse": il confronto usa i valori, non le etichette.
+- Rete ospiti e orari del Wi-Fi si spengono con un valore vuoto; svuotare l'elenco dei MAC sblocca i dispositivi; una password vuota non cancella più quella impostata.
+### Aggiunto
+- Pulsante Riapplica per spingere subito la configurazione a tutti gli AP; backup chiudibili e limitati agli ultimi 8; colore diverso per ogni gruppo della tabella.
+
 ## [0.18.0] - 2026-09-24
 ### Modificato
 - Pagina Configurazione rifatta come tabella di confronto: una riga per impostazione, colonna Sito (vale per tutti) e una colonna per AP con il valore attuale; caselle diverse in arancione, modifiche in attesa in viola e applicate insieme con "Applica modifiche"; backup apribili dalla barra.

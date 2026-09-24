@@ -92,21 +92,22 @@ def _validate(body: RuleIn):
 
 
 @router.put("/site")
-async def set_site(body: RuleIn):
+async def set_site(body: RuleIn, apply: bool = True):
+    """apply=false: si salva soltanto (la pagina applica tutte le modifiche insieme con /apply)."""
     value = _validate(body)
     if value is not None and value == policy.UNMANAGED[body.field]:
         value = None       # nel sito "non gestito" è l'assenza della regola
     policy.set_rule(policy.SITE, body.band, body.field, value)
-    return {"results": await policy.apply_all(reason="profilo del sito")}
+    return {"results": await policy.apply_all(reason="profilo del sito") if apply else []}
 
 
 @router.put("/aps/{ap_id}")
-async def set_ap(ap_id: int, body: RuleIn):
+async def set_ap(ap_id: int, body: RuleIn, apply: bool = True):
     ap = store.get_ap(ap_id)
     if not ap:
         raise HTTPException(404, "Access point non trovato")
     policy.set_rule(policy.scope_of(ap_id), body.band, body.field, _validate(body))
-    return {"results": [await policy.apply_ap(ap, reason="personalizzazione")]}
+    return {"results": [await policy.apply_ap(ap, reason="personalizzazione")] if apply else []}
 
 
 @router.get("/items")
@@ -135,7 +136,7 @@ class ItemIn(BaseModel):
 
 
 @router.put("/items/{key}")
-async def set_item(key: str, body: ItemIn):
+async def set_item(key: str, body: ItemIn, apply: bool = True):
     item = config_items.BY_KEY.get(key)
     if not item:
         raise HTTPException(404, "Impostazione sconosciuta")
@@ -144,14 +145,19 @@ async def set_item(key: str, body: ItemIn):
     except ValueError as exc:
         raise HTTPException(422, f"{item.label}: {exc}") from None
     site_config.set_value(key, value)
-    if value is None:
+    if value is None or not apply:
         return {"results": []}
     return {"results": await site_config.apply_all(reason=item.label, only={key})}
 
 
+class ApplyItemsIn(BaseModel):
+    keys: list[str] | None = None      # None = tutte le voci da mantenere; elenco = solo quelle (anche la password)
+
+
 @router.post("/items/apply")
-async def apply_items():
-    return {"results": await site_config.apply_all()}
+async def apply_items(body: ApplyItemsIn | None = None):
+    keys = set(body.keys) if body and body.keys is not None else None
+    return {"results": await site_config.apply_all(only=keys)}
 
 
 @router.post("/apply")
