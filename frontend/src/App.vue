@@ -4,6 +4,7 @@ import {
   api, auth, Unauthorized, type Ap, type Client, type Device, type DeviceUsage, type Event, type Health,
   type Internet, type Roaming, type SignalByAp, type Sites, type Traffic, type Usage,
 } from './api'
+import ApManager from './components/ApManager.vue'
 import BarList from './components/BarList.vue'
 import ClientsTable from './components/ClientsTable.vue'
 import Dashboard from './components/Dashboard.vue'
@@ -189,18 +190,6 @@ async function copyUsageDebug() {
   usageCopied.value = true
 }
 
-// ---- riavvio via SSH (non tocca la configurazione: Nebula non lo annulla) ----
-const rebooting = ref(false)
-async function rebootAp(name: string) {
-  if (!window.confirm(`Riavviare ${name}? Resta offline per 2-3 minuti e i suoi client si spostano sugli altri AP.`)) return
-  rebooting.value = true
-  try {
-    const cfg = (await api.apConfigs()).find(a => a.name === name)
-    if (cfg) await api.rebootAp(cfg.id)
-    window.setTimeout(() => { rebooting.value = false; load() }, 60_000)
-  } catch (e) { rebooting.value = false; loadError.value = (e as Error).message }
-}
-
 /** classe colore per banda radio */
 const bandClass = (band: string) => (band.startsWith('2') ? 'b24' : band.startsWith('5') ? 'b5' : band.startsWith('6') ? 'b6' : '')
 
@@ -267,6 +256,7 @@ const SSH_NA = "La CLI SSH di questo AP non fornisce ancora il dato: in Impostaz
         <button v-for="a in aps" :key="a.ap" :class="{ active: view === a.ap }" @click="view = a.ap">
           <span class="status" :class="a.online ? 'on' : 'off'" /> {{ a.ap }} <span class="pill">{{ a.clients ?? 0 }}</span>
         </button>
+        <button :class="{ active: view === '#aps' }" @click="view = '#aps'">Gestione AP</button>
         <button :class="{ active: view === '#devices' }" @click="view = '#devices'">
           Dispositivi <span v-if="newDevices.length" class="pill alert" title="Dispositivi nuovi da riconoscere">{{ newDevices.length }}</span>
         </button>
@@ -299,6 +289,8 @@ const SSH_NA = "La CLI SSH di questo AP non fornisce ancora il dato: in Impostaz
 
     <SettingsView v-if="view === '#settings'" :status="aps" @changed="reloadSoon" />
 
+    <ApManager v-else-if="view === '#aps'" :status="aps" @changed="reloadSoon" />
+
     <DevicesView v-else-if="view === '#devices'" :devices="devices" @changed="load" @rename="rename" />
 
     <main v-else-if="view === '#events'">
@@ -316,9 +308,7 @@ const SSH_NA = "La CLI SSH di questo AP non fornisce ancora il dato: in Impostaz
           </p>
           <p v-if="currentAp.error" class="error small">{{ currentAp.error }}</p>
         </div>
-        <button v-if="currentAp.method === 'ssh'" class="ghost small danger" :disabled="rebooting" @click="rebootAp(currentAp.ap)">
-          {{ rebooting ? 'Riavvio inviato…' : 'Riavvia AP' }}
-        </button>
+
         <div class="radios">
           <span v-for="r in currentAp.radios" :key="r.band" class="radio" :class="bandClass(r.band)">
             {{ r.band }}<template v-if="r.channel"> · canale {{ r.channel }}</template> · {{ r.clients }} client

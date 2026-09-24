@@ -16,7 +16,7 @@ from .base import ApReading, Client, Radio
 # (formato da verificare, l'ultimo output grezzo resta consultabile dal pannello: last_output)
 COMMANDS = [
     "show version", "show system uptime", "show wireless-hal station info",
-    "show wireless-hal statistic", "show port status",
+    "show wireless-hal statistic", "show port status", "show cpu status", "show mem status",
 ]
 last_output: dict[str, tuple[float, str]] = {}
 

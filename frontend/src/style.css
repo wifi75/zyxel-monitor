@@ -347,3 +347,39 @@ tr.unknown td { background: color-mix(in srgb, var(--weak) 10%, transparent) !im
 .dev-search { display: block; width: 100%; margin-bottom: 10px; }
 
 label.check.inline { display: inline-flex; min-height: 0; margin-right: 10px; font-size: 12px; }
+
+/* pagina Gestione AP */
+.apm { display: grid; grid-template-columns: minmax(260px, 320px) minmax(0, 1fr); gap: 16px; align-items: start; }
+@media (max-width: 860px) { .apm { grid-template-columns: 1fr; } }
+.apm-list { display: grid; gap: 6px; position: sticky; top: 12px; }
+.apm-item { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; padding: 10px 12px; border-radius: 10px;
+            border: 1px solid transparent; background: transparent; }
+.apm-item .grow { display: grid; min-width: 0; }
+.apm-item .grow span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.apm-item:hover { background: var(--bg); }
+.apm-item.active { background: var(--accent-soft); border-color: color-mix(in srgb, var(--accent) 35%, transparent); }
+.apm-item.disabled { opacity: .55; }
+.apm-detail { display: grid; gap: 16px; }
+.apm-hero { display: flex; align-items: center; gap: 14px; padding: 14px; border-radius: 12px;
+            background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 10%, var(--surface)), var(--surface) 70%); }
+.apm-hero.off { background: linear-gradient(135deg, color-mix(in srgb, var(--bad) 10%, var(--surface)), var(--surface) 70%); }
+.apm-hero h2 { font-size: 20px; }
+.apm-hero p { margin: 2px 0 0; }
+.apm-hero-icon { width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; color: #fff;
+                 background: linear-gradient(135deg, var(--accent), var(--violet)); }
+.apm-tabs { justify-self: start; }
+.apm-body { display: grid; gap: 12px; }
+.apm-facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.apm-facts .tile { height: 70px; }
+.apm-radios { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
+.apm-radio { display: grid; gap: 8px; padding: 12px 14px; border-radius: 12px; font-size: 13px; }
+.apm-radio b { font-size: 15px; }
+.apm-radio dl { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 12px; margin: 0; }
+.apm-radio dt { font-size: 11px; opacity: .75; }
+.apm-radio dd { margin: 0; font-weight: 600; color: var(--text); font-variant-numeric: tabular-nums; }
+.apm-tools { gap: 8px; }
+.apm-tool { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid var(--border); border-radius: 10px; }
+.apm-tool p { margin: 2px 0 0; }
+.apm-tool button { min-width: 110px; }
+.apm-tool.danger-zone { border-color: color-mix(in srgb, var(--bad) 35%, var(--border)); }
+button.danger:not(.ghost) { color: #fff; background: var(--bad); border-color: var(--bad); }

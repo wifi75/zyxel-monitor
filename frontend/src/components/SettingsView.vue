@@ -109,77 +109,7 @@ onMounted(() => { load(); loadGeneral() })
   <main class="settings">
     <p v-if="error" class="banner err">{{ error }}</p>
 
-    <section class="card">
-      <div class="section-head">
-        <h2>Access point</h2>
-        <button class="primary" :disabled="editing === 'new'" @click="editing = 'new'; notice = ''">+ Aggiungi AP</button>
-      </div>
-      <p class="muted small mb">
-        Password e community non vengono mai mostrate: lasciale vuote per tenere quelle salvate.
-        “Rileva protocollo” prova da solo SNMP e SSH e ti dice quale usare.
-      </p>
-      <p v-if="notice" class="note ok mb">{{ notice }}</p>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr><th /><th>Nome</th><th>Indirizzo</th><th>Protocollo</th><th>Credenziali</th><th>Ultima lettura</th><th /></tr>
-          </thead>
-          <tbody>
-            <template v-for="a in list" :key="a.id">
-              <tr :class="{ disabled: !a.enabled }">
-                <td><span class="status" :class="!a.enabled ? 'idle' : statusOf(a)?.online ? 'on' : 'off'" /></td>
-                <td><strong>{{ a.name }}</strong></td>
-                <td class="mono">{{ a.host }}</td>
-                <td><span class="tag">{{ protocol(a) }}</span></td>
-                <td class="small" :class="{ error: credentials(a).missing }">{{ credentials(a).text }}</td>
-                <td class="small">
-                  <template v-if="!a.enabled">disattivato</template>
-                  <template v-else-if="testing === a.id">prova in corso…</template>
-                  <template v-else-if="tests[a.id]">
-                    <span :class="tests[a.id].online ? 'ok-text' : 'error'">
-                      {{ tests[a.id].online ? `prova riuscita · ${tests[a.id].clients} client · ${tests[a.id].ms} ms` : tests[a.id].error }}
-                    </span>
-                    <div v-if="tests[a.id].hint" class="muted">{{ tests[a.id].hint }}</div>
-                  </template>
-                  <template v-else-if="statusOf(a)">
-                    <span v-if="statusOf(a)!.online">online · {{ statusOf(a)!.clients ?? 0 }} client</span>
-                    <span v-else class="error">{{ statusOf(a)!.error || 'non raggiungibile' }}</span>
-                  </template>
-                  <span v-else class="muted">in attesa</span>
-                </td>
-                <td class="row-actions">
-                  <button class="ghost small" :disabled="testing !== null || !a.enabled" @click="testRow(a)">Prova</button>
-                  <button class="ghost small" @click="editing = editing === a.id ? null : a.id; notice = ''">Modifica</button>
-                  <button v-if="a.method === 'ssh'" class="ghost small" title="Ultimo output della CLI" @click="showRaw(a)">Output CLI</button>
-                  <button v-if="a.method === 'ssh' && a.enabled" class="ghost small" @click="reboot(a)">Riavvia</button>
-                  <button class="ghost small" @click="toggle(a)">{{ a.enabled ? 'Disattiva' : 'Attiva' }}</button>
-                  <button class="ghost small danger" @click="remove(a)">Elimina</button>
-                </td>
-              </tr>
-              <tr v-if="raw && raw.id === a.id" class="edit-row">
-                <td colspan="7">
-                  <div class="section-head">
-                    <strong class="small">Output CLI di {{ a.name }}
-                      <span class="muted">{{ raw.ts ? `letto alle ${new Date(raw.ts * 1000).toLocaleTimeString('it-IT')}` : '' }}</span></strong>
-                    <button class="ghost small" @click="copyRaw">{{ copied ? 'Copiato' : 'Copia' }}</button>
-                    <button class="ghost small" @click="raw = null">Chiudi</button>
-                  </div>
-                  <p class="muted small mb">Se uptime o traffico non compaiono, copia questo testo e mandalo: serve a leggere il formato del tuo firmware.</p>
-                  <pre class="raw">{{ raw.text || 'Nessuna lettura riuscita finora.' }}</pre>
-                </td>
-              </tr>
-              <tr v-if="editing === a.id" class="edit-row">
-                <td colspan="7"><ApEditor :ap="a" :all="list" @saved="saved" @cancel="editing = null" /></td>
-              </tr>
-            </template>
-            <tr v-if="editing === 'new'" class="edit-row">
-              <td colspan="7"><ApEditor :ap="null" :all="list" @saved="saved" @cancel="editing = null" /></td>
-            </tr>
-            <tr v-if="!list.length && editing !== 'new'"><td colspan="7" class="muted">Nessun access point: aggiungine uno.</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
+    <p class="muted small">Gli access point si gestiscono nella pagina <strong>Gestione AP</strong>.</p>
 
     <form class="card ap-editor" @submit.prevent="saveGeneral">
       <div class="section-head">
