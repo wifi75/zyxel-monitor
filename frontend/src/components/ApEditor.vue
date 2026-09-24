@@ -104,6 +104,17 @@ const save = () => run('save', async () => {
       </template>
     </div>
 
+    <details v-if="form.method === 'snmp'" class="ssh-extra" :open="!!props.ap?.has_ssh_password">
+      <summary>Accesso SSH per configurazione e riavvio <span class="muted small">(facoltativo: i dati si leggono via SNMP)</span></summary>
+      <div class="grid">
+        <label>Utente SSH<input v-model="form.ssh_user" autocomplete="off" /></label>
+        <label>Password SSH
+          <input v-model="form.ssh_password" type="password" autocomplete="new-password" :placeholder="keeps('ssh_password', 'Local credentials di Nebula')" />
+        </label>
+        <label>Porta<input v-model.number="form.ssh_port" type="number" min="1" max="65535" /></label>
+      </div>
+    </details>
+
     <div v-else class="grid">
       <label>Utente<input v-model="form.ssh_user" required autocomplete="off" /></label>
       <label>Password

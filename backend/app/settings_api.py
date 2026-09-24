@@ -190,8 +190,8 @@ async def reboot_ap(ap_id: int):
     ap = store.get_ap(ap_id)
     if not ap:
         raise HTTPException(404, "Access point non trovato")
-    if ap.method != "ssh" or not ap.ssh_password:
-        raise HTTPException(409, "Il riavvio è disponibile solo per gli AP letti via SSH con password impostata")
+    if not ap.ssh_password:
+        raise HTTPException(409, "Per il riavvio servono le credenziali SSH (Gestione AP → Connessione)")
     try:
         await ssh.reboot(ap.host, ap.ssh_user, ap.ssh_password, ap.ssh_port)
     except (OSError, ssh.asyncssh.Error, TimeoutError) as exc:

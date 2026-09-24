@@ -399,3 +399,6 @@ button.danger:not(.ghost) { color: #fff; background: var(--bad); border-color: v
 .cfg-cell select { min-width: 190px; }
 .cfg-state { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
 .ev.config { color: var(--violet); }
+
+.ssh-extra { border: 1px dashed var(--border); border-radius: 10px; padding: 10px 12px; }
+.ssh-extra summary { cursor: pointer; font-weight: 600; margin-bottom: 8px; }

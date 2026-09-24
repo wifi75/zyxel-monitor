@@ -29,7 +29,7 @@ def overview():
                            "override": own[band] if band in own else "inherit",
                            "status": policy.status(want, have, (ap.name, band))}
         aps.append({"id": ap.id, "name": ap.name, "method": ap.method, "enabled": ap.enabled,
-                    "configurable": ap.method == "ssh" and bool(ap.ssh_password), "bands": bands})
+                    "configurable": bool(ap.ssh_password), "bands": bands})
     return {"site": {b: rules.get(policy.SITE, {}).get(b) for b in policy.BANDS}, "aps": aps}
 
 

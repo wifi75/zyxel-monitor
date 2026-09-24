@@ -2,6 +2,10 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) — versioni: [SemVer](https://semver.org/lang/it/).
 
+## [0.7.0] - 2026-09-24
+### Aggiunto
+- Accesso SSH anche per gli AP letti via SNMP (Gestione AP → Connessione): i dati restano da SNMP, configurazione centralizzata, backup e riavvio passano da SSH. Così tutti e 4 gli AP sono configurabili.
+
 ## [0.6.0] - 2026-09-24
 ### Aggiunto
 - Pagina **Configurazione**: configurazione centralizzata della potenza radio per banda, con profilo del sito valido per tutti gli AP e personalizzazione per singolo AP.

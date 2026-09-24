@@ -180,12 +180,12 @@ const doDelete = () => {
 
           <div class="apm-tool">
             <div class="grow"><strong>Riavvia</strong><p class="muted small">Via SSH, non tocca la configurazione: resta offline 2-3 minuti.</p></div>
-            <button class="danger" :disabled="!!busy || current.method !== 'ssh' || !current.enabled" :title="current.method !== 'ssh' ? 'Disponibile solo per gli AP letti via SSH' : ''" @click="doReboot">
+            <button class="danger" :disabled="!!busy || !current.has_ssh_password || !current.enabled" :title="!current.has_ssh_password ? 'Servono le credenziali SSH (scheda Connessione)' : ''" @click="doReboot">
               {{ busy === 'reboot' ? 'Invio…' : 'Riavvia' }}
             </button>
           </div>
 
-          <div v-if="current.method === 'ssh'" class="apm-tool">
+          <div v-if="current.has_ssh_password" class="apm-tool">
             <div class="grow"><strong>Output CLI</strong><p class="muted small">Il testo grezzo dell'ultima lettura, utile se un dato manca.</p></div>
             <button :disabled="!!busy" @click="doRaw">Mostra</button>
           </div>

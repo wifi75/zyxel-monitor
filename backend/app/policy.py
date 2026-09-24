@@ -89,7 +89,7 @@ def _event(ap: str, info: str) -> None:
 
 async def apply_ap(ap: store.ApConfig, only_changed: bool = False, reason: str = "manuale") -> dict:
     """Applica all'AP le regole effettive di tutte le bande gestite."""
-    if ap.method != "ssh" or not ap.ssh_password:
+    if not ap.ssh_password:
         return {"ap": ap.name, "ok": False, "message": "Serve l'accesso SSH per configurare questo AP"}
     rules = load()
     actual = actual_powers().get(ap.name, {})
@@ -122,7 +122,7 @@ async def apply_ap(ap: store.ApConfig, only_changed: bool = False, reason: str =
 
 
 async def apply_all(reason: str = "manuale") -> list[dict]:
-    aps = [a for a in store.list_aps(enabled_only=True) if a.method == "ssh"]
+    aps = [a for a in store.list_aps(enabled_only=True) if a.ssh_password]
     return list(await asyncio.gather(*(apply_ap(a, reason=reason) for a in aps)))
 
 
@@ -134,7 +134,7 @@ async def enforce() -> None:
     actual = actual_powers()
     now = time.time()
     for ap in store.list_aps(enabled_only=True):
-        if ap.method != "ssh" or not ap.ssh_password:
+        if not ap.ssh_password:
             continue
         drift = False
         for band in BANDS:
@@ -154,7 +154,7 @@ async def enforce() -> None:
 
 # ---------- backup della configurazione ----------
 async def backup_ap(ap: store.ApConfig) -> dict:
-    if ap.method != "ssh" or not ap.ssh_password:
+    if not ap.ssh_password:
         return {"ap": ap.name, "ok": False, "message": "Serve l'accesso SSH"}
     try:
         text = await ssh.running_config(ap.host, ap.ssh_user, ap.ssh_password, ap.ssh_port)
@@ -168,5 +168,5 @@ async def backup_ap(ap: store.ApConfig) -> dict:
 
 
 async def backup_all() -> list[dict]:
-    aps = [a for a in store.list_aps(enabled_only=True) if a.method == "ssh"]
+    aps = [a for a in store.list_aps(enabled_only=True) if a.ssh_password]
     return list(await asyncio.gather(*(backup_ap(a) for a in aps)))
