@@ -73,10 +73,15 @@ async def dns_totals(top: int = 10) -> dict:
     }
 
 
+DOWN_STATES = ("down", "offline", "force_down")
+
+
 async def gateways() -> list[dict]:
     d = await asyncio.to_thread(fetch, "routes/gateway/status")
     return [
         {"name": g.get("name"), "online": (g.get("status_translated") or "").lower() == "online",
+         # "Latency"/"Packetloss" sono linea degradata, non caduta: per i disservizi conta solo offline
+         "down": (g.get("status") or g.get("status_translated") or "").lower() in DOWN_STATES,
          "status": g.get("status_translated"), "delay": g.get("delay"), "loss": g.get("loss"),
          "monitor": g.get("monitor")}
         for g in d.get("items", [])
@@ -90,3 +95,26 @@ async def interface_bytes(name: str) -> tuple[int, int] | None:
     if not i:
         return None
     return int(i.get("bytes received") or 0), int(i.get("bytes transmitted") or 0)
+
+
+async def netflow_active() -> bool:
+    d = await asyncio.to_thread(fetch, "diagnostics/netflow/status")
+    return str(d.get("status") or "").lower() == "active"
+
+
+async def bytes_per_address(since: int, until: int) -> dict[str, int]:
+    """Byte per indirizzo sorgente da Insight (NetFlow con "Capture local").
+    Formato di risposta da confermare sulla prima installazione con NetFlow attivo: parsing tollerante."""
+    d = await asyncio.to_thread(
+        fetch, f"diagnostics/networkinsight/top/FlowSourceAddrTotals/{since}/{until}/src_addr/octets/%20/200"
+    )
+    rows = d if isinstance(d, list) else (d.get("rows") or d.get("items") or [])
+    out: dict[str, int] = {}
+    for r in rows:
+        if not isinstance(r, dict):
+            continue
+        addr = r.get("src_addr") or r.get("key")
+        total = r.get("total") or r.get("octets") or 0
+        if addr:
+            out[str(addr)] = out.get(str(addr), 0) + int(float(total))
+    return out

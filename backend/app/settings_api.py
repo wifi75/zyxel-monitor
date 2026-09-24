@@ -12,7 +12,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field, field_validator
 
 from . import poller
-from .collectors import opnsense
+from .collectors import opnsense, ssh
 from .core import store
 from .core.config import EDITABLE, get_settings
 from .core.security import current_user
@@ -172,6 +172,16 @@ async def test_ap(body: ApIn):
         "clients": len(r.clients), "traffic": bool(r.traffic), "error": r.error,
         "hint": _hint(ap, r.error), "ms": round((time.monotonic() - started) * 1000),
     }
+
+
+@router.get("/aps/{ap_id}/raw")
+def raw_output(ap_id: int):
+    """Ultimo output della CLI SSH così com'è: serve a riconoscere i formati non ancora gestiti."""
+    ap = store.get_ap(ap_id)
+    if not ap:
+        raise HTTPException(404, "Access point non trovato")
+    ts, text = ssh.last_output.get(ap.host, (None, ""))
+    return {"ts": ts, "text": text}
 
 
 async def _port_open(host: str, port: int, timeout: float = 3) -> bool:

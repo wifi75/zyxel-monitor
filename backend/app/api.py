@@ -262,10 +262,53 @@ def internet(hours: float = 6, points: int = 120):
          "up_bps": round(buckets[b][1] * 8 / step) if b in buckets else None, "clients": None}
         for b in range(since, now + 1, step)
     ]
+    gateways = internet_state.get("gateways", [])
     return {
         "available": bool(internet_state),
-        "gateways": internet_state.get("gateways", []),
+        "gateways": gateways,
         "dns": internet_state.get("dns"),
         "period": {"down": down, "up": up},
         "series": series,
+        **_line_history(gateways[0]["name"] if gateways else None, since, now, step),
+    }
+
+
+def _line_history(gateway: str | None, since: int, now: int, step: int) -> dict:
+    """Latenza e perdita nel tempo, disponibilità del periodo e disservizi (eventi wan_down/wan_up)."""
+    with connect() as db:
+        rows = db.execute(
+            "SELECT ts, online, delay_ms, loss_pct FROM line_samples WHERE gateway = ? AND ts >= ? ORDER BY ts",
+            (gateway, since),
+        ).fetchall()
+        events = db.execute(
+            """SELECT ts, kind, name, info FROM events WHERE kind IN ('wan_down', 'wan_up') AND ts >= ?
+               ORDER BY ts""",
+            (since - 30 * 86400,),     # un disservizio iniziato prima del periodo resta visibile
+        ).fetchall()
+    acc: dict[int, list[list[float]]] = defaultdict(lambda: [[], []])
+    for r in rows:
+        b = (r["ts"] - since) // step * step + since
+        if r["delay_ms"] is not None:
+            acc[b][0].append(r["delay_ms"])
+        if r["loss_pct"] is not None:
+            acc[b][1].append(r["loss_pct"])
+    quality = [
+        {"ts": b, "delay_ms": round(sum(d) / len(d), 1) if (d := acc[b][0]) else None,
+         "loss_pct": round(max(lo), 1) if (lo := acc[b][1]) else None}
+        for b in range(since, now + 1, step)
+    ]
+    outages, open_down = [], {}
+    for e in events:
+        if e["kind"] == "wan_down":
+            open_down[e["name"]] = e
+        elif e["name"] in open_down:
+            start = open_down.pop(e["name"])["ts"]
+            if e["ts"] >= since:
+                outages.append({"gateway": e["name"], "start": start, "end": e["ts"], "duration": e["ts"] - start})
+    for name, e in open_down.items():   # ancora in corso
+        outages.append({"gateway": name, "start": e["ts"], "end": None, "duration": now - e["ts"]})
+    return {
+        "quality": quality,
+        "availability": round(100 * sum(r["online"] for r in rows) / len(rows), 2) if rows else None,
+        "outages": sorted(outages, key=lambda o: o["start"], reverse=True)[:20],
     }

@@ -12,7 +12,8 @@ export interface Client {
   connected_at: number | null; device_type: string
 }
 export interface Event {
-  id: number; ts: number; kind: 'connect' | 'disconnect' | 'roam' | 'ap_down' | 'ap_up'
+  id: number; ts: number
+  kind: 'connect' | 'disconnect' | 'roam' | 'ap_down' | 'ap_up' | 'new_device' | 'wan_down' | 'wan_up'
   mac: string | null; name: string | null; ap: string | null; info: string | null
 }
 export interface TrafficPoint { ts: number; down_bps: number | null; up_bps: number | null; clients: number | null }
@@ -20,8 +21,11 @@ export interface Traffic { step: number; series: Record<string, TrafficPoint[]> 
 export interface Usage { hours: number; per_ap: Record<string, { down: number; up: number }> }
 export interface Sites { available: boolean; items: { site: string; queries: number }[] }
 export interface Gateway { name: string; online: boolean; status: string; delay: string; loss: string; monitor: string }
+export interface LinePoint { ts: number; delay_ms: number | null; loss_pct: number | null }
+export interface Outage { gateway: string; start: number; end: number | null; duration: number }
 export interface Internet {
   available: boolean; gateways: Gateway[]; period: { down: number; up: number }; series: TrafficPoint[]
+  quality: LinePoint[]; availability: number | null; outages: Outage[]
   dns: null | { total: number; blocked: number; blocked_pct: number; since: number;
     top_blocked: { domain: string; queries: number; list: string }[] }
 }
@@ -59,6 +63,31 @@ export interface GeneralSettings {
   opnsense_wan_if: string; local_domain: string; poll_interval: number; retention_days: number
 }
 export interface GeneralForm extends GeneralSettings { opnsense_secret: string }
+
+export interface Device {
+  mac: string; first_seen: number; last_seen: number; last_ap: string | null; last_ip: string | null
+  hostname: string | null; alias: string | null; known: boolean; online: boolean; rssi_dbm: number | null
+  device_type: string
+}
+export interface SignalHistory { step: number; points: { ts: number; avg: number | null; min: number | null; ap: string | null }[] }
+export interface SignalByAp {
+  weak_dbm: number
+  aps: { ap: string; avg: number; weak_pct: number; devices: number }[]
+  worst: { mac: string; name: string; ap: string | null; avg: number; min: number }[]
+}
+export interface Roaming {
+  threshold: number
+  pairs: { from: string; to: string; count: number }[]
+  devices: { mac: string; name: string; count: number; aps: string[]; bouncing: boolean }[]
+}
+export interface DeviceUsage {
+  available: boolean; reason?: 'opnsense' | 'netflow' | 'error'; message?: string
+  items?: { mac: string; ip: string; name: string; device_type: string; bytes: number }[]
+  by_type?: { type: string; bytes: number }[]
+}
+export interface WidgetPos { i: string; x: number; y: number; w: number; h: number }
+export type ViewKind = 'overview' | 'ap'
+export type SavedLayout = Partial<Record<ViewKind, WidgetPos[]>>
 
 const TOKEN_KEY = 'zm_token'
 export const auth = {
@@ -100,6 +129,23 @@ export const api = {
   traffic: (hours: number) => req<Traffic>(`/traffic?hours=${hours}`),
   setAlias: (mac: string, name: string) =>
     req(`/clients/${encodeURIComponent(mac)}/alias`, { method: 'PUT', body: JSON.stringify({ name }) }),
+
+  // analisi
+  devices: () => req<Device[]>('/devices'),
+  setKnown: (mac: string, known: boolean) =>
+    req(`/devices/${encodeURIComponent(mac)}/known`, { method: 'PUT', body: JSON.stringify({ known }) }),
+  setAllKnown: () => req('/devices/known-all', { method: 'POST' }),
+  forgetDevice: (mac: string) => req(`/devices/${encodeURIComponent(mac)}`, { method: 'DELETE' }),
+  signal: (mac: string, hours: number) => req<SignalHistory>(`/signal?mac=${encodeURIComponent(mac)}&hours=${hours}`),
+  signalByAp: (hours: number, ap?: string) =>
+    req<SignalByAp>(`/signal/aps?hours=${hours}${ap ? `&ap=${encodeURIComponent(ap)}` : ''}`),
+  roaming: (hours: number, ap?: string) =>
+    req<Roaming>(`/roaming?hours=${hours}${ap ? `&ap=${encodeURIComponent(ap)}` : ''}`),
+  usageDevices: (hours: number) => req<DeviceUsage>(`/usage/devices?hours=${hours}`),
+  layout: () => req<SavedLayout>('/layout'),
+  saveLayout: (l: SavedLayout) => req('/layout', { method: 'PUT', body: JSON.stringify(l) }),
+  resetLayout: () => req('/layout', { method: 'DELETE' }),
+  rawOutput: (id: number) => req<{ ts: number | null; text: string }>(`/settings/aps/${id}/raw`),
 
   // pannello impostazioni
   apConfigs: () => req<ApConfig[]>('/settings/aps'),

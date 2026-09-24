@@ -102,6 +102,37 @@ CREATE TABLE IF NOT EXISTS access_points (
 );
 CREATE UNIQUE INDEX IF NOT EXISTS ux_access_points_name ON access_points(name);
 
+-- ogni dispositivo mai visto: primo e ultimo avvistamento, riconosciuto o no
+CREATE TABLE IF NOT EXISTS devices (
+    mac        TEXT PRIMARY KEY,
+    first_seen INTEGER NOT NULL,
+    last_seen  INTEGER NOT NULL,
+    last_ap    TEXT,
+    last_ip    TEXT,
+    hostname   TEXT,
+    known      INTEGER NOT NULL DEFAULT 0
+);
+
+-- segnale di ogni client a ogni lettura
+CREATE TABLE IF NOT EXISTS rssi_samples (
+    ts   INTEGER NOT NULL,
+    mac  TEXT NOT NULL,
+    ap   TEXT NOT NULL,
+    rssi INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS ix_rssi_mac ON rssi_samples(mac, ts);
+CREATE INDEX IF NOT EXISTS ix_rssi_ts ON rssi_samples(ts);
+
+-- stato della linea Internet (gateway di OPNsense) a ogni lettura
+CREATE TABLE IF NOT EXISTS line_samples (
+    ts       INTEGER NOT NULL,
+    gateway  TEXT NOT NULL,
+    online   INTEGER NOT NULL,
+    delay_ms REAL,
+    loss_pct REAL
+);
+CREATE INDEX IF NOT EXISTS ix_line_ts ON line_samples(gateway, ts);
+
 -- impostazioni salvate dal pannello: hanno la precedenza sul .env
 CREATE TABLE IF NOT EXISTS settings (
     key   TEXT PRIMARY KEY,

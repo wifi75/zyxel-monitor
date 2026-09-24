@@ -57,6 +57,18 @@ async function testRow(a: ApConfig) {
   finally { testing.value = null }
 }
 
+const raw = ref<{ id: number; ts: number | null; text: string } | null>(null)
+const copied = ref(false)
+async function showRaw(a: ApConfig) {
+  if (raw.value?.id === a.id) { raw.value = null; return }
+  try { raw.value = { id: a.id, ...(await api.rawOutput(a.id)) }; copied.value = false }
+  catch (e) { error.value = (e as Error).message }
+}
+async function copyRaw() {
+  await navigator.clipboard?.writeText(raw.value?.text ?? '').catch(() => {})
+  copied.value = true
+}
+
 // ---- OPNsense e raccolta ----
 const gen = reactive<GeneralForm>({
   opnsense_url: '', opnsense_key: '', opnsense_secret: '', has_opnsense_secret: false, opnsense_verify_tls: true,
@@ -131,8 +143,21 @@ onMounted(() => { load(); loadGeneral() })
                 <td class="row-actions">
                   <button class="ghost small" :disabled="testing !== null || !a.enabled" @click="testRow(a)">Prova</button>
                   <button class="ghost small" @click="editing = editing === a.id ? null : a.id; notice = ''">Modifica</button>
+                  <button v-if="a.method === 'ssh'" class="ghost small" title="Ultimo output della CLI" @click="showRaw(a)">Output CLI</button>
                   <button class="ghost small" @click="toggle(a)">{{ a.enabled ? 'Disattiva' : 'Attiva' }}</button>
                   <button class="ghost small danger" @click="remove(a)">Elimina</button>
+                </td>
+              </tr>
+              <tr v-if="raw && raw.id === a.id" class="edit-row">
+                <td colspan="7">
+                  <div class="section-head">
+                    <strong class="small">Output CLI di {{ a.name }}
+                      <span class="muted">{{ raw.ts ? `letto alle ${new Date(raw.ts * 1000).toLocaleTimeString('it-IT')}` : '' }}</span></strong>
+                    <button class="ghost small" @click="copyRaw">{{ copied ? 'Copiato' : 'Copia' }}</button>
+                    <button class="ghost small" @click="raw = null">Chiudi</button>
+                  </div>
+                  <p class="muted small mb">Se uptime o traffico non compaiono, copia questo testo e mandalo: serve a leggere il formato del tuo firmware.</p>
+                  <pre class="raw">{{ raw.text || 'Nessuna lettura riuscita finora.' }}</pre>
                 </td>
               </tr>
               <tr v-if="editing === a.id" class="edit-row">

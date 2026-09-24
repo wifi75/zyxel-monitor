@@ -12,7 +12,10 @@ import asyncssh
 
 from .base import ApReading, Client, Radio
 
-COMMANDS = ["show version", "show wireless-hal station info"]
+# "show interface all" serve ai contatori di traffico: formato ancora da verificare sugli NWA50AX PRO,
+# per questo l'ultimo output grezzo resta consultabile dal pannello (last_output)
+COMMANDS = ["show version", "show system uptime", "show wireless-hal station info", "show interface all"]
+last_output: dict[str, tuple[float, str]] = {}
 
 
 async def _shell(host: str, user: str, password: str, port: int = 22, timeout: float = 30) -> str:
@@ -87,6 +90,33 @@ def _to_client(d: dict[str, str]) -> Client:
     )
 
 
+IFACE_START = re.compile(r"^\s*(?:(?:interface\s*)?name\s*[:=]\s*)?(eth\d+|wlan-\d+-\d+)\b", re.I)
+BYTES = re.compile(r"\b(rx|tx)[ _-]?(?:bytes|octets)\s*[:=]?\s*(\d+)", re.I)
+
+
+def parse_traffic(text: str) -> dict[str, tuple[int, int]]:
+    """Contatori (ricevuti, trasmessi) per interfaccia: accetta sia il formato "Name: wlan-1-1 … Rx bytes: N"
+    sia quello di ifconfig ("wlan-1-1  Link encap … RX bytes:N … TX bytes:N")."""
+    out: dict[str, tuple[int, int]] = {}
+    cur: str | None = None
+    rx = tx = None
+    for line in text.splitlines():
+        m = IFACE_START.match(line)
+        if m:
+            if cur and rx is not None and tx is not None:
+                out[cur] = (rx, tx)
+            cur, rx, tx = m.group(1).lower(), None, None
+        if cur:
+            for kind, value in BYTES.findall(line):
+                if kind.lower() == "rx":
+                    rx = int(value)
+                else:
+                    tx = int(value)
+    if cur and rx is not None and tx is not None:
+        out[cur] = (rx, tx)
+    return out
+
+
 def parse_version(text: str) -> tuple[str | None, str | None, int | None]:
     """Estrae modello, firmware e uptime da `show version` (formato variabile: parsing tollerante)."""
     model = fw = None
@@ -99,7 +129,8 @@ def parse_version(text: str) -> tuple[str | None, str | None, int | None]:
         elif not fw and "firmware version" in low:
             fw = value or None
         elif uptime is None and "uptime" in low:
-            m = re.search(r"(?:(\d+)\s*days?,?\s*)?(\d+):(\d+):(\d+)", value)
+            # "05:12:34", "3 days, 05:12:34", "1 day(s), 05:12:34"
+            m = re.search(r"(?:(\d+)\s*day[^\d]*)?(\d+):(\d+):(\d+)", value)
             if m:
                 d, h, mi, s = (int(x or 0) for x in m.groups())
                 uptime = d * 86400 + h * 3600 + mi * 60 + s
@@ -128,6 +159,7 @@ async def collect(host: str, user: str, password: str, port: int = 22) -> ApRead
     except (OSError, asyncssh.Error, TimeoutError) as exc:
         return ApReading(online=False, error=f"SSH: {exc}")
     _rejected.pop(host, None)
+    last_output[host] = (time.time(), text)
 
     model, fw, uptime = parse_version(text)
     clients = parse_stations(text)
@@ -135,6 +167,6 @@ async def collect(host: str, user: str, password: str, port: int = 22) -> ApRead
     for c in clients:
         radios[c.band or "?"] = radios.get(c.band or "?", 0) + 1
     return ApReading(
-        online=True, model=model, firmware=fw, uptime_s=uptime, clients=clients,
+        online=True, model=model, firmware=fw, uptime_s=uptime, clients=clients, traffic=parse_traffic(text),
         radios=[Radio(band=b, channel=None, clients=n) for b, n in sorted(radios.items())],
     )

@@ -2,6 +2,7 @@
 import asyncio
 import json
 import logging
+import re
 import time
 
 import ipaddress
@@ -118,7 +119,28 @@ async def poll_once() -> None:
         def label(row: dict) -> str:
             return aliases.get(row["mac"]) or row.get("hostname") or row.get("ip") or row["mac"]
 
+        # --- dispositivi mai visti: il primo giro dopo l'aggiornamento li considera tutti conosciuti ---
+        seen = {r["mac"] for r in db.execute("SELECT mac FROM devices")}
+        baseline = not seen
         events = []
+        for (ap, c), host in zip(all_clients, hostnames, strict=True):
+            if c.mac not in seen and not baseline:
+                row = current[c.mac]
+                events.append((now, "new_device", c.mac, label(row), ap.name, c.ip))
+            db.execute(
+                """INSERT INTO devices(mac, first_seen, last_seen, last_ap, last_ip, hostname, known)
+                   VALUES (?,?,?,?,?,?,?)
+                   ON CONFLICT(mac) DO UPDATE SET
+                     last_seen=excluded.last_seen, last_ap=excluded.last_ap,
+                     last_ip=COALESCE(excluded.last_ip, devices.last_ip),
+                     hostname=COALESCE(excluded.hostname, devices.hostname)""",
+                (c.mac, now, now, ap.name, c.ip, host, int(baseline)),
+            )
+        db.executemany(
+            "INSERT INTO rssi_samples(ts, mac, ap, rssi) VALUES (?,?,?,?)",
+            [(now, c.mac, ap.name, c.rssi_dbm) for ap, c in all_clients if c.rssi_dbm is not None],
+        )
+
         for mac, row in current.items():
             old = prev_clients.get(mac)
             if old is None:
@@ -202,12 +224,32 @@ async def store_internet(now: int) -> None:
         log.warning("OPNsense stato linea non disponibile: %s", exc)
         return
     internet_state.update({"gateways": gws, "dns": dns, "updated": now})
-    if wan:
-        with connect() as db:
+    with connect() as db:
+        for g in gws:
+            up = not g["down"]
+            last = db.execute(
+                "SELECT online FROM line_samples WHERE gateway = ? ORDER BY ts DESC LIMIT 1", (g["name"],)
+            ).fetchone()
+            if last is not None and bool(last["online"]) != up:   # il confronto regge anche ai riavvii
+                db.execute(
+                    "INSERT INTO events(ts, kind, name, info) VALUES (?,?,?,?)",
+                    (now, "wan_up" if up else "wan_down", g["name"], g["status"]),
+                )
+            db.execute(
+                "INSERT INTO line_samples(ts, gateway, online, delay_ms, loss_pct) VALUES (?,?,?,?,?)",
+                (now, g["name"], int(up), _number(g["delay"]), _number(g["loss"])),
+            )
+        if wan:
             db.execute(
                 "INSERT INTO samples(ts, ap, iface, in_bytes, out_bytes) VALUES (?,?,?,?,?)",
                 (now, INTERNET, "wan", wan[0], wan[1]),
             )
+
+
+def _number(text) -> float | None:
+    """ "12.3 ms" → 12.3, "0.0 %" → 0.0 """
+    m = re.search(r"-?\d+(?:\.\d+)?", str(text or ""))
+    return float(m.group()) if m else None
 
 
 INTERNET = "_internet"
@@ -219,6 +261,8 @@ def prune() -> None:
         db.execute("DELETE FROM samples WHERE ts < ?", (cutoff,))
         db.execute("DELETE FROM events WHERE ts < ?", (cutoff,))
         db.execute("DELETE FROM dns WHERE ts < ?", (cutoff,))
+        db.execute("DELETE FROM rssi_samples WHERE ts < ?", (cutoff,))
+        db.execute("DELETE FROM line_samples WHERE ts < ?", (cutoff,))
 
 
 async def run_forever() -> None:

@@ -6,6 +6,7 @@ defineProps<{ events: Event[]; showAp?: boolean }>()
 
 const LABEL: Record<Event['kind'], string> = {
   connect: 'Connesso', disconnect: 'Disconnesso', roam: 'Roaming', ap_down: 'AP offline', ap_up: 'AP online',
+  new_device: 'Nuovo dispositivo', wan_down: 'Linea caduta', wan_up: 'Linea tornata',
 }
 </script>
 

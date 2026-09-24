@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { api, type Client, type Sites } from '../api'
+import { api, type Client, type SignalHistory, type Sites } from '../api'
 import { isPrivateMac, signal, since } from '../format'
+import LineChart from './LineChart.vue'
 
 const props = defineProps<{ clients: Client[]; showAp?: boolean; hours?: number }>()
 const emit = defineEmits<{ rename: [c: Client] }>()
@@ -20,8 +21,19 @@ async function toggleSites(c: Client) {
   if (openMac.value === c.mac) { openMac.value = null; return }
   openMac.value = c.mac
   deviceSites.value = null
-  if (c.ip) deviceSites.value = await api.sites(props.hours ?? 24, undefined, c.ip).catch(() => null)
+  history.value = null
+  const h = props.hours ?? 24
+  const [s, g] = await Promise.all([
+    c.ip ? api.sites(h, undefined, c.ip).catch(() => null) : Promise.resolve(null),
+    api.signal(c.mac, h).catch(() => null),
+  ])
+  deviceSites.value = s
+  history.value = g
 }
+
+const history = ref<SignalHistory | null>(null)
+const hasHistory = computed(() => history.value?.points.some(p => p.avg != null) ?? false)
+const dbm = (v: number) => `${v} dBm`
 
 function displayName(c: Client) { return c.alias || c.hostname || c.ip || c.mac }
 </script>
@@ -53,6 +65,13 @@ function displayName(c: Client) { return c.alias || c.hostname || c.ip || c.mac 
         </tr>
         <tr v-if="openMac === c.mac" class="detail-row">
           <td :colspan="showAp ? 8 : 7">
+            <strong class="small">Segnale di {{ displayName(c) }} nel tempo</strong>
+            <div v-if="hasHistory && history" class="signal-box">
+              <LineChart :ts="history.points.map(p => p.ts)" :format="dbm"
+                         :datasets="[{ label: 'Medio', data: history.points.map(p => p.avg) },
+                                     { label: 'Peggiore', data: history.points.map(p => p.min), color: '#ef4444' }]" />
+            </div>
+            <div v-else class="muted small mb">Storico del segnale in raccolta.</div>
             <strong class="small">Siti più contattati da {{ displayName(c) }}</strong>
             <div v-if="!c.ip" class="muted small">IP sconosciuto: nessun dato DNS.</div>
             <div v-else-if="!deviceSites" class="muted small">Caricamento…</div>

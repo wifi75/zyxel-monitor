@@ -1,42 +1,44 @@
 <script setup lang="ts">
 import { Chart, registerables } from 'chart.js'
-import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 Chart.register(...registerables)
 
+/** Ciambella compatta: grafico piccolo a sinistra, legenda con valore e percentuale a destra. */
 const props = defineProps<{
   items: { label: string; value: number }[]
   format?: (v: number) => string
 }>()
 
 const PALETTE = ['#3b82f6', '#10b981', '#f59e0b', '#a855f7', '#ef4444', '#14b8a6', '#ec4899', '#84cc16', '#64748b', '#f97316']
+const color = (i: number) => PALETTE[i % PALETTE.length]
 const canvas = ref<HTMLCanvasElement>()
 let chart: Chart | null = null
+
+const total = computed(() => props.items.reduce((s, i) => s + i.value, 0) || 1)
+const fmt = (v: number) => (props.format ?? ((x: number) => x.toLocaleString('it-IT')))(v)
+const pct = (v: number) => `${Math.round((v / total.value) * 100)}%`
 
 function render() {
   chart?.destroy()
   if (!canvas.value) return
   const css = getComputedStyle(document.documentElement)
-  const fmt = props.format ?? ((v: number) => String(v))
-  const total = props.items.reduce((s, i) => s + i.value, 0) || 1
   chart = new Chart(canvas.value, {
     type: 'doughnut',
     data: {
       labels: props.items.map(i => i.label),
       datasets: [{
         data: props.items.map(i => i.value),
-        backgroundColor: props.items.map((_, i) => PALETTE[i % PALETTE.length]),
+        backgroundColor: props.items.map((_, i) => color(i)),
         borderColor: css.getPropertyValue('--surface').trim(),
         borderWidth: 2,
       }],
     },
     options: {
-      responsive: true, maintainAspectRatio: false, animation: false, cutout: '58%',
+      responsive: true, maintainAspectRatio: false, animation: false, cutout: '62%',
       plugins: {
-        legend: { position: 'right', labels: { color: css.getPropertyValue('--muted').trim(), boxWidth: 12 } },
-        tooltip: {
-          callbacks: { label: c => `${c.label}: ${fmt(c.parsed)} (${Math.round((c.parsed / total) * 100)}%)` },
-        },
+        legend: { display: false },
+        tooltip: { callbacks: { label: c => `${c.label}: ${fmt(c.parsed)} (${pct(c.parsed)})` } },
       },
     },
   })
@@ -48,5 +50,15 @@ onBeforeUnmount(() => chart?.destroy())
 </script>
 
 <template>
-  <div class="pie-box"><canvas ref="canvas" /></div>
+  <div class="pie">
+    <div class="pie-canvas"><canvas ref="canvas" /></div>
+    <ul class="pie-legend">
+      <li v-for="(i, n) in items" :key="i.label" :title="i.label">
+        <span class="swatch" :style="{ background: color(n) }" />
+        <span class="name">{{ i.label }}</span>
+        <span class="value">{{ fmt(i.value) }}</span>
+        <span class="muted pct">{{ pct(i.value) }}</span>
+      </li>
+    </ul>
+  </div>
 </template>

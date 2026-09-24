@@ -164,3 +164,69 @@ button.ghost.active { background: var(--accent-soft); color: var(--accent); bord
 .bar-list .value { font-variant-numeric: tabular-nums; font-weight: 600; }
 .bar-list .bar { grid-column: 2 / 4; height: 4px; border-radius: 2px; background: var(--grid); overflow: hidden; }
 .bar-list .bar span { display: block; height: 100%; border-radius: 2px; background: var(--accent); }
+
+/* v0.5: dashboard a griglia stile Zabbix (grid-layout-plus) */
+.dash-tools { display: flex; justify-content: flex-end; align-items: center; gap: 8px; flex-wrap: wrap; }
+button.small { padding: 3px 10px; font-size: 12px; }
+.dash-grid { margin: -12px -12px 0; }
+.dash-stack { display: grid; gap: 12px; }
+.widget { height: 100%; display: flex; flex-direction: column; padding: 14px 16px; overflow: hidden; }
+.dash-stack .widget { height: auto; }
+.dash-grid.editing .widget { outline: 1px dashed color-mix(in srgb, var(--accent) 60%, transparent); }
+.widget-bar {
+  display: flex; align-items: center; gap: 8px; margin: -6px -8px 8px; padding: 3px 8px; border-radius: 8px;
+  background: var(--accent-soft); color: var(--accent); font-size: 12px; font-weight: 600; cursor: move; user-select: none;
+}
+.widget-bar span { flex: 1; }
+.widget-bar button { border: none; padding: 0 6px; font-size: 16px; line-height: 1; color: inherit; }
+.widget-body { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 10px; overflow: auto; }
+.dash-stack .widget-body { overflow: visible; }
+.widget-body > .chart-box { flex: 1; height: auto; min-height: 140px; }
+.dash-stack .widget-body > .chart-box { flex: none; height: 260px; }
+.widget-body .empty { min-height: 0; flex: 1; padding: 12px; }
+.widget-body > .kpis .kpi { border: none; background: var(--bg); }
+.widget-body .section-head { margin-bottom: 0; }
+.vgl-item--placeholder { background: var(--accent) !important; opacity: .15; border-radius: var(--radius); }
+
+/* ciambella compatta con legenda a righe */
+.pie { flex: 1; display: flex; gap: 14px; align-items: center; min-height: 120px; }
+.dash-stack .pie { height: 180px; flex: none; }
+.pie-canvas { position: relative; flex: 0 0 auto; height: 100%; aspect-ratio: 1; min-height: 100px; max-height: 240px; max-width: 45%; }
+.pie-legend { list-style: none; margin: 0; padding: 0; flex: 1; min-width: 0; display: grid; gap: 4px; font-size: 12px; max-height: 100%; overflow: auto; }
+.pie-legend li { display: grid; grid-template-columns: 10px minmax(0, 1fr) auto 34px; gap: 6px; align-items: center; }
+.swatch { width: 10px; height: 10px; border-radius: 3px; }
+.pie-legend .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pie-legend .value { font-variant-numeric: tabular-nums; font-weight: 600; }
+.pie-legend .pct { text-align: right; font-variant-numeric: tabular-nums; }
+
+/* elenchi a righe nei widget */
+.rows { list-style: none; margin: 0; padding: 0; display: grid; }
+.rows li { display: flex; align-items: center; gap: 8px; padding: 5px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+.rows li:last-child { border-bottom: none; }
+.grow { flex: 1; min-width: 0; }
+.sub { margin: 4px 0 0; color: var(--muted); font-weight: 600; }
+.split { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+.pill.alert { background: color-mix(in srgb, var(--bad) 15%, transparent); color: var(--bad); }
+tr.unknown td { background: color-mix(in srgb, var(--weak) 8%, transparent); }
+.ev.new_device { color: var(--weak); }
+.ev.wan_down { color: var(--bad); }
+.ev.wan_up { color: var(--good); }
+.signal-box { height: 160px; margin: 6px 0 12px; }
+.signal-box .chart-box { height: 100%; }
+pre.raw {
+  max-height: 360px; overflow: auto; margin: 0; padding: 10px; font-size: 12px; white-space: pre-wrap;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+}
+.ap-grid .ap { border: 1px solid var(--border); border-radius: 10px; padding: 12px; }
+.status.pulse { animation: pulse 1.2s infinite; }
+@keyframes pulse { 50% { opacity: .3; } }
+
+/* Internet: grafico e disservizi affiancati */
+.internet { height: 100%; display: flex; flex-direction: column; gap: 12px; }
+.internet-body { display: grid; grid-template-columns: minmax(0, 1fr) 240px; gap: 16px; flex: 1; min-height: 0; }
+.internet-body .grow { display: flex; flex-direction: column; min-height: 180px; }
+.internet-body .grow .chart-box { flex: 1; height: auto; min-height: 160px; }
+.outages { overflow: auto; }
+.outages h3 { margin-bottom: 6px; }
+.kpi strong.small-num { font-size: 16px; }
+@media (max-width: 900px) { .internet-body { grid-template-columns: 1fr; } }
