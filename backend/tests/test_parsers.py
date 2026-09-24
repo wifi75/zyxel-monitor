@@ -59,3 +59,12 @@ def test_parse_traffic():
     assert parse_traffic(zld) == {"wlan-1-1": (1000, 2000), "eth0": (5, 6)}
     ifconfig = "wlan-2-1  Link encap:Ethernet\n          RX bytes:30 (30.0 B)  TX bytes:40 (40.0 B)\n"
     assert parse_traffic(ifconfig) == {"wlan-2-1": (30, 40)}
+
+
+def test_parse_traffic_detail_echo():
+    text = (
+        "Router> show interface wlan-1-1\n  RX bytes: 11\n  TX bytes: 22\n"
+        "Router> show interface wlan-2-1\n  RX bytes: 3\n  TX bytes: 4\n"
+    )
+    assert parse_traffic(text) == {"wlan-1-1": (11, 22), "wlan-2-1": (3, 4)}
+    assert parse_version("system uptime: 1 days 14:09:23")[2] == 86400 + 14 * 3600 + 9 * 60 + 23

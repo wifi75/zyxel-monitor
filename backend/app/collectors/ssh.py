@@ -12,9 +12,12 @@ import asyncssh
 
 from .base import ApReading, Client, Radio
 
-# "show interface all" serve ai contatori di traffico: formato ancora da verificare sugli NWA50AX PRO,
-# per questo l'ultimo output grezzo resta consultabile dal pannello (last_output)
-COMMANDS = ["show version", "show system uptime", "show wireless-hal station info", "show interface all"]
+# "show interface all" elenca solo le interfacce, senza contatori: si prova il dettaglio di ognuna (da verificare);
+# l'ultimo output grezzo resta consultabile dal pannello (last_output)
+COMMANDS = [
+    "show version", "show system uptime", "show wireless-hal station info",
+    "show interface wlan-1-1", "show interface wlan-2-1",
+]
 last_output: dict[str, tuple[float, str]] = {}
 
 
@@ -91,6 +94,8 @@ def _to_client(d: dict[str, str]) -> Client:
 
 
 IFACE_START = re.compile(r"^\s*(?:(?:interface\s*)?name\s*[:=]\s*)?(eth\d+|wlan-\d+-\d+)\b", re.I)
+# eco del comando: "Router> show interface wlan-1-1" apre il blocco di quell'interfaccia
+SHOW_IFACE = re.compile(r"show interface (eth\d+|wlan-\d+-\d+)", re.I)
 BYTES = re.compile(r"\b(rx|tx)[ _-]?(?:bytes|octets)\s*[:=]?\s*(\d+)", re.I)
 
 
@@ -101,7 +106,7 @@ def parse_traffic(text: str) -> dict[str, tuple[int, int]]:
     cur: str | None = None
     rx = tx = None
     for line in text.splitlines():
-        m = IFACE_START.match(line)
+        m = IFACE_START.match(line) or SHOW_IFACE.search(line)
         if m:
             if cur and rx is not None and tx is not None:
                 out[cur] = (rx, tx)
