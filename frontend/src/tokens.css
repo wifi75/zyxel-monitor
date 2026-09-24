@@ -1,0 +1,82 @@
+/*
+ * Design token — due temi a scelta (pulsante sole/luna, default dal sistema).
+ * Chiaro = "denso operativo": carta calda, blu petrolio, Public Sans + IBM Plex Mono, raggio 6, gerarchia con bordi.
+ * Scuro  = "console industriale": ardesia, ciano sugli stati, IBM Plex Sans + JetBrains Mono, raggio 4, linee d'accento.
+ * Gli stati (ok/attenzione/errore) hanno lo stesso significato nei due temi; il colore non si usa come decorazione.
+ * Carica dopo style.css e ne ridefinisce le variabili: i componenti non contengono colori propri.
+ */
+:root, :root[data-theme="light"] {
+  --bg: #f6f5f2; --surface: #fffefc; --surface-2: #efede8; --border: #dedad2; --grid: #e8e5de;
+  --text: #22201c; --muted: #6a655c;
+  --accent: #0f6e8c; --accent-soft: #e1eff4; --on-accent: #ffffff;
+  --good: #2f8a4c; --ok: #6b8f1d; --weak: #b86e00; --bad: #c23a3a;
+  /* toni di gruppo (menu, sezioni): tenui, derivati dal primario e dai semantici */
+  --blue: #0f6e8c; --teal: #1f8a80; --green: #2f8a4c; --violet: #6456a8; --pink: #a8456e; --amber: #b86e00; --orange: #b85a1f;
+  --font: "Public Sans", system-ui, sans-serif; --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  --radius: 6px; --radius-s: 4px; --ctl: 32px; --shadow: none; --row-alt: #faf9f6;
+  --t-fast: 120ms; --t-base: 200ms;
+  color-scheme: light;
+}
+:root[data-theme="dark"] {
+  --bg: #0f1720; --surface: #16212c; --surface-2: #1c2937; --border: #2a3a4b; --grid: #223040;
+  --text: #dbe6f0; --muted: #8b9cb0;
+  --accent: #22b8cf; --accent-soft: #123644; --on-accent: #062530;
+  --good: #3ecf8e; --ok: #a3d65c; --weak: #f2b441; --bad: #f0616d;
+  --blue: #22b8cf; --teal: #2dd4bf; --green: #3ecf8e; --violet: #a394f0; --pink: #f07aa8; --amber: #f2b441; --orange: #f59161;
+  --font: "IBM Plex Sans", system-ui, sans-serif; --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --radius: 4px; --radius-s: 3px; --ctl: 32px; --shadow: none; --row-alt: #182431;
+  color-scheme: dark;
+}
+
+/* base */
+body { background: var(--bg) !important; font-family: var(--font); font-size: 14px; line-height: 1.5; }
+.mono, code, pre, td.num, .num, .kpi strong { font-family: var(--font-mono); }
+.kpi strong, .num, td { font-variant-numeric: tabular-nums; }
+h2 { font-size: 15px; } h3 { font-size: 14px; }
+
+/* controlli: una sola altezza, un solo raggio */
+button, input, select { min-height: var(--ctl); border-radius: var(--radius); transition: border-color var(--t-fast), background var(--t-fast), color var(--t-fast); }
+button { padding: 0 12px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+button.ghost.small { min-height: 26px; }
+input, select { padding: 0 10px; }
+textarea { border-radius: var(--radius) !important; }
+button.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); font-weight: 600; }
+button.primary:hover { filter: brightness(1.08); }
+button:not(.primary):hover { border-color: var(--accent); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.icon-btn { width: var(--ctl); height: var(--ctl); border-radius: var(--radius); }
+
+/* superfici: bordo, niente ombre né sfumature */
+.card, .kpi, .widget, .site-section, .cmp-card { border-radius: var(--radius) !important; box-shadow: none !important; }
+.site-section { background: var(--surface) !important; }
+.kpi.rich { background: var(--surface) !important; border-color: var(--border) !important; }
+.dot { background: var(--accent) !important; box-shadow: none; border-radius: 2px; }
+.widget-body > h2::before, .widget-body > .section-head > h2::before, .internet .section-head h2::before { background: var(--accent) !important; border-radius: 1px; width: 3px; }
+
+/* menu laterale */
+.sidebar { background: var(--surface); }
+.nav-item { border-radius: var(--radius); padding: 6px 10px; }
+.nav-ico { width: 26px; height: 26px; border-radius: var(--radius-s); background: transparent; }
+.nav-item.active { background: var(--accent-soft); color: var(--text); }
+.nav-item.active .nav-ico { background: transparent; color: var(--tone); }
+.nav-item.active::before { border-radius: 0; height: 100%; top: 0; }
+.nav-title { color: var(--muted); }
+.tabs button.active { background: var(--accent) !important; color: var(--on-accent) !important; box-shadow: none !important; }
+
+/* barra del titolo: fondo pieno, niente trasparenze che si sovrappongono al contenuto */
+.layout .topbar { background: var(--bg) !important; backdrop-filter: none !important; height: 56px; padding: 0;
+                  border-bottom: 1px solid var(--border); margin-bottom: 16px; flex-wrap: nowrap; }
+.page-title { font-size: 18px; font-weight: 700; letter-spacing: -.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cfg-bar { top: 56px !important; background: var(--bg); padding: 8px 0; margin-top: -8px; }
+@media (max-width: 640px) { .layout .topbar { height: auto; min-height: 52px; flex-wrap: wrap; padding: 8px 0; } .cfg-bar { position: static !important; } }
+
+/* tabelle: righe alternate, intestazione su superficie 2 */
+table th { background: var(--surface-2); }
+.cmp th { background: var(--surface-2) !important; }
+tbody tr:nth-child(even) td { background: var(--row-alt); }
+
+/* tema scuro: linea d'accento in alto sui contenitori (direzione console) */
+:root[data-theme="dark"] .card, :root[data-theme="dark"] .widget { border-top: 2px solid var(--accent-soft); }
+:root[data-theme="dark"] .kpi strong { letter-spacing: -.01em; }
+
+@media (prefers-reduced-motion: reduce) { * { transition-duration: 1ms !important; animation-duration: 1ms !important; } }

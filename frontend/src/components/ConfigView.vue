@@ -3,6 +3,8 @@ import { computed, onMounted, ref } from 'vue'
 import { api, type Backup, type PolicyField, type PolicyOverview, type PolicyResult, type SiteItem } from '../api'
 import { copyText, time } from '../format'
 import { t } from '../i18n'
+import Icon from './Icon.vue'
+import type { IconName } from '../icons'
 
 /**
  * Configurazione a tabella di confronto: una riga per impostazione, colonna "Sito" (vale per tutti)
@@ -114,12 +116,12 @@ function itemRow(i: SiteItem): Row {
   }
 }
 
-const GROUPS = [
-  { key: 'radio', title: 'Radio', icon: '📡', tone: 'var(--blue)' },
-  { key: 'rete', title: 'Rete Wi-Fi', icon: '🔒', tone: 'var(--pink)' },
-  { key: 'ospiti', title: 'Rete ospiti', icon: '🧑‍🤝‍🧑', tone: 'var(--violet)' },
-  { key: 'roaming', title: 'Roaming', icon: '🔀', tone: 'var(--teal)' },
-  { key: 'sistema', title: 'Sistema', icon: '🛠', tone: 'var(--amber)' },
+const GROUPS: { key: string; title: string; icon: IconName; tone: string }[] = [
+  { key: 'radio', title: 'Radio', icon: 'wifi', tone: 'var(--blue)' },
+  { key: 'rete', title: 'Rete Wi-Fi', icon: 'lock', tone: 'var(--pink)' },
+  { key: 'ospiti', title: 'Rete ospiti', icon: 'users', tone: 'var(--violet)' },
+  { key: 'roaming', title: 'Roaming', icon: 'shuffle', tone: 'var(--teal)' },
+  { key: 'sistema', title: 'Sistema', icon: 'wrench', tone: 'var(--amber)' },
 ]
 const rows = computed<Row[]>(() => [
   ...BANDS.flatMap(b => (['tx_power', 'channel', 'width'] as PolicyField[]).map(f => radioRow(b, f))),
@@ -310,8 +312,8 @@ async function copyBackup() { copied.value = await copyText(shown.value?.text ??
       <span class="val same">{{ t('uguale al sito') }}</span>
       <span class="val diff">{{ t('diverso') }}</span>
       <span class="val none">{{ t('non gestito') }}</span>
-      <span class="val pend">{{ t('in attesa') }}</span>
-      <button class="ghost" :class="{ active: showBackups }" @click="showBackups = !showBackups">💾 {{ t('Backup') }}</button>
+      <span class="val pend">{{ t('da applicare') }}</span>
+      <button class="ghost" :class="{ active: showBackups }" @click="showBackups = !showBackups"><Icon name="save" :size="15" /> {{ t('Backup') }}</button>
       <button class="ghost" :disabled="!!busy" :title="t('Riapplica subito a tutti gli AP la configurazione del sito')" @click="reapplyAll">
         {{ busy === 'reapply' ? t('Applico…') : '↻ ' + t('Riapplica') }}</button>
       <button v-if="pendingCount" class="ghost" :disabled="!!busy" @click="cancelAll">{{ t('Annulla') }}</button>
@@ -331,7 +333,7 @@ async function copyBackup() { copied.value = await copyText(shown.value?.text ??
     <!-- backup, apribili dalla barra -->
     <section v-if="showBackups" class="card">
       <div class="section-head">
-        <h2>💾 {{ t('Backup delle configurazioni') }}</h2>
+        <h2>{{ t('Backup delle configurazioni') }}</h2>
         <button :disabled="!!busy" @click="backupAll">{{ busy === 'backup' ? t('Salvo…') : t('Salva backup di tutti') }}</button>
         <button class="ghost small cfg-close" :title="t('Chiudi')" @click="showBackups = false; shown = null">✕</button>
       </div>
@@ -370,7 +372,7 @@ async function copyBackup() { copied.value = await copyText(shown.value?.text ??
           </tr></thead>
           <tbody>
             <template v-for="g in grouped" :key="g.key">
-              <tr class="cmp-group" :style="{ '--tone': g.tone }"><td :colspan="2 + aps.length">{{ g.icon }} {{ t(g.title) }}</td></tr>
+              <tr class="cmp-group" :style="{ '--tone': g.tone }"><td :colspan="2 + aps.length"><Icon :name="g.icon" :size="14" /> {{ t(g.title) }}</td></tr>
               <tr v-for="r in g.rows" :key="r.id" class="cmp-row" :style="{ '--tone': g.tone }">
                 <td class="cmp-set">
                   <span>{{ r.label }}</span>

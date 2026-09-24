@@ -21,6 +21,7 @@ import TrafficChart from './components/TrafficChart.vue'
 import { bps, bytes, copyText, duration, signal, time } from './format'
 import { locale, t } from './i18n'
 import LangSwitch from './components/LangSwitch.vue'
+import ThemeSwitch from './components/ThemeSwitch.vue'
 import type { IconName } from './icons'
 
 const REFRESH_MS = 30_000
@@ -313,6 +314,7 @@ const SSH_NA = "La CLI SSH di questo AP non fornisce ancora il dato: in Impostaz
 
       <div class="nav-foot">
         <LangSwitch />
+        <ThemeSwitch />
         <button class="icon-btn" :title="t('Esci')" @click="logout"><Icon name="logout" /></button>
         <span v-if="health" class="muted small nav-version">v{{ health.version }}</span>
       </div>
