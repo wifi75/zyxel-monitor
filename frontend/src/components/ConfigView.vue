@@ -180,7 +180,10 @@ function norm(v: unknown): string {
 /** stato di una casella AP: in attesa, non gestita (arancione se gli AP non sono d'accordo) o confronto */
 function apClass(r: Row, apId: number): string {
   if (pending.value[cellKey(r, apId)]) return 'pend'
-  if (r.site == null && !r.override?.(apId)) return new Set(aps.value.map(a => r.current(a.id))).size > 1 ? 'diff' : 'none'
+  // valori non letti (null, es. password sui firmware vecchi) non contano come differenza
+  if (r.site == null && !r.override?.(apId)) {
+    return new Set(aps.value.map(a => r.current(a.id)).filter(v => v != null)).size > 1 ? 'diff' : 'none'
+  }
   return cellState(r, apId)
 }
 
