@@ -14,6 +14,9 @@
 - [ ] HTTPS per il pannello.
 - [ ] Avvisi Telegram (facoltativi).
 - [ ] Grafici con i colori del tema chiaro/scuro; revisione pagina per pagina nei due temi e su smartphone.
+- [ ] Output CLI di GIARDINO (NWA1123-AC PRO, fw 6.x) per verificare i lettori su quel modello.
+- [ ] Idee dalla dashboard di Nebula: client per banda in Panoramica, carico dei canali per AP, produttore dal MAC (elenco IEEE scaricato in build), classifica traffico per dispositivo se l'SSH dà i byte.
+- [ ] Da verificare sul campo prima di usarli: comando 160 MHz (`ch-width 20/40/80/160`), sintassi 6.x per scrivere gli orari, ripristino backup e prova controllata su un AP reale.
 
 ## Configurazione centralizzata (verso il distacco da Nebula)
 - [x] Potenza per banda: profilo del sito + personalizzazione per AP, riallineamento automatico (v0.6.0).

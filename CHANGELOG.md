@@ -2,6 +2,18 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) — versioni: [SemVer](https://semver.org/lang/it/).
 
+## [0.24.3] - 2026-09-25
+### Corretto
+- Solo monitoraggio: la potenza si confronta sul valore impostato negli AP (`output-power`), non su quella reale che dipende dal modello.
+
+## [0.24.2] - 2026-09-25
+### Corretto
+- Orari del Wi-Fi letti anche nel formato dei firmware 6.x (`mon enable HH:MM-HH:MM`); su quei firmware non vengono scritti finché la sintassi non è verificata.
+
+## [0.24.1] - 2026-09-25
+### Corretto
+- Password della rete riconosciuta anche sui firmware 6.x (riga `wpa-psk`): "impostata" invece di "non leggibile".
+
 ## [0.24.0] - 2026-09-25
 ### Aggiunto
 - Capacità per modello: intestazione con modello e generazione Wi-Fi; larghezze e sicurezza proposte solo se il modello le supporta (160 MHz e WPA3 solo Wi-Fi 6); un valore del sito oltre le capacità diventa il massimo del modello ("max del modello").
