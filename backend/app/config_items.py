@@ -270,14 +270,24 @@ def _schedule(cfg: RunningConfig) -> str | None:
     if not p:
         return None
     header = f"wlan-ssid-profile {p}"
-    if not cfg.has(header, "ssid-schedule"):
-        return ""
     v = cfg.value(header, "mon enable")
-    parts = (v or "").split()
-    return f"{parts[0]}-{parts[1]}" if len(parts) == 2 else "custom"
+    if cfg.has(header, "ssid-schedule"):            # firmware 7.x: "ssid-schedule" + "mon enable 07:00 23:00"
+        parts = (v or "").split()
+        return f"{parts[0]}-{parts[1]}" if len(parts) == 2 else "custom"
+    if v and SCHEDULE_RE.match(v):                   # firmware 6.x: "mon enable 04:00-22:00" nel profilo
+        return v
+    return ""
+
+
+def _old_schedule_syntax(cfg: RunningConfig) -> bool:
+    """Firmware 6.x: gli orari stanno nel profilo SSID come "mon enable HH:MM-HH:MM", senza "ssid-schedule"."""
+    return any(SCHEDULE_RE.match(line.split(" enable ", 1)[-1]) for h, lines in cfg.blocks.items()
+               if h.startswith("wlan-ssid-profile") for line in lines if " enable " in line)
 
 
 def _schedule_set(v, cfg: RunningConfig) -> list[str]:
+    if _old_schedule_syntax(cfg):
+        return []       # sintassi 6.x per scrivere gli orari non verificata: si legge soltanto, non si inventa
     if not v:
         return _in_ssid(cfg, "no ssid-schedule")
     start, end = SCHEDULE_RE.match(str(v)).groups()
