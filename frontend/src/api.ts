@@ -207,6 +207,10 @@ export const api = {
     req<{ ok: boolean; output: string }>(`/settings/aps/${id}/hybrid-mode`, { method: 'POST', body: JSON.stringify({ mode }) }),
   exploreAp: (id: number) => req<{ text: string }>(`/settings/aps/${id}/explore`, { method: 'POST' }),
   backup: (id: number) => req<Backup & { text: string }>(`/policy/backups/${id}`),
+  restoreBackup: (id: number) => req<{ ok: boolean; message: string }>(`/policy/backups/${id}/restore`, { method: 'POST' }),
+  paused: () => req<{ aps: string[] }>('/policy/paused'),
+  setPaused: (ap: string, on: boolean) =>
+    req<{ aps: string[] }>(`/policy/paused/${encodeURIComponent(ap)}?on=${on}`, { method: 'PUT' }),
 
   // Nebula (licenza Pro)
   nebulaStatus: () => req<NebulaStatus>('/nebula/status'),

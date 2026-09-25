@@ -94,6 +94,9 @@ async def apply_ap(ap: store.ApConfig, only_changed: bool = False, reason: str =
     dello slot, il cui nome si legge dalla running-config (Nebula li chiama in modo diverso per modello)."""
     if not ap.ssh_password:
         return {"ap": ap.name, "ok": False, "message": "Serve l'accesso SSH per configurare questo AP"}
+    from .restore import paused
+    if ap.name in paused():
+        return {"ap": ap.name, "ok": True, "message": "In pausa: gestione sospesa dopo un ripristino"}
     rules = load()
     actual = actual_powers().get(ap.name, {})
     commands, changes, radio = [], [], []
@@ -156,8 +159,10 @@ async def enforce() -> None:
         return
     actual = actual_powers()
     now = time.time()
+    from .restore import paused
+    skip = paused()
     for ap in store.list_aps(enabled_only=True):
-        if not ap.ssh_password:
+        if not ap.ssh_password or ap.name in skip:
             continue
         drift = False
         for band in BANDS:

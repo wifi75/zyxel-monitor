@@ -4,7 +4,7 @@ from typing import Literal
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
-from . import config_items, policy, site_config
+from . import config_items, policy, restore, site_config
 from .collectors import ssh
 from .core import store
 from .core.db import connect
@@ -186,3 +186,25 @@ def get_backup(backup_id: int):
     if not row:
         raise HTTPException(404, "Backup non trovato")
     return dict(row)
+
+
+@router.post("/backups/{backup_id}/restore")
+async def restore_backup(backup_id: int):
+    """Rimette sull'AP la configurazione Wi-Fi del backup e sospende la gestione del pannello per quell'AP."""
+    with connect() as db:
+        row = db.execute("SELECT ap FROM config_backups WHERE id = ?", (backup_id,)).fetchone()
+    ap = next((a for a in store.list_aps() if row and a.name == row["ap"]), None)
+    if not ap or not ap.ssh_password:
+        raise HTTPException(404, "AP del backup non trovato o senza SSH")
+    return await restore.restore(backup_id, ap)
+
+
+@router.get("/paused")
+def get_paused():
+    return {"aps": sorted(restore.paused())}
+
+
+@router.put("/paused/{ap_name}")
+def put_paused(ap_name: str, on: bool):
+    restore.set_paused(ap_name, on)
+    return {"aps": sorted(restore.paused())}

@@ -44,6 +44,9 @@ def _event(ap: str, info: str) -> None:
 async def apply_ap(ap: store.ApConfig, reason: str = "manuale", only: set[str] | None = None) -> dict:
     """only = voci da applicare (quella appena cambiata); None = controllo periodico delle voci da mantenere.
     Ogni ingresso in un profilo ricarica le radio dell'AP per qualche secondo: si inviano solo le differenze."""
+    from .restore import paused
+    if ap.name in paused():
+        return {"ap": ap.name, "ok": True, "message": "In pausa: gestione sospesa dopo un ripristino"}
     wanted = load()
     if only is not None:
         wanted = {k: v for k, v in wanted.items() if k in only}

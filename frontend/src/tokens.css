@@ -83,3 +83,4 @@ tbody tr:nth-child(even) td { background: var(--row-alt); }
 
 /* icona del gruppo sulla stessa riga del titolo */
 .cmp-group .icon { display: inline-block; vertical-align: -2px; margin-right: 6px; }
+.note.warn { background: color-mix(in srgb, var(--weak) 14%, transparent); display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }

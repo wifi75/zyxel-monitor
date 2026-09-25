@@ -24,14 +24,16 @@ const WIDTHS: Record<Band, string[]> = { '2.4GHz': ['20', '20/40'], '5GHz': ['20
 const data = ref<PolicyOverview | null>(null)
 const items = ref<SiteItem[]>([])
 const backups = ref<Backup[]>([])
+const paused = ref<string[]>([])        // AP con la gestione sospesa dopo un ripristino
+const restoreMsg = ref('')
 const results = ref<PolicyResult[]>([])
 const busy = ref('')
 const error = ref('')
 
 async function load() {
   try {
-    const [d, i, b] = await Promise.all([api.policy(), api.siteItems(), api.backups()])
-    data.value = d; items.value = i; backups.value = b
+    const [d, i, b, p] = await Promise.all([api.policy(), api.siteItems(), api.backups(), api.paused()])
+    data.value = d; items.value = i; backups.value = b; paused.value = p.aps
   } catch (e) { error.value = (e as Error).message }
 }
 onMounted(load)
@@ -293,6 +295,18 @@ async function reapplyAll() {
 
 // ---------- backup ----------
 const showBackups = ref(false)
+async function restoreBackup(b: Backup) {
+  if (!window.confirm(t('Rimettere su {ap} la configurazione Wi-Fi del {when}? Le radio si ricaricano per qualche secondo e il pannello smette di gestire questo AP finché non premi Riprendi.', { ap: b.ap, when: time(b.ts) }))) return
+  busy.value = 'restore'; restoreMsg.value = ''
+  try {
+    const r = await api.restoreBackup(b.id)
+    restoreMsg.value = `${b.ap}: ${t(r.message)}`
+    paused.value = (await api.paused()).aps
+  } catch (e) { restoreMsg.value = String(e) } finally { busy.value = '' }
+}
+async function resume(ap: string) {
+  paused.value = (await api.setPaused(ap, false)).aps
+}
 const allBackups = ref(false)
 const visibleBackups = computed(() => (allBackups.value ? backups.value : backups.value.slice(0, 8)))
 const shown = ref<Backup & { text: string } | null>(null)
@@ -344,6 +358,12 @@ async function copyBackup() { copied.value = await copyText(shown.value?.text ??
     </div>
 
     <!-- backup, apribili dalla barra -->
+    <div v-if="paused.length" class="note warn">
+      <strong>{{ t('In pausa') }}:</strong>
+      <template v-for="ap in paused" :key="ap"> {{ ap }} <button class="ghost small" @click="resume(ap)">{{ t('Riprendi') }}</button></template>
+      <span class="muted small"> — {{ t('il pannello non modifica questi AP finché non riprendi la gestione.') }}</span>
+    </div>
+    <p v-if="restoreMsg" class="note">{{ restoreMsg }}</p>
     <section v-if="showBackups" class="card">
       <div class="section-head">
         <h2>{{ t('Backup delle configurazioni') }}</h2>
@@ -358,7 +378,10 @@ async function copyBackup() { copied.value = await copyText(shown.value?.text ??
               <tr>
                 <td class="small">{{ time(b.ts) }}</td><td><strong>{{ b.ap }}</strong></td>
                 <td class="small">{{ (b.size / 1024).toFixed(1) }} KB</td>
-                <td class="row-actions"><button class="ghost small" @click="showBackup(b)">{{ shown?.id === b.id ? t('Chiudi') : t('Vedi') }}</button></td>
+                <td class="row-actions">
+                  <button class="ghost small" @click="showBackup(b)">{{ shown?.id === b.id ? t('Chiudi') : t('Vedi') }}</button>
+                  <button class="ghost small" :disabled="!!busy" @click="restoreBackup(b)">{{ t('Ripristina') }}</button>
+                </td>
               </tr>
               <tr v-if="shown?.id === b.id" class="edit-row"><td colspan="4">
                 <div class="actions"><span class="grow" />

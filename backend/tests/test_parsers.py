@@ -232,3 +232,13 @@ def test_wifi_schedule():
     assert cmds[:2] == ["wlan-ssid-profile SSID1", "ssid-schedule"] and "sun enable 08:00 22:30" in cmds
     assert ci.BY_KEY["wifi_schedule"].build("", cfg) == ["wlan-ssid-profile SSID1", "no ssid-schedule", "exit"]
     assert ci.parse_value(ci.BY_KEY["wifi_schedule"], "07:00-23:00") == "07:00-23:00"
+
+
+def test_restore_commands():
+    from app import config_items as ci
+    from app.restore import restore_commands
+    old = ci.RunningConfig("wlan-security-profile S1\n mode wpa2\n!\nwlan slot1\n output-power 16dBm\n ssid profile 1 SSID1\n!\n")
+    now = ci.RunningConfig("wlan-security-profile S1\n mode wpa3\n transition-mode\n!\n"
+                           "wlan slot1\n output-power 19dBm\n ssid profile 1 SSID1\n!\n")
+    assert restore_commands(old, now) == ["wlan-security-profile S1", "no transition-mode", "mode wpa2", "exit",
+                                          "wlan slot1", "output-power 16dBm", "exit"]
