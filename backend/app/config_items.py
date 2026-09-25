@@ -177,7 +177,12 @@ def _blocked_set(v, cfg: RunningConfig) -> list[str]:
 
 def _psk(cfg: RunningConfig) -> str | None:
     p = cfg.security_profile()
-    return cfg.value(f"wlan-security-profile {p}", "encrypted-wpa-psk") if p else None
+    if not p:
+        return None
+    header = f"wlan-security-profile {p}"
+    # firmware 7.x: "encrypted-wpa-psk" (cifrata); firmware 6.x: "wpa-psk" in chiaro. Il valore non esce mai
+    # dal server: l'API dice solo se la password è impostata.
+    return cfg.value(header, "encrypted-wpa-psk") or cfg.value(header, "wpa-psk")
 
 
 def _security(cfg: RunningConfig) -> str | None:

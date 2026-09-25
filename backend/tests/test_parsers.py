@@ -264,3 +264,10 @@ def test_capabilities_items():
     assert cap.fit_item("security_mode", "wpa2/wpa3", wifi5) == "wpa2"
     assert cap.fit_item("security_mode", "wpa2/wpa3", wifi6) == "wpa2/wpa3"
     assert not cap.available("dot11r", None, "bool") and cap.available("wifi_password", None, "password")
+
+
+def test_psk_old_firmware():
+    from app import config_items as ci
+    cfg = ci.RunningConfig("wlan-security-profile SECURITY1\n mode wpa2\n wpa-psk segreta\n!\n"
+                           "wlan-ssid-profile SSID1\n ssid WiFi\n security SECURITY1\n!\nwlan slot1\n ssid profile 1 SSID1\n!\n")
+    assert ci.BY_KEY["wifi_password"].read(cfg) == "segreta"
