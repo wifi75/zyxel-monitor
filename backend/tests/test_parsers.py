@@ -248,3 +248,19 @@ def test_guard_mask_password():
     from app.guard import _mask
     assert _mask(["wlan-security-profile S1", "wpa-psk segreta123", "exit"]) == [
         "wlan-security-profile S1", "wpa-psk ••••••••", "exit"]
+
+
+def test_capabilities():
+    from app import capabilities as cap
+    assert cap.generation("NWA50AX PRO") == 6 and cap.generation("WAC6103D-I") == 5
+    wifi5 = cap.of_model("NWA1123-AC PRO")
+    assert cap.fit_width("20/40/80/160", "5GHz", wifi5) == "20/40/80"
+    assert cap.fit_width("20/40/80/160", "5GHz", cap.of_model("NWA50AX PRO")) == "20/40/80/160"
+
+
+def test_capabilities_items():
+    from app import capabilities as cap
+    wifi5, wifi6 = cap.of_model("WAC6103D-I"), cap.of_model("NWA50AX PRO")
+    assert cap.fit_item("security_mode", "wpa2/wpa3", wifi5) == "wpa2"
+    assert cap.fit_item("security_mode", "wpa2/wpa3", wifi6) == "wpa2/wpa3"
+    assert not cap.available("dot11r", None, "bool") and cap.available("wifi_password", None, "password")

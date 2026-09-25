@@ -9,6 +9,7 @@ import json
 import logging
 import time
 
+from . import capabilities
 from . import config_items as ci
 from .collectors import ssh
 from .core import store
@@ -63,10 +64,14 @@ async def apply_ap(ap: store.ApConfig, reason: str = "manuale", only: set[str] |
     except Exception as exc:
         return {"ap": ap.name, "ok": False, "message": f"SSH: {exc}"}
     commands, changed = [], []
+    caps = capabilities.of_ap(ap.name)
     for key, value in wanted.items():
         item = ci.BY_KEY.get(key)
         if not item or (only is None and not item.enforce):
             continue
+        if not capabilities.available(key, item.read(cfg), item.kind):
+            continue                              # voce assente su questo modello/firmware: non si inventa
+        value = capabilities.fit_item(key, value, caps)   # es. WPA3 su un Wi-Fi 5 → WPA2
         if key == "hostname_sync":
             cmds = ci.hostname_commands(ap.name, cfg) if value else []
         elif item.enforce and ci.same(item, value, item.read(cfg)):

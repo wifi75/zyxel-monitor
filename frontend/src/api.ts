@@ -113,9 +113,16 @@ export interface PolicyBand {
   override: PolicyRule; status: PolicyStatus
   current: { tx_power: number | null; channel: string | null; width: string | null }
 }
+/** capacità del modello: generazione Wi-Fi e larghezze ammesse per banda */
+export interface ApCaps {
+  model: string | null; wifi: number | null; widths: Record<string, string[]>; choices: Record<string, string[]>
+}
 export interface PolicyOverview {
   site: Record<string, PolicyRule>
-  aps: { id: number; name: string; method: string; enabled: boolean; configurable: boolean; bands: Record<string, PolicyBand> }[]
+  aps: {
+    id: number; name: string; method: string; enabled: boolean; configurable: boolean; bands: Record<string, PolicyBand>
+    caps: ApCaps
+  }[]
 }
 export interface PolicyResult { ap: string; ok: boolean; message: string }
 export interface SiteItem {

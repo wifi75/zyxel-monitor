@@ -112,6 +112,40 @@ interface Row {
 const powerLabel = (p: string) => (Number(p) >= 30 ? t('Massima') : `${p} dBm`)
 const channelLabel = (c: string) => (c === 'auto' ? t('Automatico') : `${c}${Number(c) >= 100 ? ' DFS' : ''}`)
 const bandText = (b: Band) => b.replace('GHz', ' GHz')
+/** larghezze ammesse dal modello dell'AP (Wi-Fi 5: fino a 80 MHz, Wi-Fi 6: fino a 160) */
+const apWidths = (apId: number, b: Band) => aps.value.find(a => a.id === apId)?.caps?.widths?.[b] ?? WIDTHS[b]
+/** la larghezza chiesta se il modello la supporta, altrimenti la più ampia che supporta (come fa il server) */
+function fitWidth(w: string, b: Band, apId: number): string {
+  const allowed = apWidths(apId, b)
+  return allowed.includes(w) ? w : allowed[allowed.length - 1] ?? w
+}
+/** scelta del sito adattata al modello (es. WPA3 su un Wi-Fi 5 → WPA2), come fa il server */
+function fitChoice(key: string, v: unknown, apId: number): unknown {
+  const allowed = aps.value.find(a => a.id === apId)?.caps?.choices?.[key]
+  return allowed && typeof v === 'string' && !allowed.includes(v) ? allowed[allowed.length - 1] : v
+}
+/** true se il valore del sito supera le capacità di questo AP (es. 160 MHz o WPA3 su un Wi-Fi 5) */
+function beyondModel(r: Row, apId: number): boolean {
+  if (r.item) return r.item.value != null && fitChoice(r.item.key, r.item.value, apId) !== r.item.value
+  if (r.field !== 'width' || !r.band) return false
+  const own = r.override?.(apId)
+  const want = own && own !== 'none' ? own : own === 'none' ? null : r.site
+  return !!want && fitWidth(want, r.band, apId) !== want
+}
+/** voci che si possono attivare anche se l'AP oggi non le ha (le crea il comando), come sul server */
+const CREATABLE = new Set(['guest_name', 'guest_password', 'wifi_schedule', 'mac_block', 'ntp_server', 'wifi_password'])
+/** l'AP non ha questa voce nella sua configurazione: modello o firmware non la prevedono */
+function unavailable(r: Row, apId: number): boolean {
+  if (!r.item || r.item.kind === 'password' || CREATABLE.has(r.item.key)) return false
+  const name = aps.value.find(a => a.id === apId)?.name
+  return !!name && name in (r.item.current ?? {}) && r.item.current[name] == null
+}
+/** opzioni della casella di un singolo AP: solo quelle che il modello supporta */
+function apOptions(r: Row, apId: number): Opt[] {
+  if (r.field !== 'width' || !r.band) return r.options ?? []
+  const allowed = apWidths(apId, r.band)
+  return (r.options ?? []).filter(o => allowed.includes(o.value))
+}
 
 function radioRow(b: Band, f: PolicyField): Row {
   const opts: Opt[] = f === 'tx_power' ? POWERS.map(p => ({ value: String(p), label: powerLabel(String(p)) }))
@@ -188,6 +222,11 @@ const rows = computed<Row[]>(() => [
 const grouped = computed(() => GROUPS.map(g => ({ ...g, rows: rows.value.filter(r => r.group === g.key) })).filter(g => g.rows.length))
 
 // ---------- testo e stato delle caselle ----------
+/** valore comune a tutti gli AP (null se sono diversi fra loro o non letti) */
+function observed(r: Row): string | null {
+  const vals = [...new Set(aps.value.filter(a => !unavailable(r, a.id)).map(a => r.current(a.id)).filter(v => v != null))]
+  return vals.length === 1 ? vals[0] : null
+}
 function siteLabel(r: Row): string {
   if (r.site == null) return t('non gestito')
   if (r.kind === 'select') return r.options?.find(o => o.value === r.site)?.label ?? r.site
@@ -220,7 +259,7 @@ function cellState(r: Row, apId: number): 'same' | 'diff' | 'none' {
       const st = aps.value.find(x => x.id === apId)?.bands[r.band!]?.status ?? ''
       return st === 'ok' || st === 'capped' ? 'same' : 'diff'
     }
-    const wantText = r.field === 'channel' ? channelLabel(want) : widthLabel(want)
+    const wantText = r.field === 'channel' ? channelLabel(want) : widthLabel(fitWidth(want, r.band!, apId))
     return now === wantText ? 'same' : 'diff'
   }
   if (r.site == null || !r.item) return 'none'
@@ -228,7 +267,7 @@ function cellState(r: Row, apId: number): 'same' | 'diff' | 'none' {
   const name = aps.value.find(a => a.id === apId)?.name
   const cur = name ? r.item.current?.[name] : undefined
   if (cur === undefined || cur === null) return 'same'          // non ancora letto
-  return norm(cur) === norm(r.item.value) ? 'same' : 'diff'
+  return norm(cur) === norm(fitChoice(r.item.key, r.item.value, apId)) ? 'same' : 'diff'
 }
 /** valore confrontabile: liste ordinate, booleani e numeri come testo */
 function norm(v: unknown): string {
@@ -238,6 +277,12 @@ function norm(v: unknown): string {
 /** stato di una casella AP: in attesa, non gestita (arancione se gli AP non sono d'accordo) o confronto */
 function apClass(r: Row, apId: number): string {
   if (pending.value[cellKey(r, apId)]) return 'pend'
+  if (unavailable(r, apId)) return 'na'
+  // solo monitoraggio: le regole del pannello non contano, si confrontano gli AP fra loro
+  if (!managing.value) {
+    const vals = new Set(aps.value.filter(a => !unavailable(r, a.id)).map(a => r.current(a.id)).filter(v => v != null))
+    return vals.size > 1 ? 'diff' : r.current(apId) == null ? 'none' : 'same'
+  }
   // valori non letti (null, es. password sui firmware vecchi) non contano come differenza
   if (r.site == null && !r.override?.(apId)) {
     return new Set(aps.value.map(a => r.current(a.id)).filter(v => v != null)).size > 1 ? 'diff' : 'none'
@@ -517,8 +562,11 @@ async function copyBackup() { copied.value = await copyText(shown.value?.text ??
       <div class="table-wrap">
         <table class="cmp">
           <thead><tr>
-            <th>{{ t('Impostazione') }}</th><th class="site-col">{{ t('Sito (tutti)') }}</th>
-            <th v-for="a in aps" :key="a.id" class="ap-col">{{ a.name }}</th>
+            <th>{{ t('Impostazione') }}</th><th class="site-col">{{ managing ? t('Sito (tutti)') : t('Adesso sugli AP') }}</th>
+            <th v-for="a in aps" :key="a.id" class="ap-col">
+              {{ a.name }}
+              <small v-if="a.caps?.model" class="ap-model">{{ a.caps.model }}<template v-if="a.caps.wifi"> · Wi-Fi {{ a.caps.wifi }}</template></small>
+            </th>
           </tr></thead>
           <tbody>
             <template v-for="g in grouped" :key="g.key">
@@ -549,6 +597,10 @@ async function copyBackup() { copied.value = await copyText(shown.value?.text ??
                               @click="commit(r, null, draft)">OK</button>
                     </div>
                   </div>
+                  <span v-else-if="!managing" class="site-cell observed" :class="{ none: observed(r) == null }"
+                        :title="t('Solo monitoraggio: valore che hanno adesso gli AP (impostato da Nebula)')">
+                    <span class="grow">{{ observed(r) ?? t('valori diversi') }}</span>
+                  </span>
                   <button v-else class="site-cell" :class="pending[cellKey(r, null)] ? 'pend' : r.site == null ? 'none' : 'set'"
                           :title="t('Clicca per cambiare')" @click="startEdit(r, null)">
                     <span v-if="!pending[cellKey(r, null)] && r.site != null && dot(r, siteLabel(r))" class="dot" :class="dot(r, siteLabel(r))" />
@@ -562,7 +614,7 @@ async function copyBackup() { copied.value = await copyText(shown.value?.text ??
                     <select v-model="draft" @change="commit(r, a.id, draft)">
                       <option value="inherit">{{ t('Come il sito') }}</option>
                       <option value="none">{{ t('Non gestito') }}</option>
-                      <option v-for="o in r.options" :key="o.value" :value="o.value">{{ o.label }}</option>
+                      <option v-for="o in apOptions(r, a.id)" :key="o.value" :value="o.value">{{ o.label }}</option>
                     </select>
                     <div class="cmp-edit-btns"><button class="ghost small" @click="editing = null">{{ t('Annulla') }}</button></div>
                   </div>
@@ -573,9 +625,11 @@ async function copyBackup() { copied.value = await copyText(shown.value?.text ??
                     <template v-else>
                       <span v-if="dot(r, r.current(a.id))" class="dot" :class="dot(r, r.current(a.id))" />
                       <span v-if="r.current(a.id) == null && r.item?.kind === 'password'" class="muted" :title="t('Questo firmware non permette di leggere la password: è impostata, ma il pannello non può vederla.')">{{ t('non leggibile') }}</span>
+                      <span v-else-if="unavailable(r, a.id)" class="muted" :title="t('Questo modello o firmware non ha questa impostazione: il pannello non la invia.')">{{ t('non disponibile') }}</span>
                       <template v-else>{{ r.current(a.id) ?? '—' }}</template>
                       <span v-if="apClass(r, a.id) === 'same'" class="mark ok">✓</span>
                       <span v-else-if="apClass(r, a.id) === 'diff'" class="mark warn">⚠</span>
+                      <small v-if="beyondModel(r, a.id)" class="muted" :title="t('Il valore del sito non è supportato da questo modello: si usa il massimo che supporta.')">{{ t('max del modello') }}</small>
                       <span v-if="r.override?.(a.id) && r.override(a.id) !== 'none'" class="own" :title="t('personalizzato')">★</span>
                     </template>
                   </component>

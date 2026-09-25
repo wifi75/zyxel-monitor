@@ -2,6 +2,14 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) — versioni: [SemVer](https://semver.org/lang/it/).
 
+## [0.24.0] - 2026-09-25
+### Aggiunto
+- Capacità per modello: intestazione con modello e generazione Wi-Fi; larghezze e sicurezza proposte solo se il modello le supporta (160 MHz e WPA3 solo Wi-Fi 6); un valore del sito oltre le capacità diventa il massimo del modello ("max del modello").
+- Voci assenti nella configurazione di un AP mostrate come "non disponibile" e mai inviate.
+### Modificato
+- Solo monitoraggio: la colonna Sito mostra il valore che hanno adesso gli AP (quello di Nebula) e il ✓/⚠ confronta gli AP fra loro, non con le regole salvate del pannello.
+- Larghezze coi nomi di Nebula (20/40/80/160 MHz); canali 2.4 GHz in ordine con 1/6/11 consigliati; logo e favicon.
+
 ## [0.22.0] - 2026-09-25
 ### Aggiunto
 - Interruttore generale della gestione: spento (predefinito) il pannello solo monitora e non invia nulla agli AP.

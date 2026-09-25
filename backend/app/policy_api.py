@@ -4,7 +4,7 @@ from typing import Literal
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
-from . import config_items, guard, policy, restore, site_config
+from . import capabilities, config_items, guard, policy, restore, site_config
 from .collectors import ssh
 from .core import store
 from .core.db import connect
@@ -42,6 +42,7 @@ def overview():
     configs = _configs()
     rules = policy.load()
     actual = policy.actual_powers()
+    models = capabilities.models()
     aps = []
     for ap in store.list_aps():
         bands = {}
@@ -56,7 +57,8 @@ def overview():
                 "current": {"tx_power": have, **_radio_now(configs.get(ap.name), band)},
             }
         aps.append({"id": ap.id, "name": ap.name, "method": ap.method, "enabled": ap.enabled,
-                    "configurable": bool(ap.ssh_password), "bands": bands})
+                    "configurable": bool(ap.ssh_password), "bands": bands,
+                    "caps": capabilities.of_model(models.get(ap.name))})
     site = {b: {f: rules.get(policy.SITE, {}).get(b, {}).get(f) for f in policy.FIELDS} for b in policy.BANDS}
     return {"site": site, "aps": aps}
 

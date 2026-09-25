@@ -11,6 +11,7 @@ import json
 import logging
 import time
 
+from . import capabilities
 from .collectors import ssh
 from .core import store
 from .core.db import connect
@@ -104,6 +105,7 @@ async def apply_ap(ap: store.ApConfig, only_changed: bool = False, reason: str =
     if ap.name in paused():
         return {"ap": ap.name, "ok": True, "message": "In pausa: gestione sospesa dopo un ripristino"}
     rules = load()
+    caps = capabilities.of_ap(ap.name)
     actual = actual_powers().get(ap.name, {})
     commands, changes, radio = [], [], []
     for band in BANDS:
@@ -116,6 +118,8 @@ async def apply_ap(ap: store.ApConfig, only_changed: bool = False, reason: str =
             changes.append(f"{label} potenza {shown}")
         ch, _ = effective(rules, ap.id, band, "channel")
         width, _ = effective(rules, ap.id, band, "width")
+        if width:
+            width = capabilities.fit_width(width, band, caps)     # es. 160 MHz su un AP Wi-Fi 5 → 80
         if (ch or width) and not only_changed:
             radio.append((band, ch, width))
     if radio:
@@ -133,7 +137,7 @@ async def apply_ap(ap: store.ApConfig, only_changed: bool = False, reason: str =
             if ch:
                 parts.append("canale automatico" if ch == "auto" else f"canale {ch}")
             if width:
-                parts.append(f"larghezza {width} MHz")
+                parts.append(f"larghezza {width.split('/')[-1]} MHz")
             changes.append(f"{band.replace('GHz', ' GHz')} " + ", ".join(parts))
     if not commands:
         return {"ap": ap.name, "ok": True, "message": "Già allineato", "commands": []}
