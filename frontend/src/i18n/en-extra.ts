@@ -58,6 +58,7 @@ addEn({
   'in attesa': 'pending',
   'da applicare': 'to apply',
   'consigliato': 'recommended',
+  'solo modelli che lo supportano': 'only models that support it',
   'Ripristina': 'Restore',
   'Riprendi': 'Resume',
   'In pausa': 'Paused',

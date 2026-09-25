@@ -19,7 +19,9 @@ const CHANNELS: Record<Band, number[]> = {
   '2.4GHz': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13],
   '5GHz': [36, 40, 44, 48, 52, 56, 60, 64, 100, 104, 108, 112, 116, 120, 124, 128, 132, 136, 140],
 }
-const WIDTHS: Record<Band, string[]> = { '2.4GHz': ['20', '20/40'], '5GHz': ['20', '20/40', '20/40/80'] }
+const WIDTHS: Record<Band, string[]> = { '2.4GHz': ['20', '20/40'], '5GHz': ['20', '20/40', '20/40/80', '20/40/80/160'] }
+/** nome della CLI → nome usato da Nebula (la CLI indica le larghezze ammesse, Nebula solo la massima) */
+const widthLabel = (w: string) => `${w.split('/').pop()} MHz`
 
 const data = ref<PolicyOverview | null>(null)
 const items = ref<SiteItem[]>([])
@@ -114,7 +116,7 @@ const bandText = (b: Band) => b.replace('GHz', ' GHz')
 function radioRow(b: Band, f: PolicyField): Row {
   const opts: Opt[] = f === 'tx_power' ? POWERS.map(p => ({ value: String(p), label: powerLabel(String(p)) }))
     : f === 'channel' ? [{ value: 'auto', label: t('Automatico') }, ...CHANNELS[b].map(c => ({ value: String(c), label: channelLabel(String(c)) + (b === '2.4GHz' && [1, 6, 11].includes(c) ? ' — ' + t('consigliato') : '') }))]
-    : WIDTHS[b].map(w => ({ value: w, label: `${w} MHz` }))
+    : WIDTHS[b].map(w => ({ value: w, label: widthLabel(w) + (w.endsWith("160") ? " — " + t("solo modelli che lo supportano") : "") }))
   const label = { tx_power: t('Potenza'), channel: t('Canale'), width: t('Larghezza') }[f]
   const siteValue = data.value?.site[b]?.[f]
   return {
@@ -124,7 +126,7 @@ function radioRow(b: Band, f: PolicyField): Row {
     current: id => {
       const v = aps.value.find(a => a.id === id)?.bands[b]?.current?.[f]
       if (v == null || v === '') return null
-      return f === 'tx_power' ? `${v} dBm` : f === 'channel' ? channelLabel(String(v)) : `${v} MHz`
+      return f === 'tx_power' ? `${v} dBm` : f === 'channel' ? channelLabel(String(v)) : widthLabel(String(v))
     },
     override: id => {
       const o = aps.value.find(a => a.id === id)?.bands[b]?.override?.[f]
@@ -218,7 +220,7 @@ function cellState(r: Row, apId: number): 'same' | 'diff' | 'none' {
       const st = aps.value.find(x => x.id === apId)?.bands[r.band!]?.status ?? ''
       return st === 'ok' || st === 'capped' ? 'same' : 'diff'
     }
-    const wantText = r.field === 'channel' ? channelLabel(want) : `${want} MHz`
+    const wantText = r.field === 'channel' ? channelLabel(want) : widthLabel(want)
     return now === wantText ? 'same' : 'diff'
   }
   if (r.site == null || !r.item) return 'none'
