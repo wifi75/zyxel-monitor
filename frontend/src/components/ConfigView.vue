@@ -222,9 +222,17 @@ const rows = computed<Row[]>(() => [
 const grouped = computed(() => GROUPS.map(g => ({ ...g, rows: rows.value.filter(r => r.group === g.key) })).filter(g => g.rows.length))
 
 // ---------- testo e stato delle caselle ----------
+/** valore da confrontare fra gli AP: per la potenza quello impostato (la reale dipende dal modello) */
+function compared(r: Row, apId: number): string | null {
+  if (r.field === 'tx_power' && r.band) {
+    const c = aps.value.find(a => a.id === apId)?.bands[r.band]?.current?.tx_config
+    return c == null ? r.current(apId) : powerLabel(String(c))
+  }
+  return r.current(apId)
+}
 /** valore comune a tutti gli AP (null se sono diversi fra loro o non letti) */
 function observed(r: Row): string | null {
-  const vals = [...new Set(aps.value.filter(a => !unavailable(r, a.id)).map(a => r.current(a.id)).filter(v => v != null))]
+  const vals = [...new Set(aps.value.filter(a => !unavailable(r, a.id)).map(a => compared(r, a.id)).filter(v => v != null))]
   return vals.length === 1 ? vals[0] : null
 }
 function siteLabel(r: Row): string {
@@ -280,8 +288,8 @@ function apClass(r: Row, apId: number): string {
   if (unavailable(r, apId)) return 'na'
   // solo monitoraggio: le regole del pannello non contano, si confrontano gli AP fra loro
   if (!managing.value) {
-    const vals = new Set(aps.value.filter(a => !unavailable(r, a.id)).map(a => r.current(a.id)).filter(v => v != null))
-    return vals.size > 1 ? 'diff' : r.current(apId) == null ? 'none' : 'same'
+    const vals = new Set(aps.value.filter(a => !unavailable(r, a.id)).map(a => compared(r, a.id)).filter(v => v != null))
+    return vals.size > 1 ? 'diff' : compared(r, apId) == null ? 'none' : 'same'
   }
   // valori non letti (null, es. password sui firmware vecchi) non contano come differenza
   if (r.site == null && !r.override?.(apId)) {

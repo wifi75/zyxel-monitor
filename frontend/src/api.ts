@@ -111,7 +111,7 @@ export type PolicyRule = { tx_power: number | null; channel: string | null; widt
 export interface PolicyBand {
   desired: number | null; source: 'ap' | 'site' | 'none'; actual: number | null
   override: PolicyRule; status: PolicyStatus
-  current: { tx_power: number | null; channel: string | null; width: string | null }
+  current: { tx_power: number | null; channel: string | null; width: string | null; tx_config?: number | null }
 }
 /** capacità del modello: generazione Wi-Fi e larghezze ammesse per banda */
 export interface ApCaps {

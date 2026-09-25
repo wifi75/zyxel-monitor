@@ -31,10 +31,12 @@ def _radio_now(cfg, band: str) -> dict:
     slot, key = (1, "2g-channel") if band == "2.4GHz" else (2, "5g-channel")
     prof = cfg.radio_profile(slot) if cfg else None
     if not prof:
-        return {"channel": None, "width": None}
+        return {"channel": None, "width": None, "tx_config": None}
     header = f"wlan-radio-profile {prof}"
     auto = cfg.has(header, "dcs activate")
-    return {"channel": "auto" if auto else cfg.value(header, key), "width": cfg.value(header, "ch-width")}
+    power = cfg.value(f"wlan slot{slot}", "output-power")      # potenza impostata (es. "30dBm"), non quella reale
+    return {"channel": "auto" if auto else cfg.value(header, key), "width": cfg.value(header, "ch-width"),
+            "tx_config": int(power.removesuffix("dBm")) if power and power.removesuffix("dBm").isdigit() else None}
 
 
 @router.get("")
