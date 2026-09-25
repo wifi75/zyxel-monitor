@@ -22,6 +22,7 @@ import { bps, bytes, copyText, duration, signal, time } from './format'
 import { locale, t } from './i18n'
 import LangSwitch from './components/LangSwitch.vue'
 import ThemeSwitch from './components/ThemeSwitch.vue'
+import AppLogo from './components/AppLogo.vue'
 import type { IconName } from './icons'
 
 const REFRESH_MS = 30_000
@@ -273,7 +274,7 @@ const SSH_NA = "La CLI SSH di questo AP non fornisce ancora il dato: in Impostaz
 
   <div v-else class="layout" :class="{ 'nav-open': navOpen }">
     <aside class="sidebar" @click="navOpen = false">
-      <div class="brand"><span class="dot" />Zyxel Monitor</div>
+      <div class="brand"><AppLogo :size="26" />Zyxel Monitor</div>
 
       <div class="nav-group tone-blue">
         <div class="nav-title">{{ t('Monitoraggio') }}</div>

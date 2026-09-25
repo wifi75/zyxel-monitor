@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { api, auth } from '../api'
 import { t } from '../i18n'
+import AppLogo from './AppLogo.vue'
 
 const emit = defineEmits<{ done: [] }>()
 const username = ref('admin')
@@ -27,7 +28,8 @@ async function submit() {
 <template>
   <div class="login">
     <form class="card login-card" @submit.prevent="submit">
-      <div class="brand"><span class="dot" />Zyxel Monitor</div>
+      <div class="login-logo"><AppLogo :size="72" animated /></div>
+      <div class="brand login-brand">Zyxel Monitor</div>
       <p class="muted">{{ t('Accedi per vedere access point, client e traffico.') }}</p>
       <label>{{ t('Utente') }}<input v-model="username" autocomplete="username" required /></label>
       <label>{{ t('Password') }}<input v-model="password" type="password" autocomplete="current-password" required /></label>
