@@ -192,12 +192,21 @@ interface Pending { row: Row; apId: number | null; value: string | null }
 const pending = ref<Record<string, Pending>>({})
 const editing = ref<string | null>(null)
 const draft = ref('')
+const draft2 = ref('')                 // ripetizione della password
+/** errore della password in modifica: lunghezza WPA o le due non coincidono */
+const pwdError = computed(() => {
+  if (!draft.value) return ''
+  if (draft.value.length < 8 || draft.value.length > 63) return t('Da 8 a 63 caratteri')
+  if (draft.value !== draft2.value) return t('Le due password non coincidono')
+  return ''
+})
 const pendingCount = computed(() => Object.keys(pending.value).length)
 const cellKey = (r: Row, apId: number | null) => `${r.id}|${apId ?? 'site'}`
 
 function startEdit(r: Row, apId: number | null) {
   const k = cellKey(r, apId)
   editing.value = k
+  draft2.value = ''
   const p = pending.value[k]
   draft.value = p ? (p.value ?? (apId === null ? 'unmanaged' : 'inherit'))
     : apId === null ? (r.kind === 'password' ? '' : r.site ?? (r.kind === 'select' ? 'unmanaged' : ''))
@@ -208,6 +217,7 @@ const EMPTY_MEANS_OFF = new Set(['guest_name', 'wifi_schedule'])
 function commit(r: Row, apId: number | null, value: string) {
   const k = cellKey(r, apId)
   if (r.kind === 'password' && value === '') { editing.value = null; return }   // nessuna nuova password
+  if (r.kind === 'password' && pwdError.value) return
   const keepEmpty = value === '' && (r.kind === 'list' || (r.item && EMPTY_MEANS_OFF.has(r.item.key)))
   const v = value === 'unmanaged' || (value === '' && !keepEmpty) ? null : value
   const original = apId === null ? r.site : (r.override?.(apId) ?? 'inherit')
@@ -392,9 +402,14 @@ async function copyBackup() { copied.value = await copyText(shown.value?.text ??
                     <textarea v-else-if="r.kind === 'list'" v-model="draft" rows="3" placeholder="aa:bb:cc:dd:ee:ff" />
                     <input v-else v-model="draft" :type="r.kind === 'password' ? 'password' : r.kind === 'int' ? 'number' : 'text'"
                            :placeholder="r.kind === 'password' ? t('nuova password') : t('vuoto = non gestito')" @keyup.enter="commit(r, null, draft)" />
+                    <template v-if="r.kind === 'password'">
+                      <input v-model="draft2" type="password" :placeholder="t('ripeti la password')" @keyup.enter="commit(r, null, draft)" />
+                      <small v-if="pwdError && draft2" class="error">{{ pwdError }}</small>
+                    </template>
                     <div class="cmp-edit-btns">
                       <button class="ghost small" @click="editing = null">{{ t('Annulla') }}</button>
-                      <button v-if="r.kind !== 'select'" class="primary small" @click="commit(r, null, draft)">OK</button>
+                      <button v-if="r.kind !== 'select'" class="primary small" :disabled="r.kind === 'password' && !!pwdError"
+                              @click="commit(r, null, draft)">OK</button>
                     </div>
                   </div>
                   <button v-else class="site-cell" :class="pending[cellKey(r, null)] ? 'pend' : r.site == null ? 'none' : 'set'"
