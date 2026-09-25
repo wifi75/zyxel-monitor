@@ -57,6 +57,7 @@ addEn({
   'diverso': 'different',
   'in attesa': 'pending',
   'da applicare': 'to apply',
+  'consigliato': 'recommended',
   'Ripristina': 'Restore',
   'Riprendi': 'Resume',
   'In pausa': 'Paused',

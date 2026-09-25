@@ -16,7 +16,7 @@ type Band = '2.4GHz' | '5GHz'
 const BANDS: Band[] = ['2.4GHz', '5GHz']
 const POWERS = [30, 27, 24, 21, 20, 18, 17, 15, 12, 10, 8, 6, 3]
 const CHANNELS: Record<Band, number[]> = {
-  '2.4GHz': [1, 6, 11, 2, 3, 4, 5, 7, 8, 9, 10, 12, 13],
+  '2.4GHz': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13],
   '5GHz': [36, 40, 44, 48, 52, 56, 60, 64, 100, 104, 108, 112, 116, 120, 124, 128, 132, 136, 140],
 }
 const WIDTHS: Record<Band, string[]> = { '2.4GHz': ['20', '20/40'], '5GHz': ['20', '20/40', '20/40/80'] }
@@ -113,7 +113,7 @@ const bandText = (b: Band) => b.replace('GHz', ' GHz')
 
 function radioRow(b: Band, f: PolicyField): Row {
   const opts: Opt[] = f === 'tx_power' ? POWERS.map(p => ({ value: String(p), label: powerLabel(String(p)) }))
-    : f === 'channel' ? [{ value: 'auto', label: t('Automatico') }, ...CHANNELS[b].map(c => ({ value: String(c), label: channelLabel(String(c)) }))]
+    : f === 'channel' ? [{ value: 'auto', label: t('Automatico') }, ...CHANNELS[b].map(c => ({ value: String(c), label: channelLabel(String(c)) + (b === '2.4GHz' && [1, 6, 11].includes(c) ? ' — ' + t('consigliato') : '') }))]
     : WIDTHS[b].map(w => ({ value: w, label: `${w} MHz` }))
   const label = { tx_power: t('Potenza'), channel: t('Canale'), width: t('Larghezza') }[f]
   const siteValue = data.value?.site[b]?.[f]
