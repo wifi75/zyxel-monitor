@@ -124,6 +124,12 @@ export interface SiteItem {
   current: Record<string, string | number | boolean | string[] | null>
 }
 export interface Backup { id: number; ap: string; ts: number; size: number }
+export interface PlanAp { ap: string; id: number; changes: string; commands: string[] }
+export interface Rollout {
+  status: 'idle' | 'running' | 'done' | 'rolled_back' | 'error'; phase?: string; first?: string; check_at?: number
+  clients_before?: number; clients_after?: number; lost?: string[]; message?: string; results?: PolicyResult[]
+}
+export interface GuardState { enabled: boolean; rollout: Rollout; wait: number; drop: number }
 
 export interface WidgetPos { i: string; x: number; y: number; w: number; h: number }
 export type ViewKind = 'overview' | 'ap'
@@ -194,15 +200,19 @@ export const api = {
     req<{ results: PolicyResult[] }>(`/policy/site?apply=${apply}`, { method: 'PUT', body: JSON.stringify({ band, field, value }) }),
   setApPolicy: (id: number, band: string, field: PolicyField, value: number | string | null, apply = true) =>
     req<{ results: PolicyResult[] }>(`/policy/aps/${id}?apply=${apply}`, { method: 'PUT', body: JSON.stringify({ band, field, value }) }),
-  applyPolicy: () => req<{ results: PolicyResult[] }>('/policy/apply', { method: 'POST' }),
+  guard: () => req<GuardState>('/policy/guard'),
+  setGuard: (on: boolean) => req<GuardState>(`/policy/guard?on=${on}`, { method: 'PUT' }),
+  preview: (keys: string[] | null, radio: boolean) =>
+    req<{ aps: PlanAp[] }>('/policy/preview', { method: 'POST', body: JSON.stringify({ keys, radio }) }),
+  cancelPreview: () => req<{ ok: boolean }>('/policy/preview', { method: 'DELETE' }),
+  rollout: (keys: string[] | null, radio: boolean, firstAp: number | null) =>
+    req<{ ok: boolean; message: string }>('/policy/rollout', { method: 'POST', body: JSON.stringify({ keys, radio, first_ap: firstAp }) }),
   backupAll: () => req<{ results: PolicyResult[] }>('/policy/backups', { method: 'POST' }),
   backups: () => req<Backup[]>('/policy/backups'),
   siteItems: () => req<SiteItem[]>('/policy/items'),
   setSiteItem: (key: string, value: string | number | boolean | string[] | null, apply = true) =>
     req<{ results: PolicyResult[] }>(`/policy/items/${key}?apply=${apply}`, { method: 'PUT', body: JSON.stringify({ value }) }),
   /** keys: voci da applicare (anche la password); senza = tutte quelle da mantenere */
-  applyItems: (keys?: string[]) =>
-    req<{ results: PolicyResult[] }>('/policy/items/apply', { method: 'POST', body: JSON.stringify({ keys: keys ?? null }) }),
   setHybridMode: (id: number, mode: 'cloud' | 'standalone') =>
     req<{ ok: boolean; output: string }>(`/settings/aps/${id}/hybrid-mode`, { method: 'POST', body: JSON.stringify({ mode }) }),
   exploreAp: (id: number) => req<{ text: string }>(`/settings/aps/${id}/explore`, { method: 'POST' }),

@@ -242,3 +242,9 @@ def test_restore_commands():
                            "wlan slot1\n output-power 19dBm\n ssid profile 1 SSID1\n!\n")
     assert restore_commands(old, now) == ["wlan-security-profile S1", "no transition-mode", "mode wpa2", "exit",
                                           "wlan slot1", "output-power 16dBm", "exit"]
+
+
+def test_guard_mask_password():
+    from app.guard import _mask
+    assert _mask(["wlan-security-profile S1", "wpa-psk segreta123", "exit"]) == [
+        "wlan-security-profile S1", "wpa-psk ••••••••", "exit"]

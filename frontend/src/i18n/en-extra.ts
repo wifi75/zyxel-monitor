@@ -2,6 +2,26 @@ import { addEn } from './index'
 
 // traduzioni inglesi: chiave = testo italiano esatto usato in t()
 addEn({
+  'Gestione dal pannello': 'Panel management',
+  'Gestione dal pannello accesa': 'Panel management on',
+  'Solo monitoraggio': 'Monitoring only',
+  'Ogni modifica si prova prima su un AP; se i dispositivi collegati calano si torna indietro da soli.': 'Every change is tried on one AP first; if connected devices drop, it rolls back automatically.',
+  'Il pannello non modifica gli AP. Accendi la gestione per applicare le impostazioni.': 'The panel does not change the APs. Turn management on to apply settings.',
+  'Accendere la gestione dal pannello? Da ora il pannello può modificare gli AP e riallinearli alle impostazioni del sito.': 'Turn panel management on? From now on the panel can change the APs and keep them aligned to the site settings.',
+  'Prova in corso': 'Trial in progress',
+  'verifica fra': 'check in',
+  'dispositivi collegati prima': 'devices connected before',
+  'dispositivi': 'devices',
+  'Non rientrati': 'Did not come back',
+  'Anteprima: cosa verrà inviato': 'Preview: what will be sent',
+  'Nessuna modifica': 'No change',
+  '{n} comandi': '{n} commands',
+  "L'AP selezionato riceve la modifica per primo. Dopo 5 minuti si contano i dispositivi collegati: se non sono calati si passa agli altri AP, altrimenti si torna al backup fatto subito prima.": 'The selected AP gets the change first. After 5 minutes connected devices are counted: if they did not drop the other APs follow, otherwise the backup taken just before is restored.',
+  'Prova e poi applica a tutti': 'Try, then apply to all',
+  'Applicato su tutti gli AP': 'Applied to all APs',
+  "C'è già una prova in corso": 'A trial is already running',
+  'Gestione dal pannello spenta: il pannello solo monitora': 'Panel management is off: the panel only monitors',
+
   'visibile': 'visible',
   'nascosta': 'hidden',
   'accesi': 'on',

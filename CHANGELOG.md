@@ -2,6 +2,19 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) — versioni: [SemVer](https://semver.org/lang/it/).
 
+## [0.22.0] - 2026-09-25
+### Aggiunto
+- Interruttore generale della gestione: spento (predefinito) il pannello solo monitora e non invia nulla agli AP.
+- Anteprima dei comandi per ogni AP prima di applicare (password mascherate); annullando si rimettono i valori di prima.
+- Prova controllata: la modifica va prima su un AP scelto, dopo 5 minuti si contano i dispositivi collegati e solo se non sono calati si estende agli altri.
+- Ripristino automatico: se i dispositivi calano oltre il 30% ogni AP toccato torna al backup fatto subito prima e va in pausa; si elencano i dispositivi non rientrati.
+### Modificato
+- Salvare un'impostazione non la invia più agli AP: l'invio passa sempre dall'anteprima e dalla prova.
+
+## [0.21.0] - 2026-09-25
+### Aggiunto
+- Pulsante Ripristina sui backup e pausa della gestione per singolo AP.
+
 ## [0.20.1] - 2026-09-24
 ### Modificato
 - Configurazione: nome della rete 2.4 GHz e 5 GHz impostabili separatamente; stesso nome = un'unica rete.

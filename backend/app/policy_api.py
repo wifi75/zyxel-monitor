@@ -4,7 +4,7 @@ from typing import Literal
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
-from . import config_items, policy, restore, site_config
+from . import config_items, guard, policy, restore, site_config
 from .collectors import ssh
 from .core import store
 from .core.db import connect
@@ -98,7 +98,7 @@ async def set_site(body: RuleIn, apply: bool = True):
     if value is not None and value == policy.UNMANAGED[body.field]:
         value = None       # nel sito "non gestito" è l'assenza della regola
     policy.set_rule(policy.SITE, body.band, body.field, value)
-    return {"results": await policy.apply_all(reason="profilo del sito") if apply else []}
+    return {"results": []}      # l'invio agli AP passa sempre da /rollout (prova controllata)
 
 
 @router.put("/aps/{ap_id}")
@@ -107,7 +107,7 @@ async def set_ap(ap_id: int, body: RuleIn, apply: bool = True):
     if not ap:
         raise HTTPException(404, "Access point non trovato")
     policy.set_rule(policy.scope_of(ap_id), body.band, body.field, _validate(body))
-    return {"results": [await policy.apply_ap(ap, reason="personalizzazione")] if apply else []}
+    return {"results": []}
 
 
 @router.get("/items")
@@ -145,24 +145,44 @@ async def set_item(key: str, body: ItemIn, apply: bool = True):
     except ValueError as exc:
         raise HTTPException(422, f"{item.label}: {exc}") from None
     site_config.set_value(key, value)
-    if value is None or not apply:
-        return {"results": []}
-    return {"results": await site_config.apply_all(reason=item.label, only={key})}
+    return {"results": []}
 
 
 class ApplyItemsIn(BaseModel):
     keys: list[str] | None = None      # None = tutte le voci da mantenere; elenco = solo quelle (anche la password)
 
 
-@router.post("/items/apply")
-async def apply_items(body: ApplyItemsIn | None = None):
-    keys = set(body.keys) if body and body.keys is not None else None
-    return {"results": await site_config.apply_all(only=keys)}
+class RolloutIn(BaseModel):
+    keys: list[str] | None = None     # voci del sito da applicare; None = tutte quelle da mantenere
+    radio: bool = False               # anche le regole radio (potenza, canale, larghezza)
+    first_ap: int | None = None       # AP su cui provare per primo
 
 
-@router.post("/apply")
-async def apply_now():
-    return {"results": await policy.apply_all()}
+@router.get("/guard")
+def guard_state():
+    return {"enabled": guard.enabled(), "rollout": guard.state, "wait": guard.WAIT, "drop": guard.DROP}
+
+
+@router.put("/guard")
+def guard_set(on: bool):
+    guard.set_enabled(on)
+    return guard_state()
+
+
+@router.post("/preview")
+async def preview(body: RolloutIn):
+    return {"aps": await guard.preview(set(body.keys) if body.keys is not None else None, body.radio)}
+
+
+@router.delete("/preview")
+def preview_cancel():
+    guard.cancel_preview()
+    return {"ok": True}
+
+
+@router.post("/rollout")
+async def rollout(body: RolloutIn):
+    return await guard.start(set(body.keys) if body.keys is not None else None, body.radio, body.first_ap)
 
 
 @router.post("/backups")

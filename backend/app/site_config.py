@@ -41,10 +41,14 @@ def _event(ap: str, info: str) -> None:
         db.execute("INSERT INTO events(ts, kind, ap, info) VALUES (?,?,?,?)", (int(time.time()), "config", ap, info))
 
 
-async def apply_ap(ap: store.ApConfig, reason: str = "manuale", only: set[str] | None = None) -> dict:
+async def apply_ap(ap: store.ApConfig, reason: str = "manuale", only: set[str] | None = None,
+                   dry_run: bool = False) -> dict:
     """only = voci da applicare (quella appena cambiata); None = controllo periodico delle voci da mantenere.
     Ogni ingresso in un profilo ricarica le radio dell'AP per qualche secondo: si inviano solo le differenze."""
+    from .guard import blocked
     from .restore import paused
+    if not dry_run and (why := blocked(reason)):
+        return {"ap": ap.name, "ok": False, "message": why}
     if ap.name in paused():
         return {"ap": ap.name, "ok": True, "message": "In pausa: gestione sospesa dopo un ripristino"}
     wanted = load()
@@ -73,7 +77,9 @@ async def apply_ap(ap: store.ApConfig, reason: str = "manuale", only: set[str] |
             commands += cmds
             changed.append(item.label)
     if not commands:
-        return {"ap": ap.name, "ok": True, "message": "Già allineato"}
+        return {"ap": ap.name, "ok": True, "message": "Già allineato", "commands": []}
+    if dry_run:
+        return {"ap": ap.name, "ok": True, "message": ", ".join(changed), "commands": commands}
     try:
         out = await ssh.configure(ap.host, ap.ssh_user, ap.ssh_password, ap.ssh_port, commands)
     except Exception as exc:
@@ -93,7 +99,8 @@ async def apply_all(reason: str = "manuale", only: set[str] | None = None) -> li
 async def enforce() -> None:
     """Ogni 15 minuti: rilegge la configurazione degli AP e riapplica le voci cambiate."""
     global _last_check
-    if time.time() - _last_check < CHECK_EVERY or not load():
+    from .guard import blocked
+    if time.time() - _last_check < CHECK_EVERY or not load() or blocked("riallineamento automatico"):
         return
     _last_check = time.time()
     for r in await apply_all("riallineamento automatico"):

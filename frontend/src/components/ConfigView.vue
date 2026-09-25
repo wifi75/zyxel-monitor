@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
-import { api, type Backup, type PolicyField, type PolicyOverview, type PolicyResult, type SiteItem } from '../api'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { api, type Backup, type GuardState, type PlanAp, type PolicyField, type PolicyOverview, type PolicyResult, type SiteItem } from '../api'
 import { copyText, time } from '../format'
 import { t } from '../i18n'
 import Icon from './Icon.vue'
@@ -37,6 +37,60 @@ async function load() {
   } catch (e) { error.value = (e as Error).message }
 }
 onMounted(load)
+
+// ---------- protezioni: interruttore, anteprima, prova su un AP ----------
+const guardState = ref<GuardState | null>(null)
+let guardTimer = 0
+async function loadGuard() {
+  try { guardState.value = await api.guard() } catch { /* il resto della pagina funziona lo stesso */ }
+  window.clearTimeout(guardTimer)
+  if (guardState.value?.rollout.status === 'running') guardTimer = window.setTimeout(loadGuard, 5000)
+  else if (guardState.value && ['done', 'rolled_back'].includes(guardState.value.rollout.status)) load()
+}
+onMounted(loadGuard)
+onUnmounted(() => window.clearTimeout(guardTimer))
+const managing = computed(() => !!guardState.value?.enabled)
+const rollout = computed(() => guardState.value?.rollout)
+const running = computed(() => rollout.value?.status === 'running')
+const now = ref(Date.now())
+const clock = window.setInterval(() => { now.value = Date.now() }, 1000)
+onUnmounted(() => window.clearInterval(clock))
+const countdown = computed(() => {
+  const s = Math.max(0, Math.round((rollout.value?.check_at ?? 0) - now.value / 1000))
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
+})
+async function toggleManaging() {
+  const on = !managing.value
+  if (on && !window.confirm(t('Accendere la gestione dal pannello? Da ora il pannello può modificare gli AP e riallinearli alle impostazioni del sito.'))) return
+  guardState.value = await api.setGuard(on)
+}
+
+interface Plan { aps: PlanAp[]; keys: string[] | null; radio: boolean; revert: (() => Promise<unknown>)[] }
+const plan = ref<Plan | null>(null)
+const firstAp = ref<number | null>(null)
+async function openPlan(keys: string[] | null, radio: boolean, revert: Plan['revert']) {
+  const r = await api.preview(keys, radio)
+  plan.value = { aps: r.aps, keys, radio, revert }
+  firstAp.value = r.aps.find(a => a.commands.length)?.id ?? r.aps[0]?.id ?? null
+}
+async function cancelPlan() {
+  const p = plan.value
+  plan.value = null
+  if (!p) return
+  busy.value = 'apply'
+  try { for (const undo of p.revert) await undo(); await api.cancelPreview() }
+  catch (e) { error.value = (e as Error).message } finally { busy.value = ''; await load() }
+}
+async function startRollout() {
+  const p = plan.value
+  if (!p) return
+  busy.value = 'apply'
+  try {
+    const r = await api.rollout(p.keys, p.radio, firstAp.value)
+    if (!r.ok) error.value = t(r.message)
+    plan.value = null
+  } catch (e) { error.value = (e as Error).message } finally { busy.value = ''; await loadGuard() }
+}
 const refreshSoon = () => { load(); window.setTimeout(load, 70_000) }
 
 const aps = computed(() => data.value?.aps.filter(a => a.enabled) ?? [])
@@ -253,44 +307,51 @@ async function applyAll() {
   const warnings = list.map(p => (p.row.item && p.value != null ? DANGER[p.row.item.key] ?? '' : '')).filter(Boolean)
   if (list.some(p => p.row.item?.key === 'security_mode' && p.value === 'wpa3')) warnings.push('Solo WPA3: i dispositivi più vecchi non si collegheranno più.')
   if (warnings.length && !window.confirm([...new Set(warnings)].map(w => t(w)).join('\n') + '\n\n' + t('Procedere?'))) return
-  busy.value = 'apply'; error.value = ''
-  const out: PolicyResult[] = []
-  // 1) si salvano tutte le regole senza applicarle; 2) un solo giro per AP: ogni ingresso in un profilo
-  //    ricarica le radio, quindi applicare una modifica alla volta farebbe cadere il Wi-Fi più volte
+  busy.value = 'apply'; error.value = ''; results.value = []
+  // 1) si salvano le regole senza inviarle; 2) anteprima dei comandi per AP; 3) conferma → prova su un AP,
+  //    verifica dei dispositivi collegati, poi tutti gli altri. Annullando si rimettono i valori di prima.
   let radio = false
   const itemKeys: string[] = []
+  const revert: (() => Promise<unknown>)[] = []
   try {
     for (const p of list) {
       const r = p.row
       if (r.field && r.band) {
-        const f = r.field
+        const f = r.field, band = r.band
         const conv = (v: string | null) => (v == null || v === 'inherit' ? null : v === 'none' ? 'none' : f === 'tx_power' ? Number(v) : v)
-        if (p.apId === null) await api.setSitePolicy(r.band, f, conv(p.value), false)
-        else await api.setApPolicy(p.apId, r.band, f, conv(p.value), false)
+        if (p.apId === null) {
+          const old = data.value?.site[band]?.[f] ?? null
+          revert.push(() => api.setSitePolicy(band, f, old, false))
+          await api.setSitePolicy(band, f, conv(p.value), false)
+        } else {
+          const apId = p.apId
+          const o = data.value?.aps.find(a => a.id === apId)?.bands[band]?.override[f] ?? null
+          const old = o === -1 || o === 'none' ? 'none' : o
+          revert.push(() => api.setApPolicy(apId, band, f, old, false))
+          await api.setApPolicy(apId, band, f, conv(p.value), false)
+        }
         radio = true
       } else {
         const i = r.item!
         const v = p.value == null ? null : i.kind === 'bool' ? p.value === 'true' : i.kind === 'int' ? Number(p.value)
           : i.kind === 'list' ? p.value.split(/[\s,;]+/).filter(Boolean) : p.value
+        // la password vecchia non è nota al browser: annullando si toglie solo se prima non era gestita
+        if (i.kind !== 'password') revert.push(() => api.setSiteItem(i.key, i.value, false))
+        else if (!i.value) revert.push(() => api.setSiteItem(i.key, null, false))
         await api.setSiteItem(i.key, v, false)
         if (v != null) itemKeys.push(i.key)
       }
       delete pending.value[cellKey(r, p.apId)]
     }
-    if (radio) out.push(...(await api.applyPolicy()).results.map(x => ({ ...x, message: `${t('Radio')}: ${x.message}` })))
-    if (itemKeys.length) out.push(...(await api.applyItems(itemKeys)).results)
+    await openPlan(itemKeys, radio, revert)
   } catch (e) { error.value = (e as Error).message }
-  finally { results.value = out; busy.value = ''; await load(); emit('changed'); refreshSoon() }
+  finally { busy.value = ''; await load() }
 }
 
-/** riapplica subito a tutti gli AP la configurazione del sito (senza aspettare il controllo periodico) */
+/** riapplica a tutti gli AP la configurazione del sito, passando anche qui da anteprima e prova */
 async function reapplyAll() {
   busy.value = 'reapply'; error.value = ''
-  try {
-    const [a, b] = await Promise.all([api.applyPolicy(), api.applyItems()])
-    results.value = [...a.results.map(x => ({ ...x, message: `${t('Radio')}: ${x.message}` })), ...b.results]
-    await load(); emit('changed'); refreshSoon()
-  } catch (e) { error.value = (e as Error).message } finally { busy.value = '' }
+  try { await openPlan(null, true, []) } catch (e) { error.value = (e as Error).message } finally { busy.value = '' }
 }
 
 // ---------- backup ----------
@@ -341,13 +402,64 @@ async function copyBackup() { copied.value = await copyText(shown.value?.text ??
       <span class="val none">{{ t('non gestito') }}</span>
       <span class="val pend">{{ t('da applicare') }}</span>
       <button class="ghost" :class="{ active: showBackups }" @click="showBackups = !showBackups"><Icon name="save" :size="15" /> {{ t('Backup') }}</button>
-      <button class="ghost" :disabled="!!busy" :title="t('Riapplica subito a tutti gli AP la configurazione del sito')" @click="reapplyAll">
+      <button class="ghost" :disabled="!!busy || !managing || running" :title="t('Riapplica subito a tutti gli AP la configurazione del sito')" @click="reapplyAll">
         {{ busy === 'reapply' ? t('Applico…') : '↻ ' + t('Riapplica') }}</button>
       <button v-if="pendingCount" class="ghost" :disabled="!!busy" @click="cancelAll">{{ t('Annulla') }}</button>
-      <button class="primary" :disabled="!pendingCount || !!busy" @click="applyAll">
+      <button class="primary" :disabled="!pendingCount || !!busy || !managing || running" @click="applyAll">
         {{ busy === 'apply' ? t('Applico…') : t('Applica modifiche ({n})', { n: pendingCount }) }}
       </button>
     </div>
+
+    <!-- interruttore generale: spento = il pannello solo monitora -->
+    <div class="guard-bar" :class="managing ? 'on' : 'off'">
+      <button class="switch" role="switch" :aria-checked="managing" :aria-label="t('Gestione dal pannello')" @click="toggleManaging"><span /></button>
+      <div class="grow">
+        <strong>{{ managing ? t('Gestione dal pannello accesa') : t('Solo monitoraggio') }}</strong>
+        <span class="muted small"> — {{ managing
+          ? t('Ogni modifica si prova prima su un AP; se i dispositivi collegati calano si torna indietro da soli.')
+          : t('Il pannello non modifica gli AP. Accendi la gestione per applicare le impostazioni.') }}</span>
+      </div>
+    </div>
+
+    <!-- stato della prova controllata -->
+    <div v-if="rollout && rollout.status !== 'idle'" class="note"
+         :class="rollout.status === 'running' ? 'warn' : rollout.status === 'done' ? 'ok' : 'ko'">
+      <template v-if="running">
+        <strong>{{ t('Prova in corso') }}: {{ rollout.phase }}</strong> — {{ t('verifica fra') }} {{ countdown }}
+        · {{ t('dispositivi collegati prima') }}: {{ rollout.clients_before }}
+      </template>
+      <template v-else>
+        <strong>{{ t(rollout.message ?? '') }}</strong>
+        <span v-if="rollout.clients_after != null"> · {{ t('dispositivi') }}: {{ rollout.clients_before }} → {{ rollout.clients_after }}</span>
+      </template>
+      <div v-if="rollout.lost?.length" class="small">{{ t('Non rientrati') }}: {{ rollout.lost.join(', ') }}</div>
+    </div>
+
+    <!-- anteprima dei comandi, scelta dell'AP di prova -->
+    <section v-if="plan" class="card plan">
+      <h2>{{ t('Anteprima: cosa verrà inviato') }}</h2>
+      <div class="plan-rows">
+        <div v-for="a in plan.aps" :key="a.id" class="plan-row">
+          <label class="plan-pick">
+            <input v-model="firstAp" type="radio" :value="a.id" :disabled="!a.commands.length" />
+            <strong>{{ a.ap }}</strong>
+          </label>
+          <div class="grow">
+            <span :class="{ muted: !a.commands.length }">{{ a.commands.length ? a.changes : t('Nessuna modifica') }}</span>
+            <details v-if="a.commands.length">
+              <summary class="small muted">{{ t('{n} comandi', { n: a.commands.length }) }}</summary>
+              <pre class="raw">{{ a.commands.join('\n') }}</pre>
+            </details>
+          </div>
+        </div>
+      </div>
+      <p class="small muted">{{ t("L'AP selezionato riceve la modifica per primo. Dopo 5 minuti si contano i dispositivi collegati: se non sono calati si passa agli altri AP, altrimenti si torna al backup fatto subito prima.") }}</p>
+      <div class="actions"><span class="grow" />
+        <button class="ghost" :disabled="!!busy" @click="cancelPlan">{{ t('Annulla') }}</button>
+        <button class="primary" :disabled="!!busy || !plan.aps.some(a => a.commands.length)" @click="startRollout">
+          {{ t('Prova e poi applica a tutti') }}</button>
+      </div>
+    </section>
 
     <p v-if="error" class="note ko">{{ error }}</p>
     <div v-if="results.length" class="card cfg-results">

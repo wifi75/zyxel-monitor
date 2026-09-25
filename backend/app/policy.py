@@ -89,12 +89,16 @@ def _event(ap: str, info: str) -> None:
         db.execute("INSERT INTO events(ts, kind, ap, info) VALUES (?,?,?,?)", (int(time.time()), "config", ap, info))
 
 
-async def apply_ap(ap: store.ApConfig, only_changed: bool = False, reason: str = "manuale") -> dict:
+async def apply_ap(ap: store.ApConfig, only_changed: bool = False, reason: str = "manuale",
+                   dry_run: bool = False) -> dict:
     """Applica all'AP le regole effettive. La potenza va nello slot; canale e larghezza nel profilo radio
     dello slot, il cui nome si legge dalla running-config (Nebula li chiama in modo diverso per modello)."""
     if not ap.ssh_password:
         return {"ap": ap.name, "ok": False, "message": "Serve l'accesso SSH per configurare questo AP"}
+    from .guard import blocked
     from .restore import paused
+    if not dry_run and (why := blocked(reason)):
+        return {"ap": ap.name, "ok": False, "message": why}
     if ap.name in paused():
         return {"ap": ap.name, "ok": True, "message": "In pausa: gestione sospesa dopo un ripristino"}
     rules = load()
@@ -130,7 +134,9 @@ async def apply_ap(ap: store.ApConfig, only_changed: bool = False, reason: str =
                 parts.append(f"larghezza {width} MHz")
             changes.append(f"{band.replace('GHz', ' GHz')} " + ", ".join(parts))
     if not commands:
-        return {"ap": ap.name, "ok": True, "message": "Già allineato"}
+        return {"ap": ap.name, "ok": True, "message": "Già allineato", "commands": []}
+    if dry_run:
+        return {"ap": ap.name, "ok": True, "message": "; ".join(changes), "commands": commands}
     try:
         out = await ssh.configure(ap.host, ap.ssh_user, ap.ssh_password, ap.ssh_port, commands)
     except Exception as exc:     # rete, credenziali, AP spento
@@ -154,8 +160,9 @@ async def apply_all(reason: str = "manuale") -> list[dict]:
 
 async def enforce() -> None:
     """Chiamata a ogni ciclo: riporta al valore desiderato gli AP che se ne sono allontanati."""
+    from .guard import blocked
     rules = load()
-    if not rules:
+    if not rules or blocked("riallineamento automatico"):
         return
     actual = actual_powers()
     now = time.time()
@@ -191,8 +198,8 @@ async def backup_ap(ap: store.ApConfig) -> dict:
     if "wlan-ssid-profile" not in text:
         return {"ap": ap.name, "ok": False, "message": "Risposta incompleta: backup non salvato"}
     with connect() as db:
-        db.execute("INSERT INTO config_backups(ap, ts, text) VALUES (?,?,?)", (ap.name, int(time.time()), text))
-    return {"ap": ap.name, "ok": True, "message": f"Salvato ({len(text.splitlines())} righe)"}
+        cur = db.execute("INSERT INTO config_backups(ap, ts, text) VALUES (?,?,?)", (ap.name, int(time.time()), text))
+    return {"ap": ap.name, "ok": True, "id": cur.lastrowid, "message": f"Salvato ({len(text.splitlines())} righe)"}
 
 
 async def backup_all() -> list[dict]:
