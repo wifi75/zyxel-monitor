@@ -78,6 +78,8 @@ def status(desired: int | None, actual: int | None, key: tuple[str, str]) -> str
         return "unknown"
     if actual == desired:
         return "ok"
+    if desired >= 30:
+        return "capped"          # "massima": l'AP usa il suo massimo, qualunque sia (si sa anche dopo un riavvio)
     applied = _applied.get(key)
     if applied and applied[0] == desired and applied[2] == actual:
         return "capped"          # applicato ma l'AP resta dov'era: è il suo limite
