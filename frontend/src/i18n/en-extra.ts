@@ -37,6 +37,8 @@ addEn({
   'diverso': 'different',
   'in attesa': 'pending',
   'da applicare': 'to apply',
+  'non leggibile': 'not readable',
+  'Questo firmware non permette di leggere la password: è impostata, ma il pannello non può vederla.': 'This firmware does not let the password be read: it is set, but the panel cannot see it.',
   'Tema chiaro': 'Light theme',
   'Tema scuro': 'Dark theme',
   'Backup': 'Backup',

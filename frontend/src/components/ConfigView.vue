@@ -420,7 +420,8 @@ async function copyBackup() { copied.value = await copyText(shown.value?.text ??
                     <template v-if="pending[cellKey(r, a.id)]">{{ pendingLabel(pending[cellKey(r, a.id)]) }}</template>
                     <template v-else>
                       <span v-if="dot(r, r.current(a.id))" class="dot" :class="dot(r, r.current(a.id))" />
-                      {{ r.current(a.id) ?? '—' }}
+                      <span v-if="r.current(a.id) == null && r.item?.kind === 'password'" class="muted" :title="t('Questo firmware non permette di leggere la password: è impostata, ma il pannello non può vederla.')">{{ t('non leggibile') }}</span>
+                      <template v-else>{{ r.current(a.id) ?? '—' }}</template>
                       <span v-if="apClass(r, a.id) === 'same'" class="mark ok">✓</span>
                       <span v-else-if="apClass(r, a.id) === 'diff'" class="mark warn">⚠</span>
                       <span v-if="r.override?.(a.id) && r.override(a.id) !== 'none'" class="own" :title="t('personalizzato')">★</span>
