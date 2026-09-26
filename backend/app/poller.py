@@ -9,7 +9,7 @@ import ipaddress
 
 from .collectors import names, opnsense, snmp, ssh
 from .collectors.base import ApReading
-from . import alerts, policy, site_config
+from . import alerts, backup, policy, site_config
 from .core import store
 from .core.config import get_settings
 from .core.db import connect
@@ -283,6 +283,7 @@ async def run_forever() -> None:
             await policy.enforce()      # configurazione centralizzata: riporta gli AP al valore scelto
             await site_config.enforce() # impostazioni del sito, controllate ogni 15 minuti
             await alerts.check()        # avvisi Telegram sugli eventi appena registrati
+            backup.nightly()            # copia del database, una volta al giorno dopo le 3
             if time.time() - last_prune > 3600:
                 prune()
                 last_prune = time.time()
