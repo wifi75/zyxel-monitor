@@ -2,6 +2,10 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) — versioni: [SemVer](https://semver.org/lang/it/).
 
+## [0.28.7] - 2026-09-26
+### Modificato
+- Card con ombra leggera e più marcata al passaggio del mouse, nei due temi: la dashboard non è più piatta.
+
 ## [0.28.6] - 2026-09-26
 ### Corretto
 - Clic su «Client connessi»: se il widget con l'elenco non è nella dashboard si apre un pannello con i client, invece di non fare nulla.
