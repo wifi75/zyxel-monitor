@@ -2,6 +2,10 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) — versioni: [SemVer](https://semver.org/lang/it/).
 
+## [0.27.1] - 2026-09-26
+### Corretto
+- Widget Firmware: il modello si legge su ogni riga, anche per gli AP dello stesso modello.
+
 ## [0.27.0] - 2026-09-26
 ### Aggiunto
 - Dispositivi importanti (★ in Dispositivi): avviso su Telegram se restano scollegati più di 5 minuti e quando tornano.
