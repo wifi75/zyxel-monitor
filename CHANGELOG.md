@@ -2,6 +2,10 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) — versioni: [SemVer](https://semver.org/lang/it/).
 
+## [0.28.1] - 2026-09-26
+### Corretto
+- Menu delle impostazioni allineato a sinistra e a larghezza piena; nel menu principale «Impostazioni» e «Cambia password» non risultano più attivi insieme.
+
 ## [0.28.0] - 2026-09-26
 ### Modificato
 - Impostazioni divise in sezioni con menu colorato (OPNsense e raccolta, Avvisi, Utenti, Backup, Nebula, Il mio account): una alla volta, schede scorrevoli sul telefono; campi di OPNsense raggruppati.
