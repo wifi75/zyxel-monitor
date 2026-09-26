@@ -87,10 +87,12 @@ async function cancelPlan() {
 const QUICK_KEYS = new Set(['led_off', 'scheduled_reboot', 'snmp_rw', 'ntp_server', 'hostname_sync'])
 const quickPlan = computed(() => !!plan.value && !plan.value.radio && !!plan.value.keys?.length
   && plan.value.keys.every(k => QUICK_KEYS.has(k)))
+/** conferma dentro l'anteprima (non la finestra del browser) per l'invio senza prova */
+const confirmDirect = ref(false)
 async function startRollout(direct = false) {
   const p = plan.value
   if (!p) return
-  if (direct && !quickPlan.value && !window.confirm(t('Applicare subito a tutti gli AP senza prova? Viene salvato un backup, ma se qualche dispositivo si stacca non si torna indietro da soli.'))) return
+  confirmDirect.value = false
   busy.value = 'apply'
   try {
     const r = await api.rollout(p.keys, p.radio, firstAp.value, direct)
@@ -569,9 +571,16 @@ async function copyBackup() { copied.value = await copyText(shown.value?.text ??
       </div>
       <p v-if="quickPlan" class="small muted">{{ t('Questa modifica non tocca il Wi-Fi: nessun dispositivo si stacca, quindi si applica subito a tutti gli AP senza prova.') }}</p>
       <p v-else class="small muted">{{ t("L'AP selezionato riceve la modifica per primo. Dopo 2 minuti si contano i dispositivi collegati: se non sono calati si passa agli altri AP, altrimenti si torna al backup fatto subito prima.") }}</p>
+      <p v-if="confirmDirect" class="note warn direct-confirm">
+        {{ t('Applicare subito a tutti gli AP senza prova? Viene salvato un backup, ma se qualche dispositivo si stacca non si torna indietro da soli.') }}
+        <span class="actions">
+          <button class="ghost small" @click="confirmDirect = false">{{ t('Annulla') }}</button>
+          <button class="primary small" :disabled="!!busy" @click="startRollout(true)">{{ t('Conferma') }}</button>
+        </span>
+      </p>
       <div class="actions"><span class="grow" />
         <button class="ghost" :disabled="!!busy" @click="cancelPlan">{{ t('Annulla') }}</button>
-        <button v-if="!quickPlan" class="ghost" :disabled="!!busy || !plan.aps.some(a => a.commands.length)" @click="startRollout(true)">
+        <button v-if="!quickPlan" class="ghost" :disabled="!!busy || !plan.aps.some(a => a.commands.length)" @click="confirmDirect = true">
           {{ t('Applica subito a tutti') }}</button>
         <button class="primary" :disabled="!!busy || !plan.aps.some(a => a.commands.length)" @click="startRollout(quickPlan)">
           {{ quickPlan ? t('Applica subito') : t('Prova e poi applica a tutti') }}</button>

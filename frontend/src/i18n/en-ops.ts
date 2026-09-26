@@ -26,6 +26,7 @@ addEn({
     'This change does not touch Wi-Fi: no device disconnects, so it is applied to all APs at once without a trial.',
   'Applica subito': 'Apply now',
   'Applica subito a tutti': 'Apply to all now',
+  'Conferma': 'Confirm',
   'Applicare subito a tutti gli AP senza prova? Viene salvato un backup, ma se qualche dispositivo si stacca non si torna indietro da soli.':
     'Apply to all APs now without a trial? A backup is saved, but if a device drops off nothing is rolled back automatically.',
   'Dati in raccolta': 'Collecting data',
