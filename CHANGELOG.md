@@ -2,6 +2,10 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) — versioni: [SemVer](https://semver.org/lang/it/).
 
+## [0.29.2] - 2026-09-26
+### Modificato
+- Configurazione: cliccando una casella si apre un pannellino sopra la tabella, ancorato alla casella, con le scelte come pulsanti (un clic sceglie e chiude; Esc o clic fuori per annullare). Prima il menu si apriva dentro la casella e allargava tutta la riga.
+
 ## [0.29.1] - 2026-09-26
 ### Aggiunto
 - README in inglese (principale) e in italiano (`README.it.md`), con screenshot e una sezione su come funziona tutto: ciclo di lettura, fonti dei dati, gestione con prova controllata, avvisi.
