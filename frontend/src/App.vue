@@ -176,6 +176,14 @@ const weakList = computed(() => scopedClients.value.filter(c => c.rssi_dbm != nu
 const weakOnly = ref(false)
 function showWeak() {
   weakOnly.value = true
+  scrollToClients()
+}
+/** porta all'elenco dei client (widget "Client connessi") */
+function showClients() {
+  weakOnly.value = false
+  scrollToClients()
+}
+function scrollToClients() {
   window.setTimeout(() => document.querySelector('.clients-anchor')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50)
 }
 const weakClients = computed(() => scopedClients.value.filter(c => c.rssi_dbm != null && c.rssi_dbm < -75).length)
@@ -205,7 +213,8 @@ const kpis = computed(() => {
           title: ap.method === 'ssh' && ap.uptime_s == null ? t(SSH_NA) : undefined }
       : { label: t('Access point online'), value: onlineAps.value, of: aps.value.length, icon: 'wifi', tone: 'blue',
           warn: onlineAps.value < aps.value.length },
-    { label: t('Client connessi'), value: scopedClients.value.length, icon: 'users', tone: 'violet' },
+    { label: t('Client connessi'), value: scopedClients.value.length, icon: 'users', tone: 'violet',
+      title: t('Clicca per vedere l’elenco dei client'), action: scopedClients.value.length ? showClients : undefined },
     { label: t('Download Wi-Fi'), value: bps(currentDown.value), icon: 'down', tone: 'green' },
     { label: t('Upload Wi-Fi'), value: bps(currentUp.value), icon: 'up', tone: 'teal' },
     { label: t('Traffico {period}', { period: periodLabel.value }), value: periodBytes.value ? bytes(periodBytes.value) : '—', icon: 'chart', tone: 'amber' },
@@ -391,7 +400,7 @@ const SSH_NA = "La CLI SSH di questo AP non fornisce ancora il dato: in Impostaz
         <template #widget="{ id }">
           <!-- indicatori -->
           <section v-if="id === 'kpis'" class="kpis fill">
-            <div v-for="k in kpis" :key="k.label" class="kpi rich" :class="[`tone-${k.tone}`, { clickable: k.go }]"
+            <div v-for="k in kpis" :key="k.label" class="kpi rich" :class="[`tone-${k.tone}`, { clickable: k.go || k.action }]"
                  :title="k.title" @click="k.action ? k.action() : k.go && (view = k.go)">
               <div class="kpi-icon"><Icon :name="k.icon" /></div>
               <div class="kpi-text">

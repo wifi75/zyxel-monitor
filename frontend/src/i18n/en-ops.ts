@@ -22,6 +22,7 @@ addEn({
   'Nebula': 'Nebula',
   'Cloud Zyxel (licenza Pro)': 'Zyxel cloud (Pro license)',
   'Il mio account': 'My account',
+  'Clicca per vedere l’elenco dei client': 'Click to see the list of clients',
   // utenti
   'Utente {n} creato.': 'User {n} created.',
   'Eliminare l’utente {n}?': 'Delete user {n}?',
