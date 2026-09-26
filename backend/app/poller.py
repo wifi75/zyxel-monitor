@@ -104,6 +104,11 @@ async def poll_once() -> None:
                     "INSERT INTO samples(ts, ap, iface, in_bytes, out_bytes) VALUES (?,?,?,?,?)",
                     [(now, ap.name, iface, rx, tx) for iface, (rx, tx) in r.traffic.items()],
                 )
+                # occupazione del canale per banda (in_bytes = percentuale): per vedere se un cambio regge nel tempo
+                db.executemany(
+                    "INSERT INTO samples(ts, ap, iface, in_bytes, out_bytes) VALUES (?,?,?,?,NULL)",
+                    [(now, ap.name, f"{UTIL}{x.band}", x.utilization) for x in r.radios if x.utilization is not None],
+                )
 
         # --- client ed eventi ---
         # i client di un AP non raggiungibile restano come erano: niente false disconnessioni
@@ -255,6 +260,7 @@ def _number(text) -> float | None:
 
 
 INTERNET = "_internet"
+UTIL = "_util:"     # prefisso dei campioni di occupazione del canale ("_util:2.4GHz")
 
 
 def prune() -> None:

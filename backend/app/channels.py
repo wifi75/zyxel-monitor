@@ -4,6 +4,7 @@ Il pannello oggi monitora e basta (la configurazione la fa Nebula): qui non si i
 la proposta va applicata da Nebula o dalla pagina Configurazione quando la gestione sarà accesa.
 """
 import json
+import time
 
 from fastapi import APIRouter, Depends
 
@@ -83,6 +84,30 @@ def analyse(aps: list[dict]) -> dict:
                        "changes": {ap: ch for ap, ch in suggested.items()
                                    if ch != next(r["channel"] for r in known if r["ap"] == ap)}}
     return {"busy_pct": BUSY_PCT, "bands": bands}
+
+
+@router.get("/channels/history")
+def channels_history(hours: float = 24, points: int = 96):
+    """Occupazione media del canale per banda e AP, in intervalli."""
+    from .poller import UTIL
+    hours = max(1.0, min(hours, 24 * 30))
+    points = max(10, min(points, 300))
+    now = int(time.time())
+    since = now - int(hours * 3600)
+    step = max(60, int(hours * 3600 / points))
+    with connect() as db:
+        rows = db.execute("SELECT ts, ap, iface, in_bytes FROM samples WHERE iface LIKE ? AND ts >= ?",
+                          (UTIL + "%", since)).fetchall()
+    acc: dict[str, dict[str, dict[int, list[int]]]] = {}
+    for r in rows:
+        b = (r["ts"] - since) // step * step + since
+        acc.setdefault(r["iface"][len(UTIL):], {}).setdefault(r["ap"], {}).setdefault(b, []).append(r["in_bytes"])
+    ts = list(range(since, now + 1, step))
+    def avg(v: list[int] | None) -> int | None:
+        return round(sum(v) / len(v)) if v else None
+
+    return {"step": step, "ts": ts, "bands": {
+        band: {ap: [avg(per.get(b)) for b in ts] for ap, per in sorted(aps.items())} for band, aps in acc.items()}}
 
 
 @router.get("/channels")
