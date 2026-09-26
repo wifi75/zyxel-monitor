@@ -5,6 +5,7 @@ import { isPrivateMac, since, time } from '../format'
 import EventsTable from './EventsTable.vue'
 import LineChart from './LineChart.vue'
 import { t } from '../i18n'
+import { ask } from '../dialog'
 
 const props = defineProps<{ devices: Device[] }>()
 const emit = defineEmits<{ changed: []; rename: [d: Device] }>()
@@ -59,8 +60,8 @@ const setKnown = (d: Device, known: boolean) => run(() => api.setKnown(d.mac, kn
 const setCritical = (d: Device) => run(() => api.setCritical(d.mac, !d.critical))
 const exportCsv = () => download('/export/devices.csv', 'dispositivi.csv').catch(e => { error.value = (e as Error).message })
 const allKnown = () => run(() => api.setAllKnown())
-function forget(d: Device) {
-  if (window.confirm(t("Togliere {n} dall'elenco? Se si ricollega risulterà di nuovo nuovo.", { n: name(d) }))) run(() => api.forgetDevice(d.mac))
+async function forget(d: Device) {
+  if (await ask(t("Togliere {n} dall'elenco? Se si ricollega risulterà di nuovo nuovo.", { n: name(d) }))) run(() => api.forgetDevice(d.mac))
 }
 </script>
 

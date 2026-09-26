@@ -5,6 +5,7 @@ import { api, type SavedLayout, type ViewKind, type WidgetPos } from '../api'
 import { t } from '../i18n'
 import WidgetShell from './WidgetShell.vue'
 import { COLS, appendWidget, defOf, defaultLayout, normalize, widgetsFor } from '../widgets'
+import { ask } from '../dialog'
 
 /**
  * Griglia stile Zabbix: in modalità "Personalizza" i widget si trascinano dalla barra del titolo
@@ -62,7 +63,7 @@ function add() {
 }
 
 async function reset() {
-  if (!window.confirm(t('Ripristinare la disposizione iniziale di questa vista?'))) return
+  if (!await ask(t('Ripristinare la disposizione iniziale di questa vista?'))) return
   layout.value = defaultLayout(props.view)
   persist()
 }

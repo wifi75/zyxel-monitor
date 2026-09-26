@@ -12,6 +12,7 @@ import AccountSettings from './AccountSettings.vue'
 import Icon from './Icon.vue'
 import type { IconName } from '../icons'
 import { settingsSection as section, type Section } from '../settingsNav'
+import { ask } from '../dialog'
 
 const props = defineProps<{ status: Ap[] }>()
 const emit = defineEmits<{ changed: [] }>()
@@ -52,7 +53,7 @@ async function toggle(a: ApConfig) {
 }
 
 async function remove(a: ApConfig) {
-  if (!window.confirm(t('Eliminare {name}? Scompare dalla dashboard; lo storico resta fino alla scadenza.', { name: a.name }))) return
+  if (!await ask(t('Eliminare {name}? Scompare dalla dashboard; lo storico resta fino alla scadenza.', { name: a.name }))) return
   await run(() => api.deleteAp(a.id))
 }
 
@@ -61,7 +62,7 @@ async function run(fn: () => Promise<unknown>) {
 }
 
 async function reboot(a: ApConfig) {
-  if (!window.confirm(t('Riavviare {name}? Resta offline per 2-3 minuti.', { name: a.name }))) return
+  if (!await ask(t('Riavviare {name}? Resta offline per 2-3 minuti.', { name: a.name }))) return
   try { await api.rebootAp(a.id); notice.value = t('Riavvio di {name} inviato: torna online in 2-3 minuti.', { name: a.name }) }
   catch (e) { error.value = (e as Error).message }
 }

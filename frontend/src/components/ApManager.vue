@@ -5,6 +5,7 @@ import { copyText, duration } from '../format'
 import { locale, t } from '../i18n'
 import ApEditor from './ApEditor.vue'
 import Icon from './Icon.vue'
+import { ask } from '../dialog'
 
 /** Pagina di gestione degli access point: elenco a sinistra, scheda dell'AP scelto a destra. */
 const props = defineProps<{ status: Ap[] }>()
@@ -62,9 +63,9 @@ const doTest = () => run('test', async () => {
   test.value = await api.testAp({ ...apForm(a), id: a.id })
 })
 
-const doReboot = () => {
+const doReboot = async () => {
   const a = current.value!
-  if (!window.confirm(t('Riavviare {name}? Resta offline per 2-3 minuti e i suoi client si spostano sugli altri AP.', { name: a.name }))) return
+  if (!await ask(t('Riavviare {name}? Resta offline per 2-3 minuti e i suoi client si spostano sugli altri AP.', { name: a.name }))) return
   run('reboot', async () => { await api.rebootAp(a.id); notice.value = t('Riavvio di {name} inviato: torna online in 2-3 minuti.', { name: a.name }) })
 }
 
@@ -81,9 +82,9 @@ async function copyExplore() { copied.value = (await copyText(explored.value ?? 
 async function doHybrid(mode: 'cloud' | 'standalone') {
   const a = current.value!
   if (mode === 'standalone') {
-    if (!window.confirm(t("Togliere {n} da Nebula? L'AP potrebbe riavviarsi e perdere la configurazione: prima viene salvato un backup. Provalo su un solo AP, con un cavo di rete a portata di mano.", { n: a.name }))) return
-    if (!window.confirm(t('Confermi davvero? Da questo momento {n} non sarà più gestito dal cloud Nebula.', { n: a.name }))) return
-  } else if (!window.confirm(t('Rimettere {n} sotto Nebula? Il cloud tornerà a imporre la sua configurazione.', { n: a.name }))) return
+    if (!await ask(t("Togliere {n} da Nebula? L'AP potrebbe riavviarsi e perdere la configurazione: prima viene salvato un backup. Provalo su un solo AP, con un cavo di rete a portata di mano.", { n: a.name }))) return
+    if (!await ask(t('Confermi davvero? Da questo momento {n} non sarà più gestito dal cloud Nebula.', { n: a.name }))) return
+  } else if (!await ask(t('Rimettere {n} sotto Nebula? Il cloud tornerà a imporre la sua configurazione.', { n: a.name }))) return
   run('hybrid', async () => {
     await api.setHybridMode(a.id, mode)
     notice.value = mode === 'standalone'
@@ -98,9 +99,9 @@ const doToggle = () => run('toggle', async () => {
   await load(); emit('changed')
 })
 
-const doDelete = () => {
+const doDelete = async () => {
   const a = current.value!
-  if (!window.confirm(t('Eliminare {name}? Scompare dalla dashboard; lo storico resta fino alla scadenza.', { name: a.name }))) return
+  if (!await ask(t('Eliminare {name}? Scompare dalla dashboard; lo storico resta fino alla scadenza.', { name: a.name }))) return
   run('delete', async () => {
     await api.deleteAp(a.id)
     selected.value = null

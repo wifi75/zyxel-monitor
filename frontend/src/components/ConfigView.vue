@@ -5,6 +5,7 @@ import { copyText, time } from '../format'
 import { t } from '../i18n'
 import Icon from './Icon.vue'
 import type { IconName } from '../icons'
+import { ask } from '../dialog'
 
 /**
  * Configurazione a tabella di confronto: una riga per impostazione, colonna "Sito" (vale per tutti)
@@ -63,7 +64,7 @@ const countdown = computed(() => {
 })
 async function toggleManaging() {
   const on = !managing.value
-  if (on && !window.confirm(t('Accendere la gestione dal pannello? Da ora il pannello può modificare gli AP e riallinearli alle impostazioni del sito.'))) return
+  if (on && !await ask(t('Accendere la gestione dal pannello? Da ora il pannello può modificare gli AP e riallinearli alle impostazioni del sito.'))) return
   guardState.value = await api.setGuard(on)
 }
 
@@ -409,7 +410,7 @@ async function applyAll() {
   const list = Object.values(pending.value)
   const warnings = list.map(p => (p.row.item && p.value != null ? DANGER[p.row.item.key] ?? '' : '')).filter(Boolean)
   if (list.some(p => p.row.item?.key === 'security_mode' && p.value === 'wpa3')) warnings.push('Solo WPA3: i dispositivi più vecchi non si collegheranno più.')
-  if (warnings.length && !window.confirm([...new Set(warnings)].map(w => t(w)).join('\n') + '\n\n' + t('Procedere?'))) return
+  if (warnings.length && !await ask([...new Set(warnings)].map(w => t(w)).join('\n') + '\n\n' + t('Procedere?'))) return
   busy.value = 'apply'; error.value = ''; results.value = []
   // 1) si salvano le regole senza inviarle; 2) anteprima dei comandi per AP; 3) conferma → prova su un AP,
   //    verifica dei dispositivi collegati, poi tutti gli altri. Annullando si rimettono i valori di prima.
@@ -472,7 +473,7 @@ async function reapplyAll() {
 // ---------- backup ----------
 const showBackups = ref(false)
 async function restoreBackup(b: Backup) {
-  if (!window.confirm(t('Rimettere su {ap} la configurazione Wi-Fi del {when}? Le radio si ricaricano per qualche secondo e il pannello smette di gestire questo AP finché non premi Riprendi.', { ap: b.ap, when: time(b.ts) }))) return
+  if (!await ask(t('Rimettere su {ap} la configurazione Wi-Fi del {when}? Le radio si ricaricano per qualche secondo e il pannello smette di gestire questo AP finché non premi Riprendi.', { ap: b.ap, when: time(b.ts) }))) return
   busy.value = 'restore'; restoreMsg.value = ''
   try {
     const r = await api.restoreBackup(b.id)

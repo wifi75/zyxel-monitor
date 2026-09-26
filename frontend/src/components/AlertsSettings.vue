@@ -2,6 +2,7 @@
 import { onMounted, reactive, ref } from 'vue'
 import { api, type AlertForm, type AlertSettings } from '../api'
 import { t } from '../i18n'
+import { ask } from '../dialog'
 
 /** Avvisi su Telegram: bot, chat, quali eventi e report del lunedì. */
 const cur = ref<AlertSettings | null>(null)
@@ -32,8 +33,8 @@ async function run(fn: () => Promise<{ ok: boolean; message: string } | AlertSet
 const save = () => run(() => api.saveAlerts(form))
 const test = () => run(() => api.testAlerts(form))
 const report = () => run(() => api.sendReport())
-function removeToken() {
-  if (window.confirm(t('Togliere il token del bot? Gli avvisi si fermano.'))) run(() => api.saveAlerts({ ...form, clear_token: true }))
+async function removeToken() {
+  if (await ask(t('Togliere il token del bot? Gli avvisi si fermano.'))) run(() => api.saveAlerts({ ...form, clear_token: true }))
 }
 </script>
 

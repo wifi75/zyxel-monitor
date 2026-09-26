@@ -2,6 +2,7 @@
 import { onMounted, ref } from 'vue'
 import { api, type Role, type User } from '../api'
 import { t } from '../i18n'
+import { ask } from '../dialog'
 
 /** Utenti del pannello: chi è in sola lettura vede tutto ma non può cambiare nulla. */
 const list = ref<User[] | null>(null)
@@ -23,7 +24,7 @@ async function add() {
   } catch (e) { msg.value = { ok: false, message: (e as Error).message } }
 }
 async function remove(u: User) {
-  if (!window.confirm(t('Eliminare l’utente {n}?', { n: u.username }))) return
+  if (!await ask(t('Eliminare l’utente {n}?', { n: u.username }))) return
   try { await api.deleteUser(u.username); await load() } catch (e) { msg.value = { ok: false, message: (e as Error).message } }
 }
 </script>

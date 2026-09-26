@@ -24,9 +24,11 @@ import FirmwareCard from './components/FirmwareCard.vue'
 import SplitBar from './components/SplitBar.vue'
 import TopologyMap from './components/TopologyMap.vue'
 import ApHeader from './components/ApHeader.vue'
+import AppDialog from './components/AppDialog.vue'
 import EmptyState from './components/EmptyState.vue'
 import Sparkline from './components/Sparkline.vue'
 import { apColor, setApNames } from './apColors'
+import { askText } from './dialog'
 
 // pagine di gestione caricate solo quando si aprono: la panoramica parte più leggera
 const ApManager = defineAsyncComponent(() => import('./components/ApManager.vue'))
@@ -300,7 +302,7 @@ const usageTypes = computed(() => (deviceUsage.value?.by_type ?? []).map(i => ({
 const periodLabel = computed(() => ({ 1: t('ultima ora'), 6: t('ultime 6 ore'), 24: t('ultime 24 ore'), 168: t('ultimi 7 giorni') } as Record<number, string>)[hours.value])
 
 async function rename(c: { mac: string; alias: string | null; hostname: string | null }) {
-  const name = window.prompt(t('Nome per {mac}', { mac: c.mac }), c.alias || c.hostname || '')
+  const name = await askText(t('Nome per {mac}', { mac: c.mac }), c.alias || c.hostname || '')
   if (name === null) return
   await api.setAlias(c.mac, name)
   await load()
@@ -323,6 +325,7 @@ const SSH_NA = "La CLI SSH di questo AP non fornisce ancora il dato: in Impostaz
   </div>
   <div v-else-if="serverDown" class="update-bar down">{{ t('Server non raggiungibile (aggiornamento in corso?): riprovo tra pochi secondi…') }}</div>
 
+  <AppDialog />
   <LoginView v-if="!logged" @done="afterLogin" />
 
   <div v-else class="layout" :class="{ 'nav-open': navOpen }">

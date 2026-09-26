@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { api, type NebulaDevice, type NebulaDiscover, type NebulaSsid, type NebulaStatus } from '../api'
 import { t } from '../i18n'
+import { ask, askText } from '../dialog'
 
 /** Nebula OpenAPI: funziona solo con la licenza Pro. Senza, il collegamento lo dice e il resto resta nascosto. */
 const status = ref<NebulaStatus | null>(null)
@@ -52,21 +53,21 @@ const connect = () => run('connect', async () => {
 })
 
 const disconnect = () => run('connect', async () => {
-  if (!window.confirm(t('Scollegare Nebula? La chiave viene cancellata dal server.'))) return
+  if (!await ask(t('Scollegare Nebula? La chiave viene cancellata dal server.'))) return
   status.value = await api.nebulaDisconnect()
   devices.value = []; ssids.value = []
 })
 
-const reboot = (d: NebulaDevice) => {
-  if (!window.confirm(t('Riavviare {name}? Resta offline per un paio di minuti.', { name: d.name || d.devId }))) return
+const reboot = async (d: NebulaDevice) => {
+  if (!await ask(t('Riavviare {name}? Resta offline per un paio di minuti.', { name: d.name || d.devId }))) return
   run(`reboot-${d.devId}`, async () => { await api.nebulaReboot(d.devId); notice.value = t('Riavvio di {name} inviato.', { name: d.name ?? '' }) })
 }
 
 const saveSsid = (s: NebulaSsid, patch: { name?: string; enabled?: boolean; bands?: string[] }) =>
   run(`ssid-${s.id}`, async () => { await api.nebulaUpdateSsid(s.id, patch); ssids.value = await api.nebulaSsids(); notice.value = t('Rete aggiornata.') })
 
-function rename(s: NebulaSsid) {
-  const name = window.prompt(t('Nuovo nome della rete Wi-Fi'), s.name)
+async function rename(s: NebulaSsid) {
+  const name = await askText(t('Nuovo nome della rete Wi-Fi'), s.name)
   if (name && name !== s.name) saveSsid(s, { name })
 }
 

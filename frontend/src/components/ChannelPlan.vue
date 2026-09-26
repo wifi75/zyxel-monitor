@@ -4,6 +4,7 @@ import { api, type Ap, type ChannelHistory, type ChannelIssue, type Channels } f
 import { t } from '../i18n'
 import LineChart from './LineChart.vue'
 import { apColor } from '../apColors'
+import { ask } from '../dialog'
 
 /** Canali e occupazione di ogni radio, sovrapposizioni fra AP e canali consigliati (solo consiglio). */
 const props = defineProps<{ aps: Ap[] }>()
@@ -38,7 +39,7 @@ async function applySuggested() {
     return
   }
   const list = suggestions.value.map(s => `${s.ap}: ${s.band.replace('GHz', ' GHz')} → ${s.ch}`).join('\n')
-  if (!window.confirm(`${t('Impostare questi canali con la prova controllata?')}\n\n${list}`)) return
+  if (!await ask(`${t('Impostare questi canali con la prova controllata?')}\n\n${list}`)) return
   applying.value = true
   try {
     const policy = await api.policy()
