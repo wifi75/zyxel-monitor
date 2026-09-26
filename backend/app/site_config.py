@@ -131,6 +131,10 @@ def explore_commands(cfg: ci.RunningConfig) -> list[str]:
     for slot, chan in ((1, "2g-channel"), (2, "5g-channel")):
         prof = cfg.radio_profile(slot)
         if prof:
-            lines += [f"wlan-radio-profile {prof}", "ch-width ?", f"{chan} ?", "exit"]
+            b = chan[:2]    # "2g" | "5g"
+            lines += [f"wlan-radio-profile {prof}", "ch-width ?", f"{chan} ?",
+                      # velocità minime, dispositivi solo 802.11b, multicast e soglia di distacco dei client deboli
+                      f"{b}-basic-speed ?", f"{b}-support-speed ?", f"{b}-multicast-speed ?",
+                      f"{b}-wlan-rate-control ?", "reject-legacy-station ?", "rssi-kickout ?", "exit"]
         lines += [f"wlan slot{slot}", "output-power ?", "exit"]
     return [*lines, "exit"]
