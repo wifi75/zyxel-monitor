@@ -8,6 +8,10 @@ import AlertsSettings from './AlertsSettings.vue'
 import BackupSettings from './BackupSettings.vue'
 import UsersSettings from './UsersSettings.vue'
 import NebulaPanel from './NebulaPanel.vue'
+import AccountSettings from './AccountSettings.vue'
+import Icon from './Icon.vue'
+import type { IconName } from '../icons'
+import { settingsSection as section, type Section } from '../settingsNav'
 
 const props = defineProps<{ status: Ap[] }>()
 const emit = defineEmits<{ changed: [] }>()
@@ -107,49 +111,107 @@ const saveGeneral = () => genRun(async () => {
 })
 
 onMounted(() => { load(); loadGeneral() })
+
+// ---- sezioni: una alla volta, con il menu a sinistra (in alto sugli schermi stretti) ----
+const SECTIONS: { id: Section; title: string; sub: string; icon: IconName; tone: string }[] = [
+  { id: 'opnsense', title: 'OPNsense e raccolta', sub: 'Nomi, siti, linea Internet', icon: 'router', tone: 'tone-teal' },
+  { id: 'alerts', title: 'Avvisi', sub: 'Telegram e report settimanale', icon: 'bell', tone: 'tone-amber' },
+  { id: 'users', title: 'Utenti', sub: 'Accessi in sola lettura', icon: 'users', tone: 'tone-violet' },
+  { id: 'backup', title: 'Backup', sub: 'Copia del database', icon: 'save', tone: 'tone-green' },
+  { id: 'nebula', title: 'Nebula', sub: 'Cloud Zyxel (licenza Pro)', icon: 'globe', tone: 'tone-blue' },
+  { id: 'account', title: 'Il mio account', sub: 'Cambia password', icon: 'key', tone: 'tone-pink' },
+]
 </script>
 
 <template>
-  <main class="settings">
-    <p v-if="error" class="banner err">{{ error }}</p>
+  <main class="settings-page">
+    <nav class="set-nav" :aria-label="t('Sezioni delle impostazioni')">
+      <button v-for="x in SECTIONS" :key="x.id" class="set-item" :class="[x.tone, { active: section === x.id }]"
+              @click="section = x.id">
+        <span class="set-ico"><Icon :name="x.icon" :size="17" /></span>
+        <span class="set-text"><strong>{{ t(x.title) }}</strong><small>{{ t(x.sub) }}</small></span>
+      </button>
+      <p class="muted small set-hint">{{ t('Gli access point si gestiscono nella pagina') }} <strong>{{ t('Gestione AP') }}</strong>.</p>
+    </nav>
 
-    <p class="muted small">{{ t('Gli access point si gestiscono nella pagina') }} <strong>{{ t('Gestione AP') }}</strong>.</p>
+    <div class="set-body">
+      <p v-if="error" class="banner err">{{ error }}</p>
 
-    <form class="card ap-editor" @submit.prevent="saveGeneral">
-      <div class="section-head">
-        <h2>{{ t('OPNsense e raccolta') }}</h2>
-      </div>
-      <p class="muted small">
-        {{ t('Facoltativo: dà i nomi dei dispositivi, i siti visitati, le pubblicità bloccate e lo stato della linea Internet.') }}
-        {{ t('Serve una chiave API (System → Access → Users → icona chiave).') }}
-      </p>
-      <div class="grid">
-        <label>{{ t('Indirizzo OPNsense') }}<input v-model="gen.opnsense_url" placeholder="https://opnsense.casa.lan" /></label>
-        <label>{{ t('Chiave API') }}<input v-model="gen.opnsense_key" autocomplete="off" /></label>
-        <label>{{ t('Secret API') }}
-          <input v-model="gen.opnsense_secret" type="password" autocomplete="new-password"
-                 :placeholder="gen.has_opnsense_secret ? t('invariato — scrivi per cambiarlo') : ''" />
-        </label>
-        <label>{{ t('Interfaccia WAN') }}<input v-model="gen.opnsense_wan_if" :placeholder="t('wan oppure opt1')" /></label>
-        <label>{{ t('Dominio della LAN') }}<input v-model="gen.local_domain" placeholder="casa.lan" /></label>
-        <label class="check"><input v-model="gen.opnsense_verify_tls" type="checkbox" /> {{ t('Verifica certificato') }}</label>
-        <label>{{ t('Lettura ogni (secondi)') }}<input v-model.number="gen.poll_interval" type="number" min="15" max="3600" /></label>
-        <label>{{ t('Storico (giorni)') }}<input v-model.number="gen.retention_days" type="number" min="1" max="365" /></label>
-      </div>
-      <div class="actions">
-        <button type="button" :disabled="genBusy" @click="testGeneral">{{ t('Prova OPNsense') }}</button>
-        <span class="spacer" />
-        <button class="primary" :disabled="genBusy">{{ genBusy ? t('Attendi…') : t('Salva') }}</button>
-      </div>
-      <p v-if="genMsg" class="note" :class="genMsg.ok ? 'ok' : 'ko'">{{ genMsg.message }}</p>
-    </form>
+      <form v-if="section === 'opnsense'" class="card ap-editor" @submit.prevent="saveGeneral">
+        <div class="section-head"><h2>{{ t('OPNsense e raccolta') }}</h2></div>
+        <p class="muted small">
+          {{ t('Facoltativo: dà i nomi dei dispositivi, i siti visitati, le pubblicità bloccate e lo stato della linea Internet.') }}
+          {{ t('Serve una chiave API (System → Access → Users → icona chiave).') }}
+        </p>
+        <fieldset class="set-group">
+          <legend>{{ t('Connessione a OPNsense') }}</legend>
+          <div class="grid">
+            <label>{{ t('Indirizzo OPNsense') }}<input v-model="gen.opnsense_url" placeholder="https://opnsense.casa.lan" /></label>
+            <label>{{ t('Chiave API') }}<input v-model="gen.opnsense_key" autocomplete="off" /></label>
+            <label>{{ t('Secret API') }}
+              <input v-model="gen.opnsense_secret" type="password" autocomplete="new-password"
+                     :placeholder="gen.has_opnsense_secret ? t('invariato — scrivi per cambiarlo') : ''" />
+            </label>
+            <label class="check"><input v-model="gen.opnsense_verify_tls" type="checkbox" /> {{ t('Verifica certificato') }}</label>
+          </div>
+        </fieldset>
+        <fieldset class="set-group">
+          <legend>{{ t('Rete') }}</legend>
+          <div class="grid">
+            <label>{{ t('Interfaccia WAN') }}<input v-model="gen.opnsense_wan_if" :placeholder="t('wan oppure opt1')" /></label>
+            <label>{{ t('Dominio della LAN') }}<input v-model="gen.local_domain" placeholder="casa.lan" /></label>
+          </div>
+        </fieldset>
+        <fieldset class="set-group">
+          <legend>{{ t('Raccolta dati') }}</legend>
+          <div class="grid">
+            <label>{{ t('Lettura ogni (secondi)') }}<input v-model.number="gen.poll_interval" type="number" min="15" max="3600" /></label>
+            <label>{{ t('Storico (giorni)') }}<input v-model.number="gen.retention_days" type="number" min="1" max="365" /></label>
+          </div>
+        </fieldset>
+        <div class="actions">
+          <button type="button" :disabled="genBusy" @click="testGeneral">{{ t('Prova OPNsense') }}</button>
+          <span class="spacer" />
+          <button class="primary" :disabled="genBusy">{{ genBusy ? t('Attendi…') : t('Salva') }}</button>
+        </div>
+        <p v-if="genMsg" class="note" :class="genMsg.ok ? 'ok' : 'ko'">{{ genMsg.message }}</p>
+      </form>
 
-    <AlertsSettings />
-
-    <UsersSettings />
-
-    <BackupSettings />
-
-    <NebulaPanel />
+      <AlertsSettings v-else-if="section === 'alerts'" />
+      <UsersSettings v-else-if="section === 'users'" />
+      <BackupSettings v-else-if="section === 'backup'" />
+      <AccountSettings v-else-if="section === 'account'" @changed="emit('changed')" />
+      <NebulaPanel v-else />
+    </div>
   </main>
 </template>
+
+<style scoped>
+.settings-page { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 20px; align-items: start; }
+.set-nav { display: grid; gap: 4px; position: sticky; top: 12px; }
+.set-item { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border: 1px solid transparent;
+  border-radius: var(--radius); background: transparent; color: var(--text); text-align: left; font: inherit; cursor: pointer;
+  position: relative; }
+.set-item:hover { background: color-mix(in srgb, var(--tone) 8%, transparent); }
+.set-item.active { background: color-mix(in srgb, var(--tone) 12%, var(--surface)); border-color: color-mix(in srgb, var(--tone) 35%, transparent); }
+.set-item.active::before { content: ''; position: absolute; left: 0; top: 6px; bottom: 6px; width: 3px; border-radius: 0 3px 3px 0; background: var(--tone); }
+.set-ico { width: 32px; height: 32px; flex: none; display: grid; place-items: center; border-radius: var(--radius-s);
+  color: var(--tone); background: color-mix(in srgb, var(--tone) 14%, transparent); }
+.set-item.active .set-ico { color: var(--on-accent); background: var(--tone); }
+.set-text { display: flex; flex-direction: column; min-width: 0; }
+.set-text strong { font-size: 14px; }
+.set-text small { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.set-hint { margin: 10px 4px 0; }
+.set-body { display: grid; gap: 16px; min-width: 0; }
+.set-body .banner { margin: 0; }
+.set-group { border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 14px 14px; margin: 0; }
+.set-group legend { padding: 0 6px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+
+/* schermi stretti: sezioni come schede scorrevoli in alto */
+@media (max-width: 860px) {
+  .settings-page { grid-template-columns: minmax(0, 1fr); }
+  .set-nav { position: static; display: flex; overflow-x: auto; gap: 6px; padding-bottom: 4px; }
+  .set-item { flex: none; padding: 6px 10px; }
+  .set-text small, .set-hint { display: none; }
+}
+</style>

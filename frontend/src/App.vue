@@ -20,6 +20,7 @@ import LangSwitch from './components/LangSwitch.vue'
 import ThemeSwitch from './components/ThemeSwitch.vue'
 import AppLogo from './components/AppLogo.vue'
 import type { IconName } from './icons'
+import { settingsSection } from './settingsNav'
 import ChannelPlan from './components/ChannelPlan.vue'
 import FirmwareCard from './components/FirmwareCard.vue'
 import SplitBar from './components/SplitBar.vue'
@@ -260,16 +261,10 @@ async function rename(c: { mac: string; alias: string | null; hostname: string |
 }
 
 // ---- cambio password ----
-const showPwd = ref(false)
-const pwdOld = ref(''), pwdNew = ref(''), pwdMsg = ref('')
-async function changePassword() {
-  pwdMsg.value = ''
-  try {
-    await api.changePassword(pwdOld.value, pwdNew.value)
-    defaultPassword.value = false
-    showPwd.value = false
-    pwdOld.value = pwdNew.value = ''
-  } catch (e) { pwdMsg.value = (e as Error).message }
+/** "Cambia password" apre Impostazioni → Il mio account */
+function openAccount() { settingsSection.value = 'account'; view.value = '#settings' }
+async function refreshMe() {
+  try { defaultPassword.value = (await api.me()).default_password } catch { /* resta com'era */ }
 }
 
 const SSH_NA = "La CLI SSH di questo AP non fornisce ancora il dato: in Impostazioni → Output CLI trovi il testo da mandare per aggiungerlo"
@@ -323,7 +318,7 @@ const SSH_NA = "La CLI SSH di questo AP non fornisce ancora il dato: in Impostaz
         <button class="nav-item" :class="{ active: view === '#settings' }" @click="view = '#settings'">
           <span class="nav-ico"><Icon name="gear" :size="17" /></span><span class="grow">{{ t('Impostazioni') }}</span>
         </button>
-        <button class="nav-item" :class="{ active: showPwd }" @click="showPwd = !showPwd">
+        <button class="nav-item" :class="{ active: view === '#settings' && settingsSection === 'account' }" @click="openAccount">
           <span class="nav-ico"><Icon name="key" :size="17" /></span><span class="grow">{{ t('Cambia password') }}</span>
         </button>
       </div>
@@ -352,19 +347,13 @@ const SSH_NA = "La CLI SSH di questo AP non fornisce ancora il dato: in Impostaz
     </header>
 
     <div v-if="defaultPassword" class="banner warn">
-      {{ t('Stai usando la password predefinita.') }} <a href="#" @click.prevent="showPwd = true">{{ t('Cambiala adesso') }}</a>.
+      {{ t('Stai usando la password predefinita.') }} <a href="#" @click.prevent="openAccount">{{ t('Cambiala adesso') }}</a>.
     </div>
     <div v-if="readOnly" class="banner">{{ t('Sei entrato in sola lettura: puoi guardare tutto ma non modificare.') }}</div>
     <div v-if="loadError" class="banner err">{{ t('Errore di caricamento: {error}', { error: loadError }) }}</div>
 
-    <form v-if="showPwd" class="card pwd" @submit.prevent="changePassword">
-      <label>{{ t('Password attuale') }}<input v-model="pwdOld" type="password" required /></label>
-      <label>{{ t('Nuova password (min. 10 caratteri)') }}<input v-model="pwdNew" type="password" minlength="10" required /></label>
-      <button class="primary">{{ t('Salva') }}</button>
-      <span v-if="pwdMsg" class="error">{{ pwdMsg }}</span>
-    </form>
 
-    <SettingsView v-if="view === '#settings'" :status="aps" @changed="reloadSoon" />
+    <SettingsView v-if="view === '#settings'" :status="aps" @changed="reloadSoon(); refreshMe()" />
 
     <ConfigView v-else-if="view === '#config'" @changed="reloadSoon" />
 

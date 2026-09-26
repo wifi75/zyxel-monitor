@@ -2,6 +2,20 @@ import { addEn } from './index'
 
 // avvisi, report, mappa, canali, firmware, storico dispositivo
 addEn({
+  // pagina impostazioni
+  'Sezioni delle impostazioni': 'Settings sections',
+  'Connessione a OPNsense': 'OPNsense connection',
+  'Raccolta dati': 'Data collection',
+  'Password cambiata.': 'Password changed.',
+  'Nomi, siti, linea Internet': 'Names, sites, Internet line',
+  'Avvisi': 'Alerts',
+  'Telegram e report settimanale': 'Telegram and weekly report',
+  'Accessi in sola lettura': 'Read-only access',
+  'Backup': 'Backup',
+  'Copia del database': 'Database copy',
+  'Nebula': 'Nebula',
+  'Cloud Zyxel (licenza Pro)': 'Zyxel cloud (Pro license)',
+  'Il mio account': 'My account',
   // utenti
   'Utente {n} creato.': 'User {n} created.',
   'Eliminare l’utente {n}?': 'Delete user {n}?',
