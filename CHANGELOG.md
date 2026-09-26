@@ -2,6 +2,10 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) — versioni: [SemVer](https://semver.org/lang/it/).
 
+## [0.25.2] - 2026-09-26
+### Corretto
+- Widget Firmware: nota accorciata e riquadro più alto, l'ultima riga non viene più tagliata.
+
 ## [0.25.1] - 2026-09-26
 ### Corretto
 - Piano dei canali: un solo avviso per canale con tutti gli AP coinvolti, invece di uno per ogni coppia.
