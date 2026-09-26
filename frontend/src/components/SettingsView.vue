@@ -4,6 +4,7 @@ import { api, apForm, type Ap, type ApConfig, type ApTest, type GeneralForm } fr
 import { copyText } from '../format'
 import { t } from '../i18n'
 import ApEditor from './ApEditor.vue'
+import AlertsSettings from './AlertsSettings.vue'
 import NebulaPanel from './NebulaPanel.vue'
 
 const props = defineProps<{ status: Ap[] }>()
@@ -140,6 +141,8 @@ onMounted(() => { load(); loadGeneral() })
       </div>
       <p v-if="genMsg" class="note" :class="genMsg.ok ? 'ok' : 'ko'">{{ genMsg.message }}</p>
     </form>
+
+    <AlertsSettings />
 
     <NebulaPanel />
   </main>

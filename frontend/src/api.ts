@@ -14,6 +14,8 @@ export interface Client {
   ssid: string | null; band: string | null; rssi_dbm: number | null
   tx_rate: number | null; rx_rate: number | null; capability: string | null
   connected_at: number | null; device_type: string
+  /** produttore dal MAC (elenco IEEE); "MAC privato" per quelli randomizzati */
+  vendor?: string | null
 }
 export interface Event {
   id: number; ts: number
@@ -71,7 +73,7 @@ export interface GeneralForm extends GeneralSettings { opnsense_secret: string }
 export interface Device {
   mac: string; first_seen: number; last_seen: number; last_ap: string | null; last_ip: string | null
   hostname: string | null; alias: string | null; known: boolean; online: boolean; rssi_dbm: number | null
-  device_type: string
+  device_type: string; vendor?: string | null
 }
 export interface SignalHistory { step: number; points: { ts: number; avg: number | null; min: number | null; ap: string | null }[] }
 export interface SignalByAp {
@@ -138,6 +140,30 @@ export interface Rollout {
 }
 export interface GuardState { enabled: boolean; rollout: Rollout; wait: number; drop: number }
 
+export interface ChannelRadio {
+  ap: string; channel: number | null; auto: boolean | null; utilization: number | null; clients: number; tx_power: number | null
+}
+export interface ChannelIssue { kind: 'same' | 'overlap' | 'busy' | 'unclean'; aps: string[]; channel: number | null; pct?: number }
+export interface Channels {
+  busy_pct: number
+  bands: Record<string, { radios: ChannelRadio[]; issues: ChannelIssue[]; suggested: Record<string, number>; changes: Record<string, number> }>
+}
+export interface Report {
+  since: number; until: number; days: number
+  aps: { ap: string; availability: number; peak_clients: number; avg_clients: number; down: number; up: number
+    rssi: number | null; weak_pct: number | null; outages: number }[]
+  wifi: { down: number; up: number }
+  internet: { available: boolean; availability: number | null; delay_ms: number | null; max_loss: number | null
+    outages: number; down: number; up: number }
+  events: Record<string, number>
+  new_devices: { mac: string; name: string; first_seen: number; last_ap: string | null; known: number }[]
+  busiest: { mac: string; name: string; hours: number; rssi: number | null }[]
+  bouncing: string[]
+}
+export interface AlertSettings {
+  has_token: boolean; chat_id: string; kinds: string[]; weekly: boolean; all_kinds: string[]; enabled: boolean
+}
+export interface AlertForm { token: string; chat_id: string; kinds: string[]; weekly: boolean; clear_token?: boolean }
 export interface WidgetPos { i: string; x: number; y: number; w: number; h: number }
 export type ViewKind = 'overview' | 'ap'
 export type SavedLayout = Partial<Record<ViewKind, WidgetPos[]>>
@@ -173,8 +199,14 @@ export const api = {
     req('/password', { method: 'POST', body: JSON.stringify({ old_password, new_password }) }),
   aps: () => req<Ap[]>('/aps'),
   clients: () => req<Client[]>('/clients'),
-  events: (limit = 200, ap?: string) =>
-    req<Event[]>(`/events?limit=${limit}${ap ? `&ap=${encodeURIComponent(ap)}` : ''}`),
+  events: (limit = 200, ap?: string, mac?: string) =>
+    req<Event[]>(`/events?limit=${limit}${ap ? `&ap=${encodeURIComponent(ap)}` : ''}${mac ? `&mac=${encodeURIComponent(mac)}` : ''}`),
+  channels: () => req<Channels>('/channels'),
+  report: (days: number) => req<Report>(`/report?days=${days}`),
+  alerts: () => req<AlertSettings>('/alerts'),
+  saveAlerts: (f: AlertForm) => req<AlertSettings>('/alerts', { method: 'PUT', body: JSON.stringify(f) }),
+  testAlerts: (f: AlertForm) => req<{ ok: boolean; message: string }>('/alerts/test', { method: 'POST', body: JSON.stringify(f) }),
+  sendReport: () => req<{ ok: boolean; message: string }>('/alerts/report', { method: 'POST' }),
   sites: (hours: number, ap?: string, ip?: string) =>
     req<Sites>(`/sites?hours=${hours}&limit=10${ap ? `&ap=${encodeURIComponent(ap)}` : ''}${ip ? `&ip=${encodeURIComponent(ip)}` : ''}`),
   internet: (hours: number) => req<Internet>(`/internet?hours=${hours}`),

@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { api, type Device } from '../api'
+import { api, type Device, type Event, type SignalHistory } from '../api'
 import { isPrivateMac, since, time } from '../format'
+import EventsTable from './EventsTable.vue'
+import LineChart from './LineChart.vue'
 import { t } from '../i18n'
 
 const props = defineProps<{ devices: Device[] }>()
@@ -21,7 +23,7 @@ const shown = computed(() => {
   const q = search.value.trim().toLowerCase()
   return props.devices
     .filter(d => filter.value === 'all' || (filter.value === 'new' ? !d.known : d.online))
-    .filter(d => !q || [d.alias, d.hostname, d.last_ip, d.mac, d.last_ap, d.device_type]
+    .filter(d => !q || [d.alias, d.hostname, d.last_ip, d.mac, d.last_ap, d.device_type, d.vendor]
       .some(v => v?.toLowerCase().includes(q)))
 })
 
@@ -33,6 +35,22 @@ const TONES: Record<string, string> = {
   Microcontrollori: 'var(--blue)', Computer: 'var(--green)', Altro: 'var(--muted)',
 }
 const tone = (k: string) => TONES[k] ?? 'var(--orange)'
+
+// ---- storico del dispositivo: collegamenti, roaming e segnale ----
+const openMac = ref<string | null>(null)
+const history = ref<{ events: Event[]; signal: SignalHistory | null } | null>(null)
+async function toggle(d: Device) {
+  if (openMac.value === d.mac) { openMac.value = null; return }
+  openMac.value = d.mac
+  history.value = null
+  const [events, signal] = await Promise.all([
+    api.events(100, undefined, d.mac).catch(() => []),
+    api.signal(d.mac, 24 * 7).catch(() => null),
+  ])
+  if (openMac.value === d.mac) history.value = { events, signal }
+}
+const hasSignal = computed(() => history.value?.signal?.points.some(p => p.avg != null) ?? false)
+const dbm = (v: number) => `${v} dBm`
 
 async function run(fn: () => Promise<unknown>) {
   try { await fn(); error.value = ''; emit('changed') } catch (e) { error.value = (e as Error).message }
@@ -64,29 +82,48 @@ function forget(d: Device) {
       <div class="table-wrap">
         <table>
           <thead><tr>
-            <th /><th>{{ t('Dispositivo') }}</th><th>{{ t('Tipo') }}</th><th>IP</th><th>MAC</th><th>AP</th><th>{{ t('Prima volta') }}</th><th>{{ t('Ultima volta') }}</th><th />
+            <th /><th>{{ t('Dispositivo') }}</th><th>{{ t('Tipo') }}</th><th>{{ t('Produttore') }}</th><th>IP</th><th>MAC</th><th>AP</th><th>{{ t('Prima volta') }}</th><th>{{ t('Ultima volta') }}</th><th />
           </tr></thead>
           <tbody>
-            <tr v-for="d in shown" :key="d.mac" :class="{ unknown: !d.known }">
+            <template v-for="d in shown" :key="d.mac">
+            <tr class="clickable-row" :class="{ unknown: !d.known, open: openMac === d.mac }" @click="toggle(d)">
               <td><span class="status" :class="d.online ? 'on' : 'idle'" :title="d.online ? t('connesso') : t('non connesso')" /></td>
               <td class="dev-name">
                 <strong :title="name(d)">{{ name(d) }}</strong>
                 <span v-if="!d.known" class="badge ko">{{ t('nuovo') }}</span>
               </td>
               <td><span class="chip" :style="{ '--tone': tone(d.device_type) }">{{ t(d.device_type) }}</span></td>
+              <td class="small">{{ d.vendor ? t(d.vendor) : '—' }}</td>
               <td class="mono small">{{ d.last_ip || '—' }}</td>
               <td class="mono small">{{ d.mac }}<span v-if="isPrivateMac(d.mac)" class="muted" :title="t('MAC privato (randomizzato)')"> ⓟ</span></td>
               <td><span v-if="d.last_ap" class="chip ap-chip">{{ d.last_ap }}</span><span v-else class="muted">—</span></td>
               <td class="small nowrap">{{ time(d.first_seen) }}</td>
               <td class="small nowrap" :class="{ 'ok-text': d.online }">{{ d.online ? t('adesso') : t('{t} fa', { t: since(d.last_seen) }) }}</td>
-              <td class="row-actions">
+              <td class="row-actions" @click.stop>
                 <button v-if="!d.known" class="ghost small primary-text" @click="setKnown(d, true)">{{ t('Riconosci') }}</button>
                 <button v-else class="ghost small" :title="t('Segna come nuovo')" @click="setKnown(d, false)">{{ t('Nuovo') }}</button>
                 <button class="ghost small" @click="emit('rename', d)">{{ t('Rinomina') }}</button>
                 <button class="ghost small danger" :title="t('Dimentica')" @click="forget(d)">×</button>
               </td>
             </tr>
-            <tr v-if="!shown.length"><td colspan="9" class="muted">{{ t('Nessun dispositivo.') }}</td></tr>
+            <tr v-if="openMac === d.mac" class="detail-row">
+              <td colspan="10">
+                <div v-if="!history" class="muted small">{{ t('Caricamento…') }}</div>
+                <template v-else>
+                  <strong class="small">{{ t('Segnale negli ultimi 7 giorni') }}</strong>
+                  <div v-if="hasSignal && history.signal" class="signal-box">
+                    <LineChart :ts="history.signal.points.map(p => p.ts)" :format="dbm"
+                               :datasets="[{ label: t('Medio'), data: history.signal.points.map(p => p.avg) },
+                                           { label: t('Peggiore'), data: history.signal.points.map(p => p.min), color: '--bad' }]" />
+                  </div>
+                  <p v-else class="muted small">{{ t('Nessuna lettura del segnale nel periodo.') }}</p>
+                  <strong class="small">{{ t('Collegamenti e roaming') }}</strong>
+                  <EventsTable :events="history.events" show-ap />
+                </template>
+              </td>
+            </tr>
+            </template>
+            <tr v-if="!shown.length"><td colspan="10" class="muted">{{ t('Nessun dispositivo.') }}</td></tr>
           </tbody>
         </table>
       </div>

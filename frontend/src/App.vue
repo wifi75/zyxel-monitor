@@ -1,22 +1,18 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, defineAsyncComponent, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import {
   api, auth, Unauthorized, type Ap, type Client, type Device, type DeviceUsage, type Event, type Health,
   type Internet, type Roaming, type SignalByAp, type Sites, type Traffic, type Usage,
 } from './api'
-import ApManager from './components/ApManager.vue'
-import ConfigView from './components/ConfigView.vue'
 import BarList from './components/BarList.vue'
 import RoamPairs from './components/RoamPairs.vue'
 import ClientsTable from './components/ClientsTable.vue'
 import Dashboard from './components/Dashboard.vue'
-import DevicesView from './components/DevicesView.vue'
 import EventsTable from './components/EventsTable.vue'
 import Icon from './components/Icon.vue'
 import InternetCard from './components/InternetCard.vue'
 import LoginView from './components/LoginView.vue'
 import PieChart from './components/PieChart.vue'
-import SettingsView from './components/SettingsView.vue'
 import TrafficChart from './components/TrafficChart.vue'
 import { bps, bytes, copyText, duration, signal, time } from './format'
 import { locale, t } from './i18n'
@@ -24,6 +20,16 @@ import LangSwitch from './components/LangSwitch.vue'
 import ThemeSwitch from './components/ThemeSwitch.vue'
 import AppLogo from './components/AppLogo.vue'
 import type { IconName } from './icons'
+import ChannelPlan from './components/ChannelPlan.vue'
+import FirmwareCard from './components/FirmwareCard.vue'
+import TopologyMap from './components/TopologyMap.vue'
+
+// pagine di gestione caricate solo quando si aprono: la panoramica parte più leggera
+const ApManager = defineAsyncComponent(() => import('./components/ApManager.vue'))
+const ConfigView = defineAsyncComponent(() => import('./components/ConfigView.vue'))
+const SettingsView = defineAsyncComponent(() => import('./components/SettingsView.vue'))
+const DevicesView = defineAsyncComponent(() => import('./components/DevicesView.vue'))
+const ReportView = defineAsyncComponent(() => import('./components/ReportView.vue'))
 
 const REFRESH_MS = 30_000
 
@@ -39,7 +45,7 @@ const isDashboard = computed(() => !view.value.startsWith('#'))
 const navOpen = ref(false)
 const pageTitle = computed(() => ({
   '': t('Panoramica'), '#devices': t('Dispositivi'), '#events': t('Eventi'), '#aps': t('Gestione AP'),
-  '#config': t('Configurazione'), '#settings': t('Impostazioni'),
+  '#config': t('Configurazione'), '#settings': t('Impostazioni'), '#report': t('Report'),
 } as Record<string, string>)[view.value] ?? view.value)
 
 const aps = ref<Ap[]>([])
@@ -291,6 +297,9 @@ const SSH_NA = "La CLI SSH di questo AP non fornisce ancora il dato: in Impostaz
         <button class="nav-item" :class="{ active: view === '#events' }" @click="view = '#events'">
           <span class="nav-ico"><Icon name="activity" :size="17" /></span><span class="grow">{{ t('Eventi') }}</span>
         </button>
+        <button class="nav-item" :class="{ active: view === '#report' }" @click="view = '#report'">
+          <span class="nav-ico"><Icon name="file" :size="17" /></span><span class="grow">{{ t('Report') }}</span>
+        </button>
       </div>
 
       <div class="nav-group tone-violet">
@@ -355,6 +364,8 @@ const SSH_NA = "La CLI SSH di questo AP non fornisce ancora il dato: in Impostaz
     <ApManager v-else-if="view === '#aps'" :status="aps" @changed="reloadSoon" />
 
     <DevicesView v-else-if="view === '#devices'" :devices="devices" @changed="load" @rename="rename" />
+
+    <ReportView v-else-if="view === '#report'" />
 
     <main v-else-if="view === '#events'">
       <section class="card"><h2 class="mb">{{ t('Storico collegamenti') }}</h2><EventsTable :events="events" show-ap /></section>
@@ -481,6 +492,12 @@ const SSH_NA = "La CLI SSH di questo AP non fornisce ancora il dato: in Impostaz
             <PieChart v-if="byAp.length" :items="byAp" />
             <p v-else class="muted">{{ t('Nessun client.') }}</p>
           </template>
+
+          <TopologyMap v-else-if="id === 'topology'" :aps="aps" :clients="clients" :internet="internet" @open="view = $event" />
+
+          <ChannelPlan v-else-if="id === 'channels'" :aps="aps" />
+
+          <FirmwareCard v-else-if="id === 'firmware'" :aps="aps" />
 
           <template v-else-if="id === 'band'">
             <h2>{{ t('Client per banda') }}</h2>
