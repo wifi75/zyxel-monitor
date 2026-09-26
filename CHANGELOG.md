@@ -2,6 +2,10 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) — versioni: [SemVer](https://semver.org/lang/it/).
 
+## [0.28.4] - 2026-09-26
+### Aggiunto
+- Il riquadro «Client connessi» è cliccabile: porta all'elenco dei client dell'AP o di tutto il sito.
+
 ## [0.28.3] - 2026-09-26
 ### Modificato
 - Tolta la voce «Cambia password» dal menu principale: la password si cambia in Impostazioni → Il mio account.
