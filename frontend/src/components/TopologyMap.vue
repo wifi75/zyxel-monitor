@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import type { Ap, Client, Internet } from '../api'
 import { t } from '../i18n'
 import Icon from './Icon.vue'
+import { apColor } from '../apColors'
 
 /** Mappa della rete: Internet → router → access point → client per banda. Un clic sull'AP apre il dettaglio. */
 const props = defineProps<{ aps: Ap[]; clients: Client[]; internet: Internet | null }>()
@@ -41,7 +42,7 @@ const nodes = computed(() => props.aps.map(a => {
     <div class="link" />
     <ul class="leaves">
       <li v-for="n in nodes" :key="n.ap.ap">
-        <button class="node ap" :class="n.ap.online ? 'on' : 'off'" @click="emit('open', n.ap.ap)">
+        <button class="node ap" :class="n.ap.online ? 'on' : 'off'" :style="{ '--ap': apColor(n.ap.ap) }" @click="emit('open', n.ap.ap)">
           <Icon name="wifi" :size="16" />
           <div>
             <strong>{{ n.ap.ap }}</strong>
@@ -65,7 +66,8 @@ const nodes = computed(() => props.aps.map(a => {
 .node > div { display: flex; flex-direction: column; min-width: 0; }
 .node.on { border-left-color: var(--good); }
 .node.off { border-left-color: var(--bad); }
-.node.ap { width: 100%; cursor: pointer; }
+.node.ap { width: 100%; cursor: pointer; border-left-color: var(--ap); }
+.node.ap.off { border-left-color: var(--bad); }
 .node.ap:hover { border-color: var(--accent); }
 .link { width: 2px; height: 14px; background: var(--border); }
 .leaves { list-style: none; margin: 0; padding: 10px 0 0; width: 100%; border-top: 2px solid var(--border);

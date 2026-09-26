@@ -24,6 +24,10 @@ import ChannelPlan from './components/ChannelPlan.vue'
 import FirmwareCard from './components/FirmwareCard.vue'
 import SplitBar from './components/SplitBar.vue'
 import TopologyMap from './components/TopologyMap.vue'
+import ApHeader from './components/ApHeader.vue'
+import EmptyState from './components/EmptyState.vue'
+import Sparkline from './components/Sparkline.vue'
+import { apColor, setApNames } from './apColors'
 
 // pagine di gestione caricate solo quando si aprono: la panoramica parte più leggera
 const ApManager = defineAsyncComponent(() => import('./components/ApManager.vue'))
@@ -73,7 +77,7 @@ async function load() {
     const [a, c, e, t, u, d] = await Promise.all([
       api.aps(), api.clients(), api.events(300), api.traffic(hours.value), api.usage(hours.value), api.devices(),
     ])
-    aps.value = a; clients.value = c; events.value = e; traffic.value = t; usage.value = u; devices.value = d
+    aps.value = a; setApNames(a.map(x => x.ap)); clients.value = c; events.value = e; traffic.value = t; usage.value = u; devices.value = d
     await loadScoped()
     internet.value = await api.internet(hours.value).catch(() => internet.value)
     api.usageDevices(hours.value).then(r => { deviceUsage.value = r }).catch(() => {})
@@ -181,11 +185,17 @@ function showWeak() {
 function showClients() {
   weakOnly.value = false
   // widget "Client connessi" nella disposizione: ci si scende; altrimenti pannello con l'elenco
+  panelBand.value = null
   if (document.querySelector('.clients-anchor')) scrollToClients()
   else clientsPanel.value = true
 }
 const clientsPanel = ref(false)
-watch(view, () => { clientsPanel.value = false })
+/** banda scelta nell'intestazione dell'AP: pannello con i soli dispositivi di quella banda */
+const panelBand = ref<string | null>(null)
+function showBand(band: string) { panelBand.value = band; clientsPanel.value = true }
+const panelClients = computed(() => panelBand.value
+  ? scopedClients.value.filter(c => (c.band || '?') === panelBand.value) : scopedClients.value)
+watch(view, () => { clientsPanel.value = false; panelBand.value = null })
 function scrollToClients() {
   window.setTimeout(() => document.querySelector('.clients-anchor')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50)
 }
@@ -207,10 +217,28 @@ const periodBytes = computed(() => {
   return keys.reduce((s, k) => s + (per[k] ? per[k].down + per[k].up : 0), 0)
 })
 
+/** "3.7 kbit/s" → numero grande e unità piccola, così il valore non viene tagliato */
+function split(text: string): { value: string; unit?: string } {
+  const m = /^([\d.,]+)\s+(\S+)$/.exec(text)
+  return m ? { value: m[1].replace('.', locale().startsWith('it') ? ',' : '.'), unit: m[2] } : { value: text }
+}
+/** andamento recente (ultimi 30 punti) sommato su tutti gli AP visibili */
+function sparkOf(k: 'down_bps' | 'up_bps'): (number | null)[] {
+  const series = Object.values(scopedSeries.value)
+  if (!series.length) return []
+  const len = series[0].length
+  return Array.from({ length: Math.min(30, len) }, (_, n) => {
+    const i = len - Math.min(30, len) + n
+    const vals = series.map(pts => pts[i]?.[k]).filter((v): v is number => v != null)
+    return vals.length ? vals.reduce((x, y) => x + y, 0) : null
+  })
+}
+
 const kpis = computed(() => {
   const ap = currentAp.value
   const list: { label: string; value: string | number; of?: number; icon: IconName;
-    tone: string; warn?: boolean; go?: string; title?: string; action?: () => void }[] = [
+    tone: string; warn?: boolean; go?: string; title?: string; action?: () => void
+    unit?: string; spark?: (number | null)[] }[] = [
     ap
       ? { label: t('Uptime'), value: duration(ap.uptime_s), icon: 'clock', tone: 'blue',
           title: ap.method === 'ssh' && ap.uptime_s == null ? t(SSH_NA) : undefined }
@@ -218,9 +246,9 @@ const kpis = computed(() => {
           warn: onlineAps.value < aps.value.length },
     { label: t('Client connessi'), value: scopedClients.value.length, icon: 'users', tone: 'violet',
       title: t('Clicca per vedere l’elenco dei client'), action: scopedClients.value.length ? showClients : undefined },
-    { label: t('Download Wi-Fi'), value: bps(currentDown.value), icon: 'down', tone: 'green' },
-    { label: t('Upload Wi-Fi'), value: bps(currentUp.value), icon: 'up', tone: 'teal' },
-    { label: t('Traffico {period}', { period: periodLabel.value }), value: periodBytes.value ? bytes(periodBytes.value) : '—', icon: 'chart', tone: 'amber' },
+    { label: t('Download Wi-Fi'), ...split(bps(currentDown.value)), icon: 'down', tone: 'green', spark: sparkOf('down_bps') },
+    { label: t('Upload Wi-Fi'), ...split(bps(currentUp.value)), icon: 'up', tone: 'teal', spark: sparkOf('up_bps') },
+    { label: t('Traffico {period}', { period: periodLabel.value }), ...split(periodBytes.value ? bytes(periodBytes.value) : '—'), icon: 'chart', tone: 'amber' },
     { label: t('Segnale debole'), value: weakClients.value, icon: 'alert', tone: 'orange', warn: weakClients.value > 0,
       title: weakList.value.length
         ? weakList.value.map(c => `${c.alias || c.hostname || c.ip || c.mac} · ${c.ap} · ${c.rssi_dbm} dBm`).join('\n')
@@ -372,11 +400,11 @@ const SSH_NA = "La CLI SSH di questo AP non fornisce ancora il dato: in Impostaz
     <div v-if="clientsPanel" class="panel-backdrop" @click.self="clientsPanel = false">
       <section class="card panel" role="dialog" :aria-label="t('Client connessi')">
         <div class="section-head">
-          <h2>{{ t('Client connessi') }}<template v-if="currentAp"> — {{ currentAp.ap }}</template></h2>
+          <h2>{{ t('Client connessi') }}<template v-if="currentAp"> — {{ currentAp.ap }}</template><template v-if="panelBand"> · {{ panelBand.replace('GHz', ' GHz') }}</template></h2>
           <span class="spacer" />
           <button class="icon-btn" :title="t('Chiudi')" @click="clientsPanel = false">✕</button>
         </div>
-        <ClientsTable :clients="scopedClients" :show-ap="!currentAp" :hours="hours" @rename="rename" />
+        <ClientsTable :clients="panelClients" :show-ap="!currentAp" :hours="hours" @rename="rename" />
       </section>
     </div>
 
@@ -400,33 +428,19 @@ const SSH_NA = "La CLI SSH di questo AP non fornisce ancora il dato: in Impostaz
 
     <!-- PANORAMICA o DETTAGLIO AP: griglia di widget spostabili e ridimensionabili -->
     <main v-else>
-      <section v-if="currentAp" class="card ap-head" :class="{ off: !currentAp.online }">
-        <div>
-          <h2>{{ currentAp.ap }}</h2>
-          <p class="muted small">
-            {{ currentAp.model || '—' }} · {{ currentAp.host }} · {{ t('firmware') }} {{ currentAp.firmware || '—' }} ·
-            {{ t('lettura') }} {{ currentAp.method.toUpperCase() }}
-          </p>
-          <p v-if="currentAp.error" class="error small">{{ currentAp.error }}</p>
-        </div>
+      <ApHeader v-if="currentAp" :ap="currentAp" @band="showBand" />
 
-        <div class="radios">
-          <span v-for="r in currentAp.radios" :key="r.band" class="radio" :class="bandClass(r.band)">
-            {{ r.band }}<template v-if="r.channel"> · {{ t('canale {n}', { n: r.channel }) }}</template><template v-else-if="r.channel_auto"> · {{ t('canale auto') }}</template> · {{ t('{n} client', { n: r.clients }) }}
-          </span>
-        </div>
-      </section>
-
-      <Dashboard v-model:editing="editing" :view="currentAp ? 'ap' : 'overview'">
+      <Dashboard v-model:editing="editing" :view="currentAp ? 'ap' : 'overview'" :loading="!lastUpdate" @go="view = $event">
         <template #widget="{ id }">
           <!-- indicatori -->
           <section v-if="id === 'kpis'" class="kpis fill">
             <div v-for="k in kpis" :key="k.label" class="kpi rich" :class="[`tone-${k.tone}`, { clickable: k.go || k.action }]"
                  :title="k.title" @click="k.action ? k.action() : k.go && (view = k.go)">
-              <div class="kpi-icon"><Icon :name="k.icon" /></div>
+              <div class="kpi-icon" :class="{ alarm: k.warn }"><Icon :name="k.icon" /></div>
               <div class="kpi-text">
                 <span>{{ k.label }}</span>
-                <strong :class="{ warn: k.warn }">{{ k.value }}<small v-if="k.of"> / {{ k.of }}</small></strong>
+                <strong :class="{ warn: k.warn }">{{ k.value }}<small v-if="k.unit" class="unit"> {{ k.unit }}</small><small v-if="k.of"> / {{ k.of }}</small></strong>
+                <Sparkline v-if="k.spark" :values="k.spark" />
               </div>
             </div>
           </section>
@@ -494,8 +508,8 @@ const SSH_NA = "La CLI SSH di questo AP non fornisce ancora il dato: in Impostaz
 
           <template v-else-if="id === 'traffic_ap'">
             <h2>{{ t('Traffico per access point') }} <span class="muted small">({{ periodLabel }})</span></h2>
-            <PieChart v-if="gbByAp.length" :items="gbByAp" :format="bytes" />
-            <p v-else class="muted">{{ t('Dati in raccolta: servono alcuni minuti.') }}</p>
+            <PieChart v-if="gbByAp.length" :items="gbByAp" :format="bytes" :colors="gbByAp.map(i => apColor(i.label))" />
+            <EmptyState v-else icon="clock" :text="t('Dati in raccolta')" :hint="t('Servono alcuni minuti dopo l’avvio.')" />
           </template>
 
           <template v-else-if="id === 'blocked'">
@@ -518,7 +532,7 @@ const SSH_NA = "La CLI SSH di questo AP non fornisce ancora il dato: in Impostaz
 
           <template v-else-if="id === 'clients_ap'">
             <h2>{{ t('Client per access point') }}</h2>
-            <PieChart v-if="byAp.length" :items="byAp" />
+            <PieChart v-if="byAp.length" :items="byAp" :colors="byAp.map(i => apColor(i.label))" />
             <p v-else class="muted">{{ t('Nessun client.') }}</p>
           </template>
 

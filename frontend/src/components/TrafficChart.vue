@@ -2,7 +2,8 @@
 import { Chart, type ChartConfiguration, registerables } from 'chart.js'
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { locale } from '../i18n'
-import { seriesColor, soft, themeKey } from '../chartColors'
+import { soft, themeKey } from '../chartColors'
+import { apColor } from '../apColors'
 import type { TrafficPoint } from '../api'
 import { bps } from '../format'
 
@@ -27,11 +28,11 @@ function build(): ChartConfiguration<'line'> {
     type: 'line',
     data: {
       labels,
-      datasets: aps.map((ap, i) => ({
+      datasets: aps.map(ap => ({
         label: ap,
         data: props.series[ap].map(p => p[props.metric]),
-        borderColor: seriesColor(i),
-        backgroundColor: soft(seriesColor(i)),
+        borderColor: apColor(ap),
+        backgroundColor: soft(apColor(ap)),
         borderWidth: 2, pointRadius: 0, tension: 0.3, spanGaps: true,
       })),
     },

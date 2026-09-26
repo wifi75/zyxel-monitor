@@ -3,13 +3,15 @@ import { GridItem, GridLayout } from 'grid-layout-plus'
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { api, type SavedLayout, type ViewKind, type WidgetPos } from '../api'
 import { t } from '../i18n'
+import WidgetShell from './WidgetShell.vue'
 import { COLS, appendWidget, defOf, defaultLayout, normalize, widgetsFor } from '../widgets'
 
 /**
  * Griglia stile Zabbix: in modalità "Personalizza" i widget si trascinano dalla barra del titolo
  * e si ridimensionano dall'angolo. La disposizione si salva per utente, separata per panoramica e AP.
  */
-const props = defineProps<{ view: ViewKind }>()
+const props = defineProps<{ view: ViewKind; loading?: boolean }>()
+const emit = defineEmits<{ go: [view: string] }>()
 defineSlots<{ widget(props: { id: string }): unknown }>()
 /** acceso dal pulsante "Personalizza" nella barra in alto */
 const editing = defineModel<boolean>('editing', { default: false })
@@ -78,13 +80,10 @@ async function reset() {
   </div>
 
   <div v-if="narrow" class="dash-stack">
-    <div v-for="p in stacked" :key="p.i" class="widget card">
-      <div v-if="editing" class="widget-bar">
-        <span>{{ t(defOf(p.i)?.title ?? '') }}</span>
-        <button class="ghost small" :title="t('Nascondi')" @click="remove(p.i)">×</button>
-      </div>
-      <div class="widget-body"><slot name="widget" :id="p.i" /></div>
-    </div>
+    <WidgetShell v-for="p in stacked" :id="p.i" :key="p.i" :editing="editing" :loading="loading && p.i !== 'kpis'"
+                 @remove="remove(p.i)" @go="emit('go', $event)">
+      <slot name="widget" :id="p.i" />
+    </WidgetShell>
   </div>
 
   <GridLayout
@@ -109,13 +108,9 @@ async function reset() {
       :min-h="defOf(p.i)?.minH ?? 3"
       drag-allow-from=".widget-bar"
     >
-      <div class="widget card">
-        <div v-if="editing" class="widget-bar">
-          <span>⠿ {{ t(defOf(p.i)?.title ?? '') }}</span>
-          <button class="ghost small" :title="t('Nascondi')" @click="remove(p.i)">×</button>
-        </div>
-        <div class="widget-body"><slot name="widget" :id="p.i" /></div>
-      </div>
+      <WidgetShell :id="p.i" :editing="editing" :loading="loading && p.i !== 'kpis'" @remove="remove(p.i)" @go="emit('go', $event)">
+        <slot name="widget" :id="p.i" />
+      </WidgetShell>
     </GridItem>
   </GridLayout>
 </template>

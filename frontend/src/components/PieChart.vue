@@ -10,10 +10,12 @@ Chart.register(...registerables)
 const props = defineProps<{
   items: { label: string; value: number }[]
   format?: (v: number) => string
+  /** colori espliciti per voce (es. il colore fisso di ogni AP); senza, le serie del tema */
+  colors?: string[]
 }>()
 
 // ricalcolati al cambio di tema, così legenda e ciambella restano uguali
-const colors = computed(() => { themeKey(); return props.items.map((_, i) => seriesColor(i)) })
+const colors = computed(() => { themeKey(); return props.items.map((_, i) => props.colors?.[i] ?? seriesColor(i)) })
 const canvas = ref<HTMLCanvasElement>()
 let chart: Chart | null = null
 

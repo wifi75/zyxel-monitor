@@ -1,33 +1,37 @@
 import type { ViewKind, WidgetPos } from './api'
+import type { IconName } from './icons'
 
 /** Widget della dashboard: dimensioni in celle di una griglia a 12 colonne (riga = 40 px). */
 export interface WidgetDef {
   id: string; title: string; views: ViewKind[]
   w: number; h: number; minW?: number; minH?: number
+  /** icona e tono del titolo; azioni del menu "⋯": pagina collegata e CSV */
+  icon?: IconName; tone?: string
+  link?: { view: string; label: string }; csv?: { path: string; name: string }
 }
 
 export const COLS = 12
 
 export const WIDGETS: WidgetDef[] = [
   { id: 'kpis', title: 'Indicatori', views: ['overview', 'ap'], w: 12, h: 2, minW: 3, minH: 2 },
-  { id: 'aps', title: 'Access point', views: ['overview'], w: 12, h: 5, minW: 3, minH: 3 },
-  { id: 'internet', title: 'Internet', views: ['overview'], w: 12, h: 9, minW: 4, minH: 5 },
-  { id: 'sites', title: 'Siti più visitati', views: ['overview', 'ap'], w: 3, h: 8 },
-  { id: 'types', title: 'Dispositivi per tipologia', views: ['overview', 'ap'], w: 3, h: 4, minH: 2 },
-  { id: 'traffic_ap', title: 'Traffico per access point', views: ['overview'], w: 3, h: 5 },
-  { id: 'blocked', title: 'Pubblicità e tracker bloccati', views: ['overview'], w: 3, h: 8 },
-  { id: 'clients_ap', title: 'Client per access point', views: ['overview'], w: 3, h: 5 },
-  { id: 'band', title: 'Client per banda', views: ['overview', 'ap'], w: 3, h: 3, minH: 2 },
-  { id: 'topology', title: 'Mappa della rete', views: ['overview'], w: 6, h: 7, minW: 4, minH: 5 },
-  { id: 'channels', title: 'Piano dei canali', views: ['overview'], w: 6, h: 12, minW: 4, minH: 5 },
-  { id: 'firmware', title: 'Firmware', views: ['overview'], w: 4, h: 6, minW: 3, minH: 4 },
-  { id: 'new_devices', title: 'Dispositivi nuovi', views: ['overview'], w: 4, h: 6 },
-  { id: 'signal', title: 'Qualità del segnale', views: ['overview', 'ap'], w: 4, h: 6 },
-  { id: 'roaming', title: 'Roaming', views: ['overview', 'ap'], w: 4, h: 6 },
-  { id: 'usage_devices', title: 'Consumo per dispositivo', views: ['overview'], w: 6, h: 7 },
-  { id: 'trend', title: 'Andamento', views: ['overview', 'ap'], w: 12, h: 7, minW: 4, minH: 4 },
-  { id: 'clients', title: 'Client connessi', views: ['overview', 'ap'], w: 12, h: 10, minW: 4, minH: 4 },
-  { id: 'ap_events', title: 'Storico collegamenti', views: ['ap'], w: 12, h: 7, minW: 4, minH: 3 },
+  { id: 'aps', title: 'Access point', views: ['overview'], w: 12, h: 5, minW: 3, minH: 3, icon: 'wifi', tone: 'blue' },
+  { id: 'internet', title: 'Internet', views: ['overview'], w: 12, h: 9, minW: 4, minH: 5, icon: 'globe', tone: 'teal' },
+  { id: 'sites', title: 'Siti più visitati', views: ['overview', 'ap'], w: 3, h: 8, icon: 'globe', tone: 'violet' },
+  { id: 'types', title: 'Dispositivi per tipologia', views: ['overview', 'ap'], w: 3, h: 4, minH: 2, icon: 'users', tone: 'violet', link: { view: '#devices', label: 'Apri Dispositivi' } },
+  { id: 'traffic_ap', title: 'Traffico per access point', views: ['overview'], w: 3, h: 5, icon: 'chart', tone: 'amber', link: { view: '#report', label: 'Apri il report' } },
+  { id: 'blocked', title: 'Pubblicità e tracker bloccati', views: ['overview'], w: 3, h: 8, icon: 'lock', tone: 'pink' },
+  { id: 'clients_ap', title: 'Client per access point', views: ['overview'], w: 3, h: 5, icon: 'users', tone: 'blue' },
+  { id: 'band', title: 'Client per banda', views: ['overview', 'ap'], w: 3, h: 3, minH: 2, icon: 'wifi', tone: 'teal' },
+  { id: 'topology', title: 'Mappa della rete', views: ['overview'], w: 6, h: 7, minW: 4, minH: 5, icon: 'router', tone: 'blue' },
+  { id: 'channels', title: 'Piano dei canali', views: ['overview'], w: 6, h: 12, minW: 4, minH: 5, icon: 'sliders', tone: 'orange', link: { view: '#config', label: 'Apri Configurazione' } },
+  { id: 'firmware', title: 'Firmware', views: ['overview'], w: 4, h: 6, minW: 3, minH: 4, icon: 'wrench', tone: 'amber', link: { view: '#aps', label: 'Apri Gestione AP' } },
+  { id: 'new_devices', title: 'Dispositivi nuovi', views: ['overview'], w: 4, h: 6, icon: 'star', tone: 'pink', link: { view: '#devices', label: 'Apri Dispositivi' }, csv: { path: '/export/devices.csv', name: 'dispositivi.csv' } },
+  { id: 'signal', title: 'Qualità del segnale', views: ['overview', 'ap'], w: 4, h: 6, icon: 'activity', tone: 'green' },
+  { id: 'roaming', title: 'Roaming', views: ['overview', 'ap'], w: 4, h: 6, icon: 'shuffle', tone: 'teal' },
+  { id: 'usage_devices', title: 'Consumo per dispositivo', views: ['overview'], w: 6, h: 7, icon: 'chart', tone: 'amber' },
+  { id: 'trend', title: 'Andamento', views: ['overview', 'ap'], w: 12, h: 7, minW: 4, minH: 4, icon: 'chart', tone: 'blue', link: { view: '#report', label: 'Apri il report' } },
+  { id: 'clients', title: 'Client connessi', views: ['overview', 'ap'], w: 12, h: 10, minW: 4, minH: 4, icon: 'users', tone: 'violet', link: { view: '#devices', label: 'Apri Dispositivi' }, csv: { path: '/export/devices.csv', name: 'dispositivi.csv' } },
+  { id: 'ap_events', title: 'Storico collegamenti', views: ['ap'], w: 12, h: 7, minW: 4, minH: 3, icon: 'activity', tone: 'blue', link: { view: '#events', label: 'Apri Eventi' }, csv: { path: '/export/events.csv?days=30', name: 'eventi.csv' } },
 ]
 
 export const widgetsFor = (view: ViewKind) => WIDGETS.filter(w => w.views.includes(view))

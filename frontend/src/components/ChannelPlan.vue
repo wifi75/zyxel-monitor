@@ -3,6 +3,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { api, type Ap, type ChannelHistory, type ChannelIssue, type Channels } from '../api'
 import { t } from '../i18n'
 import LineChart from './LineChart.vue'
+import { apColor } from '../apColors'
 
 /** Canali e occupazione di ogni radio, sovrapposizioni fra AP e canali consigliati (solo consiglio). */
 const props = defineProps<{ aps: Ap[] }>()
@@ -20,7 +21,7 @@ watch(hours, load)
 function trend(band: string) {
   const per = history.value?.bands[band]
   if (!per || !Object.values(per).some(v => v.some(x => x != null))) return null
-  return Object.entries(per).map(([ap, data]) => ({ label: ap, data }))
+  return Object.entries(per).map(([ap, data]) => ({ label: ap, data, color: apColor(ap) }))
 }
 const pct = (v: number) => `${v}%`
 
