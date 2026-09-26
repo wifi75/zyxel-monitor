@@ -2,6 +2,10 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) — versioni: [SemVer](https://semver.org/lang/it/).
 
+## [0.28.2] - 2026-09-26
+### Corretto
+- Il mio account: modulo del cambio password rifatto, con campi uno sotto l'altro, nome utente per i gestori di password del browser e controlli chiari prima dell'invio.
+
 ## [0.28.1] - 2026-09-26
 ### Corretto
 - Menu delle impostazioni allineato a sinistra e a larghezza piena; nel menu principale «Impostazioni» e «Cambia password» non risultano più attivi insieme.
