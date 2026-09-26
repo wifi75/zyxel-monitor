@@ -5,6 +5,7 @@ propone per ciascun modello: gli AP Wi-Fi 5 si fermano a 80 MHz sulla 5 GHz, i W
 Un modello sconosciuto ha le capacità minime comuni, così non si propone mai qualcosa di troppo.
 """
 import json
+import re
 
 from .core.db import connect
 
@@ -41,7 +42,28 @@ def models() -> dict[str, str | None]:
 
 
 def of_ap(name: str) -> dict:
-    return of_model(models().get(name))
+    """Capacità del modello, ristrette alle larghezze che l'AP ha dichiarato con Esplora comandi."""
+    caps = of_model(models().get(name))
+    said = learned_widths(name)
+    if said:
+        caps["widths"] = {b: [w for w in ws if w in said] or ws for b, ws in caps["widths"].items()}
+    return caps
+
+
+# risposta a "ch-width ?": qualche riga dopo l'eco compare "<20, 20/40, 20/40/80>"
+WIDTH_HELP = re.compile(r"ch-width[^<]{0,80}<([0-9/, ]+)>")
+
+
+def parse_widths(help_text: str) -> list[str]:
+    """Larghezze dall'aiuto di "ch-width ?": "<20, 20/40, 20/40/80>" → ["20", "20/40", "20/40/80"]."""
+    m = WIDTH_HELP.search(help_text)
+    return [w.strip() for w in m.group(1).split(",") if w.strip()] if m else []
+
+
+def learned_widths(ap_name: str) -> list[str]:
+    with connect() as db:
+        row = db.execute("SELECT value FROM settings WHERE key = ?", (f"caps_widths:{ap_name}",)).fetchone()
+    return json.loads(row["value"]) if row else []
 
 
 def fit_width(width: str, band: str, caps: dict) -> str:
@@ -67,7 +89,12 @@ DEFAULTS = {"min_rate_24": "1"}
 def learn(ap_name: str, help_text: str) -> list[str]:
     """Salva le voci che l'AP ha dichiarato di supportare nell'output di Esplora comandi."""
     found = sorted(learned(ap_name) | {k for k, sign in HELP_SIGNS.items() if sign in help_text})
+    widths = parse_widths(help_text)
     with connect() as db:
+        if widths:
+            db.execute("INSERT INTO settings(key, value) VALUES (?,?) "
+                       "ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+                       (f"caps_widths:{ap_name}", json.dumps(widths)))
         db.execute("INSERT INTO settings(key, value) VALUES (?,?) "
                    "ON CONFLICT(key) DO UPDATE SET value = excluded.value", (f"caps:{ap_name}", json.dumps(found)))
     return found

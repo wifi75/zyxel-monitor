@@ -100,3 +100,35 @@ def test_explore_never_asks_about_valueless_commands():
     from app.site_config import explore_commands
     cfg = RunningConfig("wlan slot1\n ap profile R2\n!\nwlan slot2\n ap profile R5\n!\n")
     assert not any(line.startswith("reject-legacy-station") for line in explore_commands(cfg))
+
+
+def test_widths_from_cli_help():
+    from app.capabilities import parse_widths
+    garage = "Router(config-wlan-radio R2)# ch-width \n20m                     \n<20, 20/40, 20/40/80>   \nauto\n"
+    assert parse_widths(garage) == ["20", "20/40", "20/40/80"]
+    assert parse_widths("nessun aiuto") == []
+
+
+def test_ap_override_wins_over_site(tmp_path, monkeypatch):
+    monkeypatch.setenv("DB_PATH", str(tmp_path / "o.db"))
+    from app.core.config import get_settings
+    get_settings.cache_clear()
+    from app import site_config
+    from app.core.db import init_db
+    init_db()
+    site_config.set_value("min_rate_24", "1")
+    site_config.set_override(3, "min_rate_24", "12")
+    site_config.set_override(4, "min_rate_24", site_config.UNMANAGED)
+    assert site_config.for_ap(3)["min_rate_24"] == "12"
+    assert "min_rate_24" not in site_config.for_ap(4)
+    assert site_config.for_ap(5)["min_rate_24"] == "1"
+    assert "min_rate_24@ap:3" not in site_config.load()
+    get_settings.cache_clear()
+
+
+def test_legacy_reject_read_and_commands():
+    from app.config_items import BY_KEY, RunningConfig
+    cfg = RunningConfig("wlan slot1\n ap profile R2\n!\nwlan-radio-profile R2\n reject-legacy-station\n!\n")
+    item = BY_KEY["legacy_reject"]
+    assert item.read(cfg) is True
+    assert item.build(False, cfg) == ["wlan-radio-profile R2", "no reject-legacy-station", "exit"]

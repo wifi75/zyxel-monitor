@@ -86,6 +86,11 @@ addEn({
   'Nessuna lettura del segnale nel periodo.': 'No signal readings in this period.',
   'Collegamenti e roaming': 'Connections and roaming',
   'MAC privato': 'Private MAC',
+  'Periodo del grafico': 'Chart period',
+  'Andamento dell’occupazione in raccolta: servono alcune ore.': 'Utilization trend being collected: it takes a few hours.',
+  'Rifiuta i dispositivi solo 802.11b': 'Reject 802.11b-only devices',
+  'Senza dispositivi 802.11b gli AP non devono più rallentare ogni trasmissione per proteggerli: il canale 2.4 GHz si libera. Esclude solo apparecchi di prima del 2003.':
+    'Without 802.11b devices the APs no longer slow down every transmission to protect them: the 2.4 GHz channel frees up. Only excludes devices from before 2003.',
   'Velocità minima 2.4 GHz': 'Minimum rate 2.4 GHz',
   'Toglie le velocità più lente (1–5,5 Mbps): i dispositivi vicini occupano meno il canale. Chi ha segnale molto debole potrebbe non collegarsi più. Compare dopo Esplora comandi, sugli AP che la hanno.':
     'Removes the slowest rates (1–5.5 Mbps): nearby devices take less airtime. Devices with a very weak signal may no longer connect. Appears after Explore commands, on the APs that support it.',
