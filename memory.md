@@ -47,4 +47,5 @@
 - Capacità per modello in `capabilities.py`: Wi-Fi 6 = modelli "AX" (160 MHz, WPA3); Wi-Fi 5 fino a 80 MHz e solo WPA2. Voci assenti nella config di un AP = "non disponibile", mai inviate.
 - Firmware 6.x (WAC6103D-I V6.28, output reale del 2026-09-25): password in chiaro su `wpa-psk` (7.x: `encrypted-wpa-psk`), orari come `mon enable 04:00-22:00` nel profilo SSID. Nebula ha `rssi-kickout -70` (Smart steering) e `dot11r activate`: sospetti per l'inverter.
 - In solo monitoraggio la colonna Sito mostra il valore comune degli AP (quello di Nebula) e il ✓/⚠ confronta gli AP fra loro.
+- v0.25.0 (2026-09-26): avvisi Telegram (`alerts.py`: eventi letti per id dalla tabella events, chiavi `alert_*` in `settings`, un AP giù per una sola lettura non avvisa), report (`report.py`, anche il lunedì su Telegram), piano canali (`channels.py`, solo consiglio), produttore dal MAC (`oui.py`; `oui.csv` IEEE scaricato nel Dockerfile con User-Agent da browser, altrimenti risponde 418), storico per dispositivo, blocco login. Colori dei grafici da `--series` in `tokens.css`. Su Windows i test partono da `backend` con `PYTHONPATH=.`.
 Vedi [TODO.md](TODO.md).

@@ -9,8 +9,8 @@
 [![Database](https://img.shields.io/badge/DB-SQLite-003B57?logo=sqlite&logoColor=white)](https://www.sqlite.org)
 [![Docker](https://img.shields.io/badge/Deploy-Docker-2496ED?logo=docker&logoColor=white)](docker-compose.yml)
 [![Fonti](https://img.shields.io/badge/Fonti-SNMP%20%7C%20SSH%20%7C%20OPNsense-5A6B7B)](#come-legge-i-dati)
-[![API](https://img.shields.io/badge/API-59%20endpoint-0A7EA4)](backend/app/api.py)
-[![Test](https://img.shields.io/badge/Test-25%20pytest-0A9EDC?logo=pytest&logoColor=white)](backend/tests)
+[![API](https://img.shields.io/badge/API-66%20endpoint-0A7EA4)](backend/app/api.py)
+[![Test](https://img.shields.io/badge/Test-32%20pytest-0A9EDC?logo=pytest&logoColor=white)](backend/tests)
 [![Lint](https://img.shields.io/badge/Lint-ruff-D7FF64?logo=ruff&logoColor=black)](ruff.toml)
 [![SemVer](https://img.shields.io/badge/SemVer-2.0.0-blue)](https://semver.org/lang/it/)
 [![Keep a Changelog](https://img.shields.io/badge/Changelog-Keep%20a%20Changelog-E05735)](CHANGELOG.md)
@@ -28,7 +28,10 @@ Cosa mostra la dashboard, in generale e per ogni singolo AP:
 - grafici di download, upload e numero di client nel tempo;
 - torte: **siti più visitati** dai dispositivi Wi-Fi, dispositivi per tipologia, traffico e client per AP;
 - storico di connessioni, disconnessioni, roaming e AP offline;
-- con OPNsense: stato della linea Internet, velocità e GB della WAN, pubblicità e tracker bloccati, siti contattati da ogni dispositivo.
+- con OPNsense: stato della linea Internet, velocità e GB della WAN, pubblicità e tracker bloccati, siti contattati da ogni dispositivo;
+- mappa della rete, piano dei canali con sovrapposizioni e canali consigliati, firmware per modello;
+- produttore di ogni dispositivo dal MAC (elenco IEEE) e storico per dispositivo di collegamenti, roaming e segnale;
+- avvisi su Telegram (AP offline, linea caduta, dispositivi nuovi, canali saturi) e report settimanale.
 
 ## Come legge i dati
 
@@ -130,8 +133,24 @@ frontend/src/
 
 ## Sicurezza
 - Il login SSH fallito non viene ripetuto per 10 minuti: gli AP Zyxel bloccano l'IP dopo troppi tentativi.
+- Login del pannello: dopo 5 password sbagliate lo stesso utente è bloccato per 15 minuti.
+- Intestazioni di sicurezza su ogni risposta (`nosniff`, niente iframe, niente referrer); HSTS quando si arriva in HTTPS.
 - Il file `.env` (password, chiavi) è escluso da git.
-- Per l'accesso da fuori casa usare una VPN (es. Tailscale o WireGuard) invece di aprire la porta sul router.
+
+### HTTPS
+Il container parla solo HTTP: il certificato lo mette il reverse proxy davanti. Con OPNsense (plugin
+`os-acme-client` e `os-haproxy`):
+1. ACME: certificato per il nome del pannello (es. `wifi.casa.example`), validazione DNS.
+2. HAProxy: *Real server* = IP del server Docker e porta del pannello; *Backend pool* con quel server;
+   *Public service* in ascolto su 443 con il certificato ACME e l'intestazione `X-Forwarded-Proto: https`.
+3. Unbound: *Host override* del nome verso OPNsense, così dalla LAN si arriva al proxy.
+
+### Accesso da fuori casa
+Non aprire la porta del pannello sul router: usare la VPN WireGuard di OPNsense.
+1. *VPN → WireGuard → Instances*: nuova istanza (porta UDP 51820, rete del tunnel es. `10.10.10.1/24`).
+2. *Peers*: un peer per ogni telefono o PC, con la sua chiave pubblica e un IP del tunnel (`10.10.10.2/32`).
+3. *Firewall → Rules → WAN*: consenti UDP 51820; *Rules → WireGuard*: consenti il tunnel verso il server.
+4. Sul telefono, app WireGuard con DNS = OPNsense: il pannello si apre col suo nome, come da casa.
 
 ## Licenza
 

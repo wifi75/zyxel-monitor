@@ -2,6 +2,20 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) — versioni: [SemVer](https://semver.org/lang/it/).
 
+## [0.25.0] - 2026-09-26
+### Aggiunto
+- Avvisi su Telegram: AP offline e di nuovo online, linea caduta e tornata, dispositivi nuovi, modifiche alla configurazione, canali saturi; un AP che manca a una sola lettura non genera avvisi. Report settimanale il lunedì mattina.
+- Pagina Report (24 ore, 7 o 30 giorni): disponibilità, cadute, client medi e di picco, traffico e segnale per AP; linea Internet; dispositivi nuovi e più presenti.
+- Widget Mappa della rete (Internet → router → AP → client per banda), Piano dei canali (sovrapposizioni, occupazione, canali consigliati da impostare in Nebula) e Firmware (versioni diverse sullo stesso modello).
+- Produttore dal MAC con l'elenco pubblico IEEE, scaricato nell'immagine Docker; i MAC privati sono indicati come tali.
+- Storico per dispositivo: collegamenti, roaming e segnale degli ultimi 7 giorni, aprendo la riga in Dispositivi.
+- Client per banda anche in Panoramica.
+- Blocco del login per 15 minuti dopo 5 password sbagliate; intestazioni di sicurezza e HSTS in HTTPS.
+- README: HTTPS con HAProxy di OPNsense e accesso remoto con WireGuard.
+### Modificato
+- Grafici con i colori del tema chiaro/scuro, ridisegnati al cambio di tema.
+- Pagine di gestione caricate solo quando si aprono e librerie in file separati: niente più pacchetto unico oltre i 500 kB.
+
 ## [0.24.3] - 2026-09-25
 ### Corretto
 - Solo monitoraggio: la potenza si confronta sul valore impostato negli AP (`output-power`), non su quella reale che dipende dal modello.

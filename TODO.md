@@ -10,12 +10,16 @@
 - [x] SSH su tutti e 4 gli AP.
 - [x] Formato di `show version` / `show system uptime` sugli NWA50AX PRO (v0.4.0).
 - [x] Deploy sul server Docker come stack Portainer (v0.4.0).
-- [ ] Accesso remoto via VPN WireGuard su OPNsense.
-- [ ] HTTPS per il pannello.
-- [ ] Avvisi Telegram (facoltativi).
-- [ ] Grafici con i colori del tema chiaro/scuro; revisione pagina per pagina nei due temi e su smartphone.
+- [ ] Accesso remoto via VPN WireGuard su OPNsense: procedura nel README (v0.25.0), da configurare.
+- [ ] HTTPS per il pannello: procedura HAProxy nel README (v0.25.0), da configurare.
+- [x] Avvisi Telegram e report settimanale (v0.25.0).
+- [x] Grafici con i colori del tema chiaro/scuro (v0.25.0).
+- [ ] Revisione pagina per pagina nei due temi e su smartphone, comprese Report, Mappa e Piano dei canali.
 - [ ] Output CLI di GIARDINO (NWA1123-AC PRO, fw 6.x) per verificare i lettori su quel modello.
-- [ ] Idee dalla dashboard di Nebula: client per banda in Panoramica, carico dei canali per AP, produttore dal MAC (elenco IEEE scaricato in build), classifica traffico per dispositivo se l'SSH dà i byte.
+- [x] Client per banda in Panoramica, carico dei canali per AP, produttore dal MAC (v0.25.0).
+- [ ] Classifica traffico per dispositivo se l'SSH dà i byte.
+- [ ] Occupazione del canale anche sugli AP SNMP (oggi solo SSH) e nello storico, non solo il valore attuale.
+- [ ] Rete ospiti, smart steering, 802.11r dal pannello: solo dopo il distacco da Nebula (un solo capo per la configurazione).
 - [ ] Da verificare sul campo prima di usarli: comando 160 MHz (`ch-width 20/40/80/160`), sintassi 6.x per scrivere gli orari, ripristino backup e prova controllata su un AP reale.
 
 ## Configurazione centralizzata (verso il distacco da Nebula)
