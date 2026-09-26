@@ -2,6 +2,10 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) — versioni: [SemVer](https://semver.org/lang/it/).
 
+## [0.25.1] - 2026-09-26
+### Corretto
+- Tabelle dentro i widget (Firmware, Piano dei canali) non più schiacciate: mostravano solo le prime righe e nascondevano le altre in uno scorrimento interno.
+
 ## [0.25.0] - 2026-09-26
 ### Aggiunto
 - Avvisi su Telegram: AP offline e di nuovo online, linea caduta e tornata, dispositivi nuovi, modifiche alla configurazione, canali saturi; un AP che manca a una sola lettura non genera avvisi. Report settimanale il lunedì mattina.
