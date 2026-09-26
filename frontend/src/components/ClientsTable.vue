@@ -54,7 +54,7 @@ function displayName(c: Client) { return c.alias || c.hostname || c.ip || c.mac 
         <tr class="clickable-row" :class="{ open: openMac === c.mac }" @click="toggleSites(c)">
           <td>
             <strong>{{ displayName(c) }}</strong>
-            <div class="muted small mono">{{ c.ip || '—' }} · {{ c.mac }}<span v-if="isPrivateMac(c.mac)" :title="t('MAC privato (randomizzato)')"> · {{ t('privato') }}</span></div>
+            <div class="muted small mono">{{ c.ip || '—' }} · {{ c.mac }}<span v-if="isPrivateMac(c.mac)" :title="t('MAC privato (randomizzato)')"> · {{ t('privato') }}</span><span v-else-if="c.vendor"> · {{ c.vendor }}</span></div>
           </td>
           <td>{{ t(c.device_type) }}</td>
           <td v-if="showAp">{{ c.ap }}</td>
@@ -70,7 +70,7 @@ function displayName(c: Client) { return c.alias || c.hostname || c.ip || c.mac 
             <div v-if="hasHistory && history" class="signal-box">
               <LineChart :ts="history.points.map(p => p.ts)" :format="dbm"
                          :datasets="[{ label: t('Medio'), data: history.points.map(p => p.avg) },
-                                     { label: t('Peggiore'), data: history.points.map(p => p.min), color: '#ef4444' }]" />
+                                     { label: t('Peggiore'), data: history.points.map(p => p.min), color: '--bad' }]" />
             </div>
             <div v-else class="muted small mb">{{ t('Storico del segnale in raccolta.') }}</div>
             <strong class="small">{{ t('Siti più contattati da {n}', { n: displayName(c) }) }}</strong>

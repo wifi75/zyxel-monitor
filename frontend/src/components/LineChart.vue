@@ -2,18 +2,19 @@
 import { Chart, type ChartConfiguration, registerables } from 'chart.js'
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { locale } from '../i18n'
+import { cssColor, seriesColor, soft, themeKey } from '../chartColors'
 
 Chart.register(...registerables)
 
 /** Linee generiche su un asse temporale (segnale, latenza, perdita). */
 const props = defineProps<{
   ts: number[]
+  /** color: esplicito o variabile del tema ("--bad"); senza, la serie N del tema */
   datasets: { label: string; data: (number | null)[]; color?: string }[]
   format: (v: number) => string
   zero?: boolean
 }>()
 
-const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#a855f7', '#ef4444', '#14b8a6']
 const canvas = ref<HTMLCanvasElement>()
 let chart: Chart | null = null
 
@@ -28,8 +29,8 @@ function build(): ChartConfiguration<'line'> {
       labels: props.ts.map(t => new Date(t * 1000).toLocaleString(locale(), multiDay
         ? { day: '2-digit', month: '2-digit', hour: '2-digit' } : { hour: '2-digit', minute: '2-digit' })),
       datasets: props.datasets.map((d, i) => {
-        const c = d.color ?? COLORS[i % COLORS.length]
-        return { label: d.label, data: d.data, borderColor: c, backgroundColor: c + '22',
+        const c = cssColor(d.color ?? seriesColor(i))
+        return { label: d.label, data: d.data, borderColor: c, backgroundColor: soft(c),
                  borderWidth: 2, pointRadius: 0, tension: 0.3, spanGaps: true }
       }),
     },
@@ -55,7 +56,7 @@ function render() {
 }
 
 onMounted(render)
-watch(() => [props.ts, props.datasets], render)
+watch(() => [props.ts, props.datasets, themeKey()], render)
 onBeforeUnmount(() => chart?.destroy())
 </script>
 

@@ -2,6 +2,7 @@
 import { Chart, registerables } from 'chart.js'
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { locale } from '../i18n'
+import { seriesColor, themeKey } from '../chartColors'
 
 Chart.register(...registerables)
 
@@ -11,8 +12,8 @@ const props = defineProps<{
   format?: (v: number) => string
 }>()
 
-const PALETTE = ['#3b82f6', '#10b981', '#f59e0b', '#a855f7', '#ef4444', '#14b8a6', '#ec4899', '#84cc16', '#64748b', '#f97316']
-const color = (i: number) => PALETTE[i % PALETTE.length]
+// ricalcolati al cambio di tema, così legenda e ciambella restano uguali
+const colors = computed(() => { themeKey(); return props.items.map((_, i) => seriesColor(i)) })
 const canvas = ref<HTMLCanvasElement>()
 let chart: Chart | null = null
 
@@ -30,7 +31,7 @@ function render() {
       labels: props.items.map(i => i.label),
       datasets: [{
         data: props.items.map(i => i.value),
-        backgroundColor: props.items.map((_, i) => color(i)),
+        backgroundColor: colors.value,
         borderColor: css.getPropertyValue('--surface').trim(),
         borderWidth: 2,
       }],
@@ -47,6 +48,7 @@ function render() {
 
 onMounted(render)
 watch(() => props.items, render, { deep: true })
+watch(themeKey, render)
 onBeforeUnmount(() => chart?.destroy())
 </script>
 
@@ -55,7 +57,7 @@ onBeforeUnmount(() => chart?.destroy())
     <div class="pie-canvas"><canvas ref="canvas" /></div>
     <ul class="pie-legend">
       <li v-for="(i, n) in items" :key="i.label" :title="i.label">
-        <span class="swatch" :style="{ background: color(n) }" />
+        <span class="swatch" :style="{ background: colors[n] }" />
         <span class="name">{{ i.label }}</span>
         <span class="value">{{ fmt(i.value) }}</span>
         <span class="muted pct">{{ pct(i.value) }}</span>

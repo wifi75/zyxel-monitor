@@ -2,6 +2,7 @@
 import { Chart, type ChartConfiguration, registerables } from 'chart.js'
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { locale } from '../i18n'
+import { seriesColor, soft, themeKey } from '../chartColors'
 import type { TrafficPoint } from '../api'
 import { bps } from '../format'
 
@@ -12,8 +13,6 @@ const props = defineProps<{
   metric: 'down_bps' | 'up_bps' | 'clients'
 }>()
 
-// palette categoriale stabile per AP
-const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#a855f7', '#ef4444', '#14b8a6']
 const canvas = ref<HTMLCanvasElement>()
 let chart: Chart | null = null
 
@@ -31,8 +30,8 @@ function build(): ChartConfiguration<'line'> {
       datasets: aps.map((ap, i) => ({
         label: ap,
         data: props.series[ap].map(p => p[props.metric]),
-        borderColor: COLORS[i % COLORS.length],
-        backgroundColor: COLORS[i % COLORS.length] + '22',
+        borderColor: seriesColor(i),
+        backgroundColor: soft(seriesColor(i)),
         borderWidth: 2, pointRadius: 0, tension: 0.3, spanGaps: true,
       })),
     },
@@ -64,7 +63,7 @@ function render() {
 }
 
 onMounted(render)
-watch(() => [props.series, props.metric], render)
+watch(() => [props.series, props.metric, themeKey()], render)
 onBeforeUnmount(() => chart?.destroy())
 </script>
 

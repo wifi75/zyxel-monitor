@@ -58,8 +58,8 @@ const perc = (v: number) => `${v.toLocaleString(locale(), { maximumFractionDigit
         <template v-else>
           <LineChart v-if="hasQuality" :ts="quality.map(p => p.ts)" zero
                      :datasets="[metric === 'delay'
-                       ? { label: t('Latenza'), data: quality.map(p => p.delay_ms), color: '#f59e0b' }
-                       : { label: t('Perdita'), data: quality.map(p => p.loss_pct), color: '#ef4444' }]"
+                       ? { label: t('Latenza'), data: quality.map(p => p.delay_ms), color: '--weak' }
+                       : { label: t('Perdita'), data: quality.map(p => p.loss_pct), color: '--bad' }]"
                      :format="metric === 'delay' ? ms : perc" />
           <p v-else class="muted small">{{ t('Lo storico di latenza e perdita si popola dopo qualche minuto.') }}</p>
         </template>
