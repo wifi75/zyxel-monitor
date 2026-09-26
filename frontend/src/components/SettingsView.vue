@@ -189,7 +189,7 @@ const SECTIONS: { id: Section; title: string; sub: string; icon: IconName; tone:
 <style scoped>
 .settings-page { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 20px; align-items: start; }
 .set-nav { display: grid; gap: 4px; position: sticky; top: 12px; }
-.set-item { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border: 1px solid transparent;
+.set-item { display: flex; align-items: center; justify-content: flex-start; width: 100%; gap: 10px; padding: 8px 10px; border: 1px solid transparent;
   border-radius: var(--radius); background: transparent; color: var(--text); text-align: left; font: inherit; cursor: pointer;
   position: relative; }
 .set-item:hover { background: color-mix(in srgb, var(--tone) 8%, transparent); }
@@ -211,7 +211,7 @@ const SECTIONS: { id: Section; title: string; sub: string; icon: IconName; tone:
 @media (max-width: 860px) {
   .settings-page { grid-template-columns: minmax(0, 1fr); }
   .set-nav { position: static; display: flex; overflow-x: auto; gap: 6px; padding-bottom: 4px; }
-  .set-item { flex: none; padding: 6px 10px; }
+  .set-item { flex: none; width: auto; padding: 6px 10px; }
   .set-text small, .set-hint { display: none; }
 }
 </style>
