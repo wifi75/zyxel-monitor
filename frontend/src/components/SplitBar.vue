@@ -3,14 +3,18 @@ import { computed } from 'vue'
 import { seriesColor, themeKey } from '../chartColors'
 
 /** Poche categorie (es. bande radio): una barra divisa in proporzione e la legenda su una riga. */
-const props = defineProps<{ items: { label: string; value: number }[]; selected?: string | null }>()
+const props = defineProps<{
+  items: { label: string; value: number }[]; selected?: string | null
+  /** colori per voce (es. il colore fisso di ogni AP) e formato del valore (es. GB) */
+  colors?: string[]; format?: (v: number) => string
+}>()
 /** clic su una voce della legenda (es. per mostrare i dispositivi di quella banda) */
 const emit = defineEmits<{ pick: [label: string] }>()
 
 const total = computed(() => props.items.reduce((s, i) => s + i.value, 0) || 1)
 const parts = computed(() => {
   themeKey()
-  return props.items.map((i, n) => ({ ...i, pct: Math.round((i.value / total.value) * 100), color: seriesColor(n) }))
+  return props.items.map((i, n) => ({ ...i, pct: Math.round((i.value / total.value) * 100), color: props.colors?.[n] ?? seriesColor(n), text: props.format ? props.format(i.value) : String(i.value) }))
 })
 </script>
 
@@ -24,7 +28,7 @@ const parts = computed(() => {
           @click="emit('pick', p.label)" @keydown.enter="emit('pick', p.label)">
         <span class="swatch" :style="{ background: p.color }" />
         <span>{{ p.label.replace('GHz', ' GHz') }}</span>
-        <strong>{{ p.value }}</strong>
+        <strong>{{ p.text }}</strong>
         <span class="muted">{{ p.pct }}%</span>
       </li>
     </ul>

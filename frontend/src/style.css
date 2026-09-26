@@ -614,3 +614,11 @@ button.ghost.active { background: var(--accent-soft); color: var(--accent); }
 .pop-choice .mark { color: var(--accent); }
 .pop input, .pop textarea { width: 100%; box-sizing: border-box; }
 .pop textarea { font: 12px/1.4 var(--font-mono); border: 1px solid var(--border); border-radius: var(--radius-s); padding: 6px; }
+
+/* schede degli AP in panoramica: icona + numero; l'etichetta resta come suggerimento se non c'è spazio */
+@container (max-width: 300px) { .tile span { display: none; } }
+.ap-grid .ap { container-type: inline-size; }
+.ap-bands .radio { height: auto !important; min-height: 28px; flex-wrap: wrap; row-gap: 2px; padding-top: 4px; padding-bottom: 4px; }
+.ap-bands .radio span { white-space: nowrap; }
+/* stati vuoti nei widget: riquadro tenue, non un grande bordo tratteggiato */
+.widget-body .empty { border: none; background: var(--surface-2); border-radius: var(--radius); flex: none; min-height: 0; padding: 18px 14px; }

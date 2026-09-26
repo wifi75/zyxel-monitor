@@ -40,7 +40,7 @@ function displayName(c: Client) { return c.alias || c.hostname || c.ip || c.mac 
 </script>
 
 <template>
-  <div class="section-head">
+  <div class="section-head clients-head">
     <input v-model="search" class="search" :placeholder="t('Cerca nome, IP, MAC, tipo…')" />
     <span class="muted small">{{ t('{n} client', { n: filtered.length }) }}</span>
   </div>
@@ -88,3 +88,9 @@ function displayName(c: Client) { return c.alias || c.hostname || c.ip || c.mac 
     </table>
   </div>
 </template>
+
+<style scoped>
+/* ricerca compatta accanto al conteggio, non una riga lunga quanto la scheda */
+.clients-head { gap: 10px; margin-bottom: 6px; }
+.clients-head .search { flex: 0 1 320px; min-width: 0; }
+</style>

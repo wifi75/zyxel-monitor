@@ -66,12 +66,12 @@ const nodes = computed(() => props.aps.map(a => {
 .node > div { display: flex; flex-direction: column; min-width: 0; }
 .node.on { border-left-color: var(--good); }
 .node.off { border-left-color: var(--bad); }
-.node.ap { width: 100%; cursor: pointer; border-left-color: var(--ap); }
+.node.ap { width: 100%; cursor: pointer; border-left-color: var(--ap); padding: 6px 8px; }
 .node.ap.off { border-left-color: var(--bad); }
 .node.ap:hover { border-color: var(--accent); }
 .link { width: 2px; height: 14px; background: var(--border); }
 .leaves { list-style: none; margin: 0; padding: 10px 0 0; width: 100%; border-top: 2px solid var(--border);
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); gap: 6px; }
 .bands { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 2px; }
 .band { font-size: 11px; padding: 0 6px; border-radius: 99px; background: var(--surface-2); color: var(--muted); }
 .band.weak { color: var(--weak); }

@@ -11,7 +11,6 @@ import EventsTable from './components/EventsTable.vue'
 import Icon from './components/Icon.vue'
 import InternetCard from './components/InternetCard.vue'
 import LoginView from './components/LoginView.vue'
-import PieChart from './components/PieChart.vue'
 import TrafficChart from './components/TrafficChart.vue'
 import { bps, bytes, copyText, duration, signal, time } from './format'
 import { locale, t } from './i18n'
@@ -457,14 +456,14 @@ const SSH_NA = "La CLI SSH di questo AP non fornisce ancora il dato: in Impostaz
                 <span class="tag" :class="a.method">{{ a.method.toUpperCase() }}</span>
               </header>
               <div class="ap-tiles">
-                <div class="tile tone-violet">
+                <div class="tile tone-violet" :title="t('Client')">
                   <Icon name="users" :size="16" /><span>{{ t('Client') }}</span><strong>{{ a.clients ?? '—' }}</strong>
                 </div>
-                <div class="tile tone-blue" :title="a.method === 'ssh' && a.uptime_s == null ? t(SSH_NA) : ''">
+                <div class="tile tone-blue" :title="a.method === 'ssh' && a.uptime_s == null ? t(SSH_NA) : t('Acceso da')">
                   <Icon name="clock" :size="16" /><span>{{ t('Acceso da') }}</span>
                   <strong>{{ a.uptime_s == null && a.method === 'ssh' && a.online ? t('n.d.') : duration(a.uptime_s) }}</strong>
                 </div>
-                <div class="tile tone-amber" :title="a.method === 'ssh' && !usage?.per_ap[a.ap] ? t(SSH_NA) : ''">
+                <div class="tile tone-amber" :title="a.method === 'ssh' && !usage?.per_ap[a.ap] ? t(SSH_NA) : t('Traffico')">
                   <Icon name="chart" :size="16" /><span :title="t('Traffico {period}', { period: periodLabel })">{{ t('Traffico') }}</span>
                   <strong>{{ usage?.per_ap[a.ap] ? bytes(usage.per_ap[a.ap].down + usage.per_ap[a.ap].up) : a.method === 'ssh' && a.online ? t('n.d.') : '—' }}</strong>
                 </div>
@@ -474,7 +473,7 @@ const SSH_NA = "La CLI SSH di questo AP non fornisce ancora il dato: in Impostaz
                       :title="r.channel ? t('canale {n}', { n: r.channel }) : t('canale non fornito da questo AP')">
                   <b>{{ r.band.replace('GHz', ' GHz') }}</b>
                   <span :title="r.utilization != null ? t('Potenza {power} dBm, canale occupato al {util}%', { power: r.tx_power ?? '—', util: r.utilization }) : ''">
-                    <template v-if="r.channel">{{ t('canale {n}', { n: r.channel }) }}</template><template v-else-if="r.channel_auto">{{ t('canale auto') }}</template><template v-if="(r.channel || r.channel_auto) && r.tx_power != null"> · </template><template v-if="r.tx_power != null">{{ r.tx_power }} dBm</template>
+                    <template v-if="r.channel">{{ t('canale {n}', { n: r.channel }) }}</template><template v-else-if="r.channel_auto">{{ t('canale auto') }}</template>
                   </span>
                   <span>{{ t('{n} client', { n: r.clients }) }}</span>
                 </span>
@@ -501,14 +500,13 @@ const SSH_NA = "La CLI SSH di questo AP non fornisce ancora il dato: in Impostaz
           <template v-else-if="id === 'types'">
             <h2>{{ t('Dispositivi per tipologia') }}</h2>
             <!-- pochi tipi: barra compatta; tanti: ciambella con legenda -->
-            <SplitBar v-if="byType.length && byType.length <= 4" :items="byType" />
-            <PieChart v-else-if="byType.length" :items="byType" />
+            <SplitBar v-if="byType.length" :items="byType" />
             <p v-else class="muted">{{ t('Nessun client.') }}</p>
           </template>
 
           <template v-else-if="id === 'traffic_ap'">
             <h2>{{ t('Traffico per access point') }} <span class="muted small">({{ periodLabel }})</span></h2>
-            <PieChart v-if="gbByAp.length" :items="gbByAp" :format="bytes" :colors="gbByAp.map(i => apColor(i.label))" />
+            <SplitBar v-if="gbByAp.length" :items="gbByAp" :format="bytes" :colors="gbByAp.map(i => apColor(i.label))" />
             <EmptyState v-else icon="clock" :text="t('Dati in raccolta')" :hint="t('Servono alcuni minuti dopo l’avvio.')" />
           </template>
 
@@ -532,7 +530,7 @@ const SSH_NA = "La CLI SSH di questo AP non fornisce ancora il dato: in Impostaz
 
           <template v-else-if="id === 'clients_ap'">
             <h2>{{ t('Client per access point') }}</h2>
-            <PieChart v-if="byAp.length" :items="byAp" :colors="byAp.map(i => apColor(i.label))" />
+            <SplitBar v-if="byAp.length" :items="byAp" :colors="byAp.map(i => apColor(i.label))" />
             <p v-else class="muted">{{ t('Nessun client.') }}</p>
           </template>
 
@@ -676,8 +674,7 @@ const SSH_NA = "La CLI SSH di questo AP non fornisce ancora il dato: in Impostaz
 
           <!-- client -->
           <template v-else-if="id === 'clients'">
-            <h2 class="mb">{{ currentAp ? t('Client connessi a {ap}', { ap: currentAp.ap }) : t('Tutti i client connessi') }}</h2>
-            <p class="muted small mb">{{ t('Clicca un dispositivo per vedere segnale nel tempo e siti che contatta.') }}</p>
+            <h2 :title="t('Clicca un dispositivo per vedere segnale nel tempo e siti che contatta.')">{{ currentAp ? t('Client connessi a {ap}', { ap: currentAp.ap }) : t('Tutti i client connessi') }}</h2>
             <span class="clients-anchor" />
             <div v-if="weakOnly" class="filter-chip">
               ⚠ {{ t('Solo dispositivi con segnale debole (sotto -75 dBm)') }}

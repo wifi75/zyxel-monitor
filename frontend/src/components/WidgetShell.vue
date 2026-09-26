@@ -42,12 +42,17 @@ const hasMenu = !!(def?.link || def?.csv)
 
 <style scoped>
 .widget { position: relative; }
-.w-ico { position: absolute; top: 12px; left: 14px; width: 26px; height: 26px; display: grid; place-items: center;
+.w-ico { position: absolute; z-index: 4; top: 12px; left: 14px; width: 26px; height: 26px; display: grid; place-items: center;
   border-radius: var(--radius-s); color: var(--tone, var(--accent)); background: color-mix(in srgb, var(--tone, var(--accent)) 14%, transparent); }
 .widget-body.has-ico > :deep(h2:first-child), .widget-body.has-ico > :deep(.section-head:first-child),
 .widget-body.has-ico > :deep(.internet:first-child > .section-head) { padding-left: 34px; min-height: 26px; }
 .widget-body.has-ico > :deep(h2:first-child)::before, .widget-body.has-ico > :deep(.section-head:first-child h2)::before,
 .widget-body.has-ico > :deep(.internet:first-child > .section-head h2)::before { display: none !important; }
+/* il titolo resta fisso in alto quando si scorre il contenuto del widget */
+.widget-body > :deep(h2:first-child), .widget-body > :deep(.section-head:first-child),
+.widget-body > :deep(.internet:first-child > .section-head) {
+  position: sticky; top: 0; z-index: 3; background: var(--surface); margin: 0; padding-bottom: 6px; }
+.widget-body { gap: 8px !important; }
 /* titoli su una riga: il sottotitolo lungo si accorcia invece di finire sopra il contenuto */
 .widget-body :deep(h2) { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: none; }
 .w-menu { position: absolute; top: 10px; right: 10px; z-index: 5; }
