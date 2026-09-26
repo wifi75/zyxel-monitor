@@ -57,10 +57,17 @@ def analyse(aps: list[dict]) -> dict:
         ]
         known = [r for r in radios if r["channel"]]
         issues = []
+        # stesso canale: un avviso per canale con tutti gli AP coinvolti, non uno per ogni coppia
+        by_channel: dict[int, list[str]] = {}
+        for r in known:
+            by_channel.setdefault(r["channel"], []).append(r["ap"])
+        for ch, names in by_channel.items():
+            if len(names) > 1:
+                issues.append({"kind": "same", "aps": names, "channel": ch})
         for i, a in enumerate(known):
             for b in known[i + 1:]:
                 if a["channel"] == b["channel"]:
-                    issues.append({"kind": "same", "aps": [a["ap"], b["ap"]], "channel": a["channel"]})
+                    continue
                 elif band == "2.4GHz" and _overlap_24(a["channel"], b["channel"]):
                     issues.append({"kind": "overlap", "aps": [a["ap"], b["ap"]], "channel": a["channel"]})
                 elif band == "5GHz" and _block_5(a["channel"]) == _block_5(b["channel"]):

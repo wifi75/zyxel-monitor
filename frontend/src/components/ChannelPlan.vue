@@ -18,8 +18,10 @@ watch(() => props.aps.map(a => a.updated).join(), load)
 const bands = computed(() => Object.entries(data.value?.bands ?? {}).filter(([, b]) => b.radios.length))
 
 function issueText(i: ChannelIssue): string {
-  const aps = i.aps.join(' / ')
-  if (i.kind === 'same') return t('{aps} sullo stesso canale {ch}: si disturbano', { aps, ch: i.channel ?? '?' })
+  const aps = i.aps.join(', ')
+  if (i.kind === 'same') return i.aps.length > 2
+    ? t('{n} AP sullo stesso canale {ch} ({aps}): si disturbano a vicenda', { n: i.aps.length, aps, ch: i.channel ?? '?' })
+    : t('{aps} sullo stesso canale {ch}: si disturbano', { aps, ch: i.channel ?? '?' })
   if (i.kind === 'overlap') return t('{aps} su canali che si sovrappongono', { aps })
   if (i.kind === 'unclean') return t('{aps} sul canale {ch}: in 2.4 GHz usa solo 1, 6 o 11', { aps, ch: i.channel ?? '?' })
   return t('{aps}: canale occupato al {pct}%', { aps, pct: i.pct ?? 0 })

@@ -26,6 +26,7 @@ addEn({
   'Canale saturo': 'Saturated channel',
   // canali
   '{aps} sullo stesso canale {ch}: si disturbano': '{aps} on the same channel {ch}: they interfere',
+  '{n} AP sullo stesso canale {ch} ({aps}): si disturbano a vicenda': '{n} APs on the same channel {ch} ({aps}): they interfere with each other',
   '{aps} su canali che si sovrappongono': '{aps} on overlapping channels',
   '{aps} sul canale {ch}: in 2.4 GHz usa solo 1, 6 o 11': '{aps} on channel {ch}: on 2.4 GHz use only 1, 6 or 11',
   '{aps}: canale occupato al {pct}%': '{aps}: channel {pct}% busy',

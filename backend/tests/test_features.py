@@ -36,6 +36,8 @@ def test_channels_overlap_and_suggestion():
     assert {i["kind"] for i in b24["issues"]} >= {"same", "overlap"}
     # tre AP in 2.4: il suggerimento usa 1, 6, 11 senza ripetizioni
     assert sorted(b24["suggested"].values()) == [1, 6, 11]
+    # A e B sullo stesso canale: un solo avviso con entrambi
+    assert [i["aps"] for i in b24["issues"] if i["kind"] == "same"] == [["A", "B"]]
     assert len(set(r["bands"]["5GHz"]["suggested"].values())) == 3
 
 
