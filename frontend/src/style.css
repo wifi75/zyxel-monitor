@@ -194,6 +194,9 @@ button.small { padding: 3px 10px; font-size: 12px; }
 .widget-bar span { flex: 1; }
 .widget-bar button { border: none; padding: 0 6px; font-size: 16px; line-height: 1; color: inherit; }
 .widget-body { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 10px; overflow: auto; }
+/* una tabella dentro un widget non si schiaccia: con overflow-x la sua altezza minima diventerebbe 0 e le righe
+   finirebbero nascoste in uno scorrimento interno; scorre invece il widget */
+.widget-body > .table-wrap { flex-shrink: 0; }
 .dash-stack .widget-body { overflow: visible; }
 .widget-body > .chart-box { flex: 1; height: auto; min-height: 140px; }
 .dash-stack .widget-body > .chart-box { flex: none; height: 260px; }
