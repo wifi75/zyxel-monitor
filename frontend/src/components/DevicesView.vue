@@ -98,7 +98,7 @@ function forget(d: Device) {
                 <span v-if="d.critical" class="badge ok" :title="t('Dispositivo importante')">{{ t('importante') }}</span>
               </td>
               <td><span class="chip" :style="{ '--tone': tone(d.device_type) }">{{ t(d.device_type) }}</span></td>
-              <td class="small">{{ d.vendor ? t(d.vendor) : '—' }}</td>
+              <td class="small vendor" :title="d.vendor ?? ''">{{ d.vendor ? t(d.vendor) : '—' }}</td>
               <td class="mono small">{{ d.last_ip || '—' }}</td>
               <td class="mono small">{{ d.mac }}<span v-if="isPrivateMac(d.mac)" class="muted" :title="t('MAC privato (randomizzato)')"> ⓟ</span></td>
               <td><span v-if="d.last_ap" class="chip ap-chip">{{ d.last_ap }}</span><span v-else class="muted">—</span></td>
@@ -144,6 +144,10 @@ function forget(d: Device) {
 </template>
 
 <style scoped>
+.vendor { max-width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.section-head { flex-wrap: wrap; }
+main { min-width: 0; }
+.card { min-width: 0; overflow: hidden; }
 .crit-on { color: var(--weak); }
 .warn-text { color: var(--weak); }
 </style>

@@ -44,8 +44,12 @@ const hasMenu = !!(def?.link || def?.csv)
 .widget { position: relative; }
 .w-ico { position: absolute; top: 12px; left: 14px; width: 26px; height: 26px; display: grid; place-items: center;
   border-radius: var(--radius-s); color: var(--tone, var(--accent)); background: color-mix(in srgb, var(--tone, var(--accent)) 14%, transparent); }
-.widget-body.has-ico > :deep(h2:first-child), .widget-body.has-ico > :deep(.section-head:first-child) { padding-left: 34px; min-height: 26px; }
-.widget-body.has-ico > :deep(h2:first-child)::before, .widget-body.has-ico > :deep(.section-head:first-child h2)::before { display: none !important; }
+.widget-body.has-ico > :deep(h2:first-child), .widget-body.has-ico > :deep(.section-head:first-child),
+.widget-body.has-ico > :deep(.internet:first-child > .section-head) { padding-left: 34px; min-height: 26px; }
+.widget-body.has-ico > :deep(h2:first-child)::before, .widget-body.has-ico > :deep(.section-head:first-child h2)::before,
+.widget-body.has-ico > :deep(.internet:first-child > .section-head h2)::before { display: none !important; }
+/* titoli su una riga: il sottotitolo lungo si accorcia invece di finire sopra il contenuto */
+.widget-body :deep(h2) { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: none; }
 .w-menu { position: absolute; top: 10px; right: 10px; z-index: 5; }
 .w-more { border: none; background: transparent; color: var(--muted); font-size: 18px; line-height: 1; padding: 2px 8px;
   border-radius: var(--radius-s); cursor: pointer; opacity: .55; }

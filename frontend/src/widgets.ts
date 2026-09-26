@@ -14,14 +14,14 @@ export const COLS = 12
 
 export const WIDGETS: WidgetDef[] = [
   { id: 'kpis', title: 'Indicatori', views: ['overview', 'ap'], w: 12, h: 2, minW: 3, minH: 2 },
-  { id: 'aps', title: 'Access point', views: ['overview'], w: 12, h: 5, minW: 3, minH: 3, icon: 'wifi', tone: 'blue' },
+  { id: 'aps', title: 'Access point', views: ['overview'], w: 12, h: 5, minW: 3, minH: 3, tone: 'blue' },
   { id: 'internet', title: 'Internet', views: ['overview'], w: 12, h: 9, minW: 4, minH: 5, icon: 'globe', tone: 'teal' },
   { id: 'sites', title: 'Siti più visitati', views: ['overview', 'ap'], w: 3, h: 8, icon: 'globe', tone: 'violet' },
   { id: 'types', title: 'Dispositivi per tipologia', views: ['overview', 'ap'], w: 3, h: 4, minH: 2, icon: 'users', tone: 'violet', link: { view: '#devices', label: 'Apri Dispositivi' } },
   { id: 'traffic_ap', title: 'Traffico per access point', views: ['overview'], w: 3, h: 5, icon: 'chart', tone: 'amber', link: { view: '#report', label: 'Apri il report' } },
   { id: 'blocked', title: 'Pubblicità e tracker bloccati', views: ['overview'], w: 3, h: 8, icon: 'lock', tone: 'pink' },
   { id: 'clients_ap', title: 'Client per access point', views: ['overview'], w: 3, h: 5, icon: 'users', tone: 'blue' },
-  { id: 'band', title: 'Client per banda', views: ['overview', 'ap'], w: 3, h: 3, minH: 2, icon: 'wifi', tone: 'teal' },
+  { id: 'band', title: 'Client per banda', views: ['overview', 'ap'], w: 3, h: 4, minH: 3, icon: 'wifi', tone: 'teal' },
   { id: 'topology', title: 'Mappa della rete', views: ['overview'], w: 6, h: 7, minW: 4, minH: 5, icon: 'router', tone: 'blue' },
   { id: 'channels', title: 'Piano dei canali', views: ['overview'], w: 6, h: 12, minW: 4, minH: 5, icon: 'sliders', tone: 'orange', link: { view: '#config', label: 'Apri Configurazione' } },
   { id: 'firmware', title: 'Firmware', views: ['overview'], w: 4, h: 6, minW: 3, minH: 4, icon: 'wrench', tone: 'amber', link: { view: '#aps', label: 'Apri Gestione AP' } },

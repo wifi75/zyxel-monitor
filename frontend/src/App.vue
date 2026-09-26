@@ -276,7 +276,7 @@ function countBy(list: Client[], key: (c: Client) => string) {
   for (const c of list) m.set(key(c), (m.get(key(c)) ?? 0) + 1)
   return [...m].map(([label, value]) => ({ label, value })).sort((a, b) => b.value - a.value)
 }
-const byType = computed(() => countBy(scopedClients.value, c => c.device_type))
+const byType = computed(() => countBy(scopedClients.value, c => t(c.device_type)))
 const byBand = computed(() => countBy(scopedClients.value, c => c.band || '?'))
 /** banda scelta nel widget "Client per banda": elenco dei suoi dispositivi, dal segnale peggiore */
 const bandSel = ref<string | null>(null)
