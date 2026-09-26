@@ -126,4 +126,11 @@ def explore_commands(cfg: ci.RunningConfig) -> list[str]:
                    "wlan-macfilter-profile BLOCKED1", f"wlan-radio-profile {cfg.radio_profile(1)}"):
         if "None" not in header:
             lines += [header, "?", "exit"]
+    # capacità reali di ogni radio: valori ammessi per larghezza, canali e potenza. Il "?" mostra l'aiuto;
+    # l'invio che segue trova il comando incompleto e la CLI lo rifiuta, quindi non cambia nulla
+    for slot, chan in ((1, "2g-channel"), (2, "5g-channel")):
+        prof = cfg.radio_profile(slot)
+        if prof:
+            lines += [f"wlan-radio-profile {prof}", "ch-width ?", f"{chan} ?", "exit"]
+        lines += [f"wlan slot{slot}", "output-power ?", "exit"]
     return [*lines, "exit"]
