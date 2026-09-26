@@ -1,157 +1,253 @@
 # Zyxel Monitor
 
+**English** · [Italiano](README.it.md)
+
 [![Backend](https://img.shields.io/badge/Backend-FastAPI%200.141-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
 [![Python](https://img.shields.io/badge/Python-3.13-3776AB?logo=python&logoColor=white)](https://www.python.org)
 [![Frontend](https://img.shields.io/badge/Frontend-Vue%203.5-4FC08D?logo=vuedotjs&logoColor=white)](https://vuejs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-6.0-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
 [![Vite](https://img.shields.io/badge/Build-Vite%208-646CFF?logo=vite&logoColor=white)](https://vite.dev)
-[![Chart.js](https://img.shields.io/badge/Grafici-Chart.js%204.5-FF6384?logo=chartdotjs&logoColor=white)](https://www.chartjs.org)
+[![Chart.js](https://img.shields.io/badge/Charts-Chart.js%204.5-FF6384?logo=chartdotjs&logoColor=white)](https://www.chartjs.org)
 [![Database](https://img.shields.io/badge/DB-SQLite-003B57?logo=sqlite&logoColor=white)](https://www.sqlite.org)
 [![Docker](https://img.shields.io/badge/Deploy-Docker-2496ED?logo=docker&logoColor=white)](docker-compose.yml)
-[![Fonti](https://img.shields.io/badge/Fonti-SNMP%20%7C%20SSH%20%7C%20OPNsense-5A6B7B)](#come-legge-i-dati)
-[![API](https://img.shields.io/badge/API-76%20endpoint-0A7EA4)](backend/app/api.py)
-[![Test](https://img.shields.io/badge/Test-40%20pytest-0A9EDC?logo=pytest&logoColor=white)](backend/tests)
+[![Sources](https://img.shields.io/badge/Sources-SNMP%20%7C%20SSH%20%7C%20OPNsense-5A6B7B)](#where-the-data-comes-from)
+[![API](https://img.shields.io/badge/API-76%20endpoints-0A7EA4)](backend/app/api.py)
+[![Tests](https://img.shields.io/badge/Tests-40%20pytest-0A9EDC?logo=pytest&logoColor=white)](backend/tests)
 [![Lint](https://img.shields.io/badge/Lint-ruff-D7FF64?logo=ruff&logoColor=black)](ruff.toml)
-[![SemVer](https://img.shields.io/badge/SemVer-2.0.0-blue)](https://semver.org/lang/it/)
+[![SemVer](https://img.shields.io/badge/SemVer-2.0.0-blue)](https://semver.org)
 [![Keep a Changelog](https://img.shields.io/badge/Changelog-Keep%20a%20Changelog-E05735)](CHANGELOG.md)
-[![Mantenuto](https://img.shields.io/badge/Mantenuto-s%C3%AC%20(2026)-brightgreen)](https://github.com/wifi75/zyxel-monitor/commits)
-[![Ultimo commit](https://img.shields.io/github/last-commit/wifi75/zyxel-monitor)](https://github.com/wifi75/zyxel-monitor/commits)
-[![Stelle](https://img.shields.io/github/stars/wifi75/zyxel-monitor?style=flat)](https://github.com/wifi75/zyxel-monitor/stargazers)
+[![Maintained](https://img.shields.io/badge/Maintained-yes%20(2026)-brightgreen)](https://github.com/wifi75/zyxel-monitor/commits)
+[![Last commit](https://img.shields.io/github/last-commit/wifi75/zyxel-monitor)](https://github.com/wifi75/zyxel-monitor/commits)
+[![Stars](https://img.shields.io/github/stars/wifi75/zyxel-monitor?style=flat)](https://github.com/wifi75/zyxel-monitor/stargazers)
 [![License](https://img.shields.io/badge/License-MIT-yellow)](LICENSE)
 
-Monitoraggio self-hosted degli access point **Zyxel gestiti da Nebula Base**, cioè senza licenza Pro:
-l'OpenAPI di Nebula su Base non espone client né statistiche, quindi i dati vengono letti in locale.
+Self-hosted monitoring and management panel for **Zyxel access points run by Nebula with the free Base
+licence**. On Base, Nebula's OpenAPI exposes neither clients nor statistics, so this panel reads everything
+locally from the APs (SNMP and SSH) and, optionally, from an OPNsense firewall: who is connected, how well,
+how much traffic, which channels are crowded, when the Internet line dropped.
 
-Cosa mostra la dashboard, in generale e per ogni singolo AP:
-- stato degli AP (online, modello, firmware, uptime, canali, client per radio);
-- client connessi con nome, tipologia, banda, segnale, velocità e durata della connessione;
-- grafici di download, upload e numero di client nel tempo;
-- torte: **siti più visitati** dai dispositivi Wi-Fi, dispositivi per tipologia, traffico e client per AP;
-- storico di connessioni, disconnessioni, roaming e AP offline;
-- con OPNsense: stato della linea Internet, velocità e GB della WAN, pubblicità e tracker bloccati, siti contattati da ogni dispositivo;
-- mappa della rete, piano dei canali con sovrapposizioni e canali consigliati, firmware per modello;
-- produttore di ogni dispositivo dal MAC (elenco IEEE) e storico per dispositivo di collegamenti, roaming e segnale;
-- avvisi su Telegram (AP offline, linea caduta, dispositivi nuovi, canali saturi) e report settimanale.
+![Overview, light theme](docs/screenshots/overview-light.png)
 
-## Come legge i dati
+> Screenshots are taken from a demo house with invented data (`scripts/demo_data.py`), never from a real network.
 
-| Fonte | Cosa fornisce | Modelli / note |
+## Contents
+- [What it does](#what-it-does)
+- [Screenshots](#screenshots)
+- [How it works](#how-it-works)
+- [Installation](#installation-with-docker)
+- [Configuration](#configuration-env)
+- [Security](#security)
+- [Development](#local-development)
+
+## What it does
+
+**Monitoring**
+- **Access points**: online/offline, model, firmware, uptime, CPU and memory, channel, power and channel
+  utilisation per radio, clients per band.
+- **Clients**: name, device type, vendor (from the MAC, IEEE list), band, signal, speed, connection time;
+  signal history and visited sites for every device.
+- **Traffic**: Wi-Fi download/upload and clients over time, per AP and for the whole site.
+- **Internet line** (with OPNsense): gateway status, latency, packet loss, availability, outages, WAN speed and
+  GB, share of DNS queries blocked (ads and trackers).
+- **Channel plan**: channel utilisation now and over time, overlapping APs, suggested 1/6/11 layout.
+- **Roaming**: which devices move between APs and which ones keep bouncing (a sign of overlapping cells).
+- **Devices**: every device ever seen; new ones are flagged until you mark them as known; *important* ones
+  (inverter, gate, alarm…) trigger an alert when they drop off.
+- **Report**: 24 hours, 7 or 30 days — availability, drops, average and peak clients, traffic, signal.
+
+**Alerts** — on Telegram: AP down/up, Internet line down/up, new device, important device disconnected,
+saturated channel, configuration changes, plus a weekly report every Monday.
+
+**Management (optional, off by default)** — power, channel and width per band, Wi-Fi name and password, guest
+network, roaming options, minimum data rate, 802.11b rejection, LEDs, scheduled reboot… set for the whole site
+and overridden per AP, always applied through a **controlled trial** with automatic rollback (see below).
+
+**Everything else** — light and dark theme, Italian and English, customisable dashboard (drag and resize
+widgets), read-only users, CSV export, nightly database backup, installable as a phone app (PWA, over HTTPS).
+
+## Screenshots
+
+| | |
+|---|---|
+| ![Single access point](docs/screenshots/access-point.png) **Access point**: header with one tile per band (channel, clients, utilisation), indicators with sparklines, per-AP widgets. | ![Dark theme](docs/screenshots/overview-dark.png) **Dark theme**: the same dashboard in the "console" palette. |
+| ![Devices](docs/screenshots/devices.png) **Devices**: new devices to review, vendor, drops and roams in the last 24 hours, important devices (★). | ![Report](docs/screenshots/report.png) **Report**: availability and traffic per AP, Internet line, new and most present devices. |
+| ![Settings](docs/screenshots/settings.png) **Settings**: one section at a time — OPNsense, alerts, users, backup, Nebula, account. | |
+
+## How it works
+
+```mermaid
+flowchart LR
+  subgraph LAN
+    AP1["AP (SSH)<br/>NWA50AX PRO"]
+    AP2["AP (SNMP or SSH)<br/>WAC6103D-I · NWA1123-AC PRO"]
+    OPN["OPNsense<br/>DHCP · DNS · gateways · NetFlow"]
+  end
+  subgraph "Zyxel Monitor (Docker)"
+    P["Poller<br/>every 60 s"] --> DB[("SQLite")]
+    DB --> API["FastAPI<br/>/api/..."]
+    API --> UI["Vue 3 dashboard"]
+    G["Guard<br/>trial + rollback"] -->|SSH commands| AP1
+    AL["Alerts"] --> TG["Telegram"]
+  end
+  AP1 -->|CLI output| P
+  AP2 -->|SNMP / CLI| P
+  OPN -->|REST API, read-only| P
+  DB --> AL
+```
+
+### The polling cycle
+Every `POLL_INTERVAL` seconds (60 by default) the poller:
+1. **reads every AP in parallel** — SNMP walks of the Zyxel MIB, or an interactive SSH session (the Zyxel CLI
+   does not accept commands on the `ssh` command line, so the panel opens a shell and sends
+   `show wireless-hal station info`, `show wireless-hal statistic`, `show running-config`, …);
+2. **resolves names**: Kea DHCP leases from OPNsense first, then reverse DNS, then the IP; aliases you type
+   in the panel win over everything;
+3. **stores** the AP status, the current clients, traffic counters, channel utilisation and signal samples;
+4. **derives events** by comparing with the previous cycle: connect, disconnect, roam (same MAC, different AP),
+   AP down/up, new device, Internet line down/up. An unreachable AP keeps its clients, so a failed reading does
+   not produce fake disconnections;
+5. **reads OPNsense** (if configured): new DNS queries of Wi-Fi clients (reduced to the main domain, e.g.
+   `bbc.co.uk`), gateway status, WAN counters;
+6. runs **alerts**, the **nightly backup** and, if management is on, the periodic **re-alignment** of the APs.
+
+Traffic and rates are computed from differences between cumulative counters; a counter that goes backwards
+(AP reboot) is skipped. History older than `RETENTION_DAYS` is pruned every hour.
+
+### Where the data comes from
+
+| Source | What it provides | Models / notes |
 |---|---|---|
-| **SNMP v2c** (MIB Zyxel `1.3.6.1.4.1.890.1.15.3`) | client (MAC, SSID, RSSI, ora connessione), radio, traffico per SSID, uptime | WAC6103D-I, NWA1123-AC PRO |
-| **SSH** (CLI `show wireless-hal station info`) | client con IP, banda, RSSI, velocità, standard Wi-Fi | NWA50AX PRO: in Nebula l'agente SNMP resta `active: no` |
-| **OPNsense API** (facoltativa) | nomi dai lease Kea DHCP, siti visitati e bloccati (Unbound), stato gateway, contatori WAN | solo chiamate GET |
-| DNS inverso / tabella ARP | nomi e IP di riserva | quando OPNsense non è configurato |
+| **SNMP v2c/v3** (Zyxel MIB `1.3.6.1.4.1.890.1.15.3`) | clients (MAC, SSID, RSSI, connection time), radios, traffic per SSID, uptime | WAC6103D-I, NWA1123-AC PRO |
+| **SSH** (CLI) | clients with IP, band, RSSI, rates, Wi-Fi standard; channel utilisation and power; CPU/memory; running-config | NWA50AX PRO (its SNMP agent stays `active: no` under Nebula), and any model with SSH |
+| **OPNsense API** (optional, GET only) | names from Kea DHCP leases, visited and blocked sites (Unbound), gateway status, WAN counters, NetFlow bytes per address | |
+| Reverse DNS / ARP table | fallback names and IPs | when OPNsense is not configured |
+| IEEE OUI list | vendor of each MAC | downloaded into the Docker image at build time |
 
-I nomi dei dispositivi si possono sovrascrivere dalla dashboard (*Rinomina*).
+### Managing the APs without breaking them
+Nebula keeps pushing its own configuration, so **by default the panel only monitors** and never writes to the
+APs. When you switch management on (Configuration page):
+- **Preview** — the exact CLI commands for every AP are shown before anything is sent (passwords masked).
+- **Controlled trial** — the change goes to one AP first; after 5 minutes the panel compares the devices
+  connected to the whole site. Only if they did not drop does it extend the change to the other APs, and
+  then checks again.
+- **Automatic rollback** — if connected devices drop by more than 30 %, every AP that was touched goes back
+  to the backup taken right before, and is paused. Devices that did not come back are listed.
+- **Capabilities per AP** — widths, WPA3 and options are offered only where the model supports them; some
+  options (e.g. minimum data rate) appear only after the AP declared them in *Explore commands*, which asks
+  the CLI for help (`?`) without changing anything.
+- **Re-alignment** — every 15 minutes the panel re-reads the APs and re-applies settings that a reboot or
+  Nebula reverted. The panel does not run `write`: configuration saved on the AP stays Nebula's.
 
-### Prerequisiti in Nebula
-*Site-wide → Configure → General settings*:
-- **SNMP access**: SNMPv2 attivo con una community a scelta;
-- **Administrative Access**: SSH e SNMP spuntati;
-- **Permit access… from designated IP addresses**: aggiungere l'IP del server di monitoraggio,
-  altrimenti la regola predefinita *Deny all* blocca tutto.
+Rule of thumb: **one master for the configuration**. While Nebula manages the APs, use the panel to observe and
+to test single changes; set the final values in Nebula too.
 
-### Prerequisiti in OPNsense (facoltativo)
-- *Unbound DNS*: statistiche attive (`/api/unbound/overview/isEnabled` deve restituire `1`);
-- una chiave API (*System → Access → Users → icona chiave*).
+### Alerts
+Alerts are built from the stored events, read in order of id, so nothing is lost or sent twice across
+restarts. An AP that disappears for a single reading and comes back within the tolerance does not alert.
+Important devices alert after 5 minutes offline and again when they come back.
 
-## Installazione con Docker
+## Installation with Docker
 
 ```bash
 git clone https://github.com/wifi75/zyxel-monitor.git && cd zyxel-monitor
-cp .env.example .env          # compilare almeno APS, SNMP_COMMUNITY, SSH_PASSWORD
+cp .env.example .env          # at least APS, SNMP_COMMUNITY, SSH_PASSWORD
 docker compose up -d --build
 ```
-Dashboard: `http://<ip-server>:8000` — documentazione API: `/docs`.
+Dashboard: `http://<server-ip>:8000` — API docs: `/docs`.
+First login: **user `admin`, password `Admin12345`** — the panel asks you to change it.
 
-Il container usa `network_mode: host` per raggiungere gli AP e leggere la tabella ARP; dati in `./data`.
+The container uses `network_mode: host` to reach the APs and read the ARP table; data lives in the `/data`
+volume. For Portainer, `docker-compose.portainer.yml` builds from the Git repository ("Pull and redeploy"
+updates it, and open pages reload by themselves).
 
-## Accesso
+### Nebula prerequisites
+*Site-wide → Configure → General settings*:
+- **SNMP access**: SNMPv2 on, with a community of your choice;
+- **Administrative Access**: SSH and SNMP ticked;
+- **Permit access… from designated IP addresses**: add the monitoring server, otherwise the default *Deny all*
+  blocks everything.
 
-Credenziali iniziali: **utente `admin` — password `Admin12345`**.
-Finché non viene cambiata, la dashboard mostra un avviso (pulsante *Password* in alto).
+### OPNsense prerequisites (optional)
+- *Unbound DNS*: statistics enabled;
+- an API key (*System → Access → Users → key icon*); the panel only reads.
 
-## Sviluppo locale
+## Configuration (`.env`)
+
+After the first start, APs, credentials and OPNsense are managed from the panel (stored in the database); the
+`.env` only seeds them.
+
+| Variable | Default | Description |
+|---|---|---|
+| `APS` | 4 example APs | `NAME\|IP\|snmp or ssh`, comma separated |
+| `SNMP_COMMUNITY` | `public` | SNMP v2c community set in Nebula |
+| `SSH_USER` / `SSH_PASSWORD` | `admin` / — | Nebula *Local credentials* |
+| `OPNSENSE_URL` | — | e.g. `https://opnsense.example.lan` (use the host name behind a reverse proxy) |
+| `OPNSENSE_KEY` / `OPNSENSE_SECRET` | — | OPNsense API key |
+| `OPNSENSE_VERIFY_TLS` | `true` | `false` only for self-signed certificates |
+| `OPNSENSE_WAN_IF` | `wan` | Internet interface (e.g. `opt1` for a provider VLAN) |
+| `LOCAL_DOMAIN` | — | LAN domain, excluded from "visited sites" |
+| `POLL_INTERVAL` | `60` | seconds between readings |
+| `RETENTION_DAYS` | `30` | days of history |
+| `SECRET_KEY` | generated | session signing key; if left as the example, one is created in `data/secret.key` |
+| `BACKUP_DIR` | `/data/backups` | nightly database copies (last 7); mount a NAS folder here |
+
+## Security
+- Panel login: after 5 wrong passwords the user is locked for 15 minutes; read-only users are enforced by
+  the server, not just hidden in the UI.
+- A rejected SSH password is not retried for 10 minutes (Zyxel APs block the IP after too many attempts).
+- Security headers on every response (`nosniff`, no iframes, no referrer); HSTS when reached over HTTPS.
+- Secrets never leave the server: the API only says whether a password is set.
+- `.env` is excluded from git.
+
+**HTTPS** — the container speaks plain HTTP; put a reverse proxy with a certificate in front. With OPNsense:
+`os-acme-client` for the certificate, `os-haproxy` with a public service on 443 that adds
+`X-Forwarded-Proto: https`, and an Unbound host override so the LAN reaches the proxy.
+
+**Remote access** — do not forward the panel's port: use OPNsense's WireGuard (one peer per phone/PC, DNS
+pointing to OPNsense) and open the panel by name as if you were home.
+
+## Local development
 
 ```bash
 python3 -m venv .venv && .venv/bin/pip install -r backend/requirements.txt
 cd frontend && npm install && npm run build && cd ..
-ln -s ../frontend/dist backend/static                         # la UI compilata servita dal backend
-cd backend && ../.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000
+ln -s ../frontend/dist backend/static                 # compiled UI served by the backend
+cd backend && ../.venv/bin/uvicorn app.main:app --port 8000
 ```
-Per lavorare sulla UI con ricarica automatica: `cd frontend && npm run dev` (porta 5173, proxy su `/api`).
+UI with hot reload: `cd frontend && npm run dev` (port 5173, `/api` proxied).
 
-Su macOS servono `snmpget`/`snmpbulkwalk`, già presenti nel sistema. Se `npm` fallisce con
-`UNABLE_TO_GET_ISSUER_CERT_LOCALLY`, esportare i certificati di sistema e passarli a Node:
+**Demo mode** — a fake house for UI work and screenshots, without touching any AP:
 ```bash
-security find-certificate -a -p /Library/Keychains/System.keychain /System/Library/Keychains/SystemRootCertificates.keychain > /tmp/ca.pem
-NODE_EXTRA_CA_CERTS=/tmp/ca.pem npm install
+cd backend
+DB_PATH=../demo/monitor.db python ../scripts/demo_data.py
+DB_PATH=../demo/monitor.db ZM_DEMO=1 uvicorn app.main:app --port 8010
+python ../scripts/screenshots.py http://127.0.0.1:8010    # needs: pip install playwright
 ```
 
-## Controlli di qualità
-
-Da eseguire prima di ogni commit (dalla cartella principale):
+**Quality checks** before every commit:
 ```bash
-.venv/bin/ruff check backend                               # linter Python (regole in ruff.toml)
-(cd backend && ../.venv/bin/python -m pytest -q tests)     # test dei parser
-(cd frontend && npm run build)                             # build + controllo dei tipi (vue-tsc)
+.venv/bin/ruff check backend scripts
+(cd backend && ../.venv/bin/python -m pytest -q tests)
+(cd frontend && npm run build)                        # includes vue-tsc type checking
 ```
 
-## Configurazione (`.env`)
-
-| Variabile | Default | Descrizione |
-|---|---|---|
-| `APS` | 4 AP d'esempio | `NOME\|IP\|snmp o ssh`, separati da virgola |
-| `SNMP_COMMUNITY` | `public` | community SNMP v2c impostata in Nebula |
-| `SSH_USER` / `SSH_PASSWORD` | `admin` / — | *Local credentials* di Nebula |
-| `OPNSENSE_URL` | — | es. `https://opnsense.example.lan` (usare il nome host se c'è un reverse proxy) |
-| `OPNSENSE_KEY` / `OPNSENSE_SECRET` | — | chiave API di OPNsense |
-| `OPNSENSE_VERIFY_TLS` | `true` | `false` solo per certificati autofirmati |
-| `OPNSENSE_WAN_IF` | `wan` | interfaccia verso Internet (es. `opt1` se la linea è su una VLAN) |
-| `LOCAL_DOMAIN` | — | dominio della LAN, escluso dai "siti visitati" |
-| `POLL_INTERVAL` | `60` | secondi tra due letture |
-| `RETENTION_DAYS` | `30` | giorni di storico |
-| `SECRET_KEY` | generata | firma delle sessioni; se lasciata d'esempio viene creata in `data/secret.key` |
-
-Il file `.env` si rilegge a ogni ciclo: una password corretta vale senza riavviare.
-
-## Struttura
-
+### Project structure
 ```
 backend/app/
-  main.py              avvio FastAPI, raccolta in background, UI statica
-  api.py               endpoint REST (/api/...)
-  poller.py            ciclo di raccolta: stato AP, client, eventi, campioni, DNS
-  devices.py           tipologia del dispositivo dal nome
-  collectors/          snmp.py · ssh.py · opnsense.py · names.py (ARP/DNS)
-  core/                config.py · db.py (schema SQLite) · security.py (login) · version.py
-backend/tests/         test pytest dei parser (SSH, siti DNS, tipologia dispositivi)
-frontend/src/
-  App.vue              panoramica (AP, Internet, torte), schede per AP, eventi
-  components/          grafici (linee, torte), tabelle client ed eventi, login
+  main.py            FastAPI start-up, background poller, security headers, static UI
+  poller.py          polling cycle: AP status, clients, events, samples, DNS, Internet line
+  collectors/        snmp.py · ssh.py (CLI parsers) · opnsense.py · names.py (ARP/DNS)
+  api.py · insights_api.py · report.py · channels.py · export_api.py      read endpoints
+  settings_api.py · policy_api.py · users_api.py · backup.py              management endpoints
+  config_items.py    every configurable setting: how to read it from the running-config and the CLI commands
+  policy.py · site_config.py · guard.py · restore.py · capabilities.py    configuration, trial, rollback
+  alerts.py          Telegram alerts and weekly report
+  oui.py · devices.py                vendor from MAC, device type
+backend/tests/       pytest: parsers, channel plan, alerts, capabilities, overrides
+frontend/src/        Vue 3 + TypeScript: App.vue, components/, i18n/ (it/en), tokens.css (themes)
+scripts/             demo_data.py (fake house) · screenshots.py (README images)
 ```
 
-## Sicurezza
-- Il login SSH fallito non viene ripetuto per 10 minuti: gli AP Zyxel bloccano l'IP dopo troppi tentativi.
-- Login del pannello: dopo 5 password sbagliate lo stesso utente è bloccato per 15 minuti.
-- Intestazioni di sicurezza su ogni risposta (`nosniff`, niente iframe, niente referrer); HSTS quando si arriva in HTTPS.
-- Il file `.env` (password, chiavi) è escluso da git.
+## Licence
 
-### HTTPS
-Il container parla solo HTTP: il certificato lo mette il reverse proxy davanti. Con OPNsense (plugin
-`os-acme-client` e `os-haproxy`):
-1. ACME: certificato per il nome del pannello (es. `wifi.casa.example`), validazione DNS.
-2. HAProxy: *Real server* = IP del server Docker e porta del pannello; *Backend pool* con quel server;
-   *Public service* in ascolto su 443 con il certificato ACME e l'intestazione `X-Forwarded-Proto: https`.
-3. Unbound: *Host override* del nome verso OPNsense, così dalla LAN si arriva al proxy.
-
-### Accesso da fuori casa
-Non aprire la porta del pannello sul router: usare la VPN WireGuard di OPNsense.
-1. *VPN → WireGuard → Instances*: nuova istanza (porta UDP 51820, rete del tunnel es. `10.10.10.1/24`).
-2. *Peers*: un peer per ogni telefono o PC, con la sua chiave pubblica e un IP del tunnel (`10.10.10.2/32`).
-3. *Firewall → Rules → WAN*: consenti UDP 51820; *Rules → WireGuard*: consenti il tunnel verso il server.
-4. Sul telefono, app WireGuard con DNS = OPNsense: il pannello si apre col suo nome, come da casa.
-
-## Licenza
-
-[MIT](LICENSE) — Ideato e sviluppato da Tiziano Cassone
+[MIT](LICENSE) — designed and developed by Tiziano Cassone.
