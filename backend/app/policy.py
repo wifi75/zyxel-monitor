@@ -92,6 +92,36 @@ def _event(ap: str, info: str) -> None:
         db.execute("INSERT INTO events(ts, kind, ap, info) VALUES (?,?,?,?)", (int(time.time()), "config", ap, info))
 
 
+def radio_now(cfg, band: str) -> dict:
+    """Canale ("auto" o numero), larghezza e potenza impostati adesso su una banda, dalla running-config."""
+    slot, key = (1, "2g-channel") if band == "2.4GHz" else (2, "5g-channel")
+    prof = cfg.radio_profile(slot) if cfg else None
+    if not prof:
+        return {"channel": None, "width": None, "tx_config": None}
+    header = f"wlan-radio-profile {prof}"
+    auto = cfg.has(header, "dcs activate")
+    power = cfg.value(f"wlan slot{slot}", "output-power")      # potenza impostata (es. "30dBm"), non quella reale
+    return {"channel": "auto" if auto else cfg.value(header, key), "width": cfg.value(header, "ch-width"),
+            "tx_config": int(power.removesuffix("dBm")) if power and power.removesuffix("dBm").isdigit() else None}
+
+
+def same_width(a: str | None, b: str | None) -> bool:
+    """"20/40/80" e "80" indicano la stessa larghezza massima."""
+    return bool(a) and bool(b) and a.split("/")[-1] == b.split("/")[-1]
+
+
+def radio_diff(want: dict, now: dict) -> dict:
+    """Solo le voci che cambiano: {"tx_power", "channel", "width"} con il valore da inviare."""
+    out = {}
+    if want.get("tx_power") is not None and want["tx_power"] != now.get("tx_config"):
+        out["tx_power"] = want["tx_power"]
+    if want.get("channel") and str(want["channel"]) != str(now.get("channel")):
+        out["channel"] = want["channel"]
+    if want.get("width") and not same_width(want["width"], now.get("width")):
+        out["width"] = want["width"]
+    return out
+
+
 async def apply_ap(ap: store.ApConfig, only_changed: bool = False, reason: str = "manuale",
                    dry_run: bool = False) -> dict:
     """Applica all'AP le regole effettive. La potenza va nello slot; canale e larghezza nel profilo radio
@@ -107,26 +137,28 @@ async def apply_ap(ap: store.ApConfig, only_changed: bool = False, reason: str =
     rules = load()
     caps = capabilities.of_ap(ap.name)
     actual = actual_powers().get(ap.name, {})
+    # si legge la configurazione attuale e si invia solo ciò che è diverso: ogni ingresso nel profilo radio
+    # fa ripartire la radio, e rimandare valori già giusti staccherebbe i dispositivi per niente
+    try:
+        running = await ssh.running_config(ap.host, ap.ssh_user, ap.ssh_password, ap.ssh_port)
+    except Exception as exc:
+        return {"ap": ap.name, "ok": False, "message": f"SSH: {exc}"}
+    from .config_items import RunningConfig
+    cfg = RunningConfig(running)
     commands, changes, radio = [], [], []
     for band in BANDS:
         label = band.replace("GHz", " GHz")
-        want, _ = effective(rules, ap.id, band, "tx_power")
-        have = actual.get(band)
-        if want is not None and not (only_changed and have == want):
-            commands += ssh.power_commands(band, want)
-            shown = "massima" if want >= 30 else f"{want} dBm"
+        want = {f: effective(rules, ap.id, band, f)[0] for f in FIELDS}
+        if want.get("width"):
+            want["width"] = capabilities.fit_width(want["width"], band, caps)   # es. 160 MHz su un Wi-Fi 5 → 80
+        diff = radio_diff(want, radio_now(cfg, band))
+        if "tx_power" in diff:
+            commands += ssh.power_commands(band, diff["tx_power"])
+            shown = "massima" if diff["tx_power"] >= 30 else f"{diff['tx_power']} dBm"
             changes.append(f"{label} potenza {shown}")
-        ch, _ = effective(rules, ap.id, band, "channel")
-        width, _ = effective(rules, ap.id, band, "width")
-        if width:
-            width = capabilities.fit_width(width, band, caps)     # es. 160 MHz su un AP Wi-Fi 5 → 80
-        if (ch or width) and not only_changed:
-            radio.append((band, ch, width))
+        if "channel" in diff or "width" in diff:
+            radio.append((band, diff.get("channel"), diff.get("width")))
     if radio:
-        try:
-            running = await ssh.running_config(ap.host, ap.ssh_user, ap.ssh_password, ap.ssh_port)
-        except Exception as exc:
-            return {"ap": ap.name, "ok": False, "message": f"SSH: {exc}"}
         profiles = ssh.slot_profiles(running)
         for band, ch, width in radio:
             profile = profiles.get(ssh.BAND_SLOT[band])
