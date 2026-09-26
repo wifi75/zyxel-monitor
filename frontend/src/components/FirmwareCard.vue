@@ -26,8 +26,8 @@ const models = computed(() => {
       <thead><tr><th>{{ t('Modello') }}</th><th>AP</th><th>{{ t('Versione') }}</th></tr></thead>
       <tbody>
         <template v-for="g in models" :key="g.model">
-          <tr v-for="(a, n) in g.list" :key="a.ap">
-            <td v-if="n === 0" :rowspan="g.list.length">{{ g.model }}</td>
+          <tr v-for="a in g.list" :key="a.ap">
+            <td>{{ g.model }}</td>
             <td>{{ a.ap }}</td>
             <td class="mono small">
               {{ a.firmware || '—' }}
