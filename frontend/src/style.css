@@ -601,3 +601,16 @@ button.ghost.active { background: var(--accent-soft); color: var(--accent); }
 .kpi-text span { white-space: normal; line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 .kpi.rich strong .unit { font-size: 12px; font-weight: 500; color: var(--muted); margin-left: 2px; }
 .kpi-icon.alarm { color: var(--bad) !important; background: color-mix(in srgb, var(--bad) 14%, transparent) !important; }
+
+/* Configurazione: pannellino di modifica sopra la tabella */
+.pop-backdrop { position: fixed; inset: 0; z-index: 60; }
+.pop { position: fixed; z-index: 61; display: grid; gap: 8px; padding: 12px !important; box-shadow: var(--shadow-hover) !important; }
+.pop-head { display: grid; gap: 2px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+.pop-choices { display: grid; gap: 2px; max-height: 300px; overflow: auto; }
+.pop-choice { display: flex; align-items: center; gap: 8px; justify-content: flex-start; width: 100%; text-align: left;
+  border: 1px solid transparent; background: transparent; padding: 7px 10px; border-radius: var(--radius-s); font: inherit; color: var(--text); cursor: pointer; }
+.pop-choice:hover { background: var(--surface-2); }
+.pop-choice.on { background: var(--accent-soft); border-color: color-mix(in srgb, var(--accent) 35%, transparent); font-weight: 600; }
+.pop-choice .mark { color: var(--accent); }
+.pop input, .pop textarea { width: 100%; box-sizing: border-box; }
+.pop textarea { font: 12px/1.4 var(--font-mono); border: 1px solid var(--border); border-radius: var(--radius-s); padding: 6px; }

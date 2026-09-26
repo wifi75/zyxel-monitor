@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { api, type Backup, type GuardState, type PlanAp, type PolicyField, type PolicyOverview, type PolicyResult, type SiteItem } from '../api'
 import { copyText, time } from '../format'
 import { t } from '../i18n'
@@ -322,8 +322,41 @@ const pwdError = computed(() => {
 const pendingCount = computed(() => Object.keys(pending.value).length)
 const cellKey = (r: Row, apId: number | null) => `${r.id}|${apId ?? 'site'}`
 
-function startEdit(r: Row, apId: number | null) {
+const editRow = ref<Row | null>(null)
+const editApId = ref<number | null>(null)
+const anchor = ref<DOMRect | null>(null)
+function closeEdit() { editing.value = null }
+watch(editing, v => { if (v === null) editRow.value = null })
+const apNameOf = (id: number) => aps.value.find(a => a.id === id)?.name ?? ''
+/** le caselle a scelta (e tutte quelle di un singolo AP) mostrano le opzioni come pulsanti */
+const choiceMode = computed(() => !!editRow.value && (editApId.value !== null || editRow.value.kind === 'select'))
+const popOptions = computed<Opt[]>(() => {
+  const r = editRow.value
+  if (!r) return []
+  return editApId.value === null
+    ? [{ value: 'unmanaged', label: t('Non gestito') }, ...(r.options ?? [])]
+    : [{ value: 'inherit', label: t('Come il sito') }, { value: 'none', label: t('Non gestito') }, ...apOptions(r, editApId.value)]
+})
+/** sotto la casella, dentro lo schermo; sopra se in basso non c'è spazio */
+const popStyle = computed(() => {
+  const a = anchor.value
+  if (!a) return {}
+  const width = 280
+  const left = Math.min(Math.max(8, a.left + a.width / 2 - width / 2), window.innerWidth - width - 8)
+  const below = window.innerHeight - a.bottom > 320
+  return below ? { left: `${left}px`, top: `${a.bottom + 6}px`, width: `${width}px` }
+    : { left: `${left}px`, bottom: `${window.innerHeight - a.top + 6}px`, width: `${width}px` }
+})
+const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') closeEdit() }
+const onScroll = () => { if (editing.value) closeEdit() }
+onMounted(() => { document.addEventListener('keydown', onKey); window.addEventListener('resize', onScroll); window.addEventListener('scroll', onScroll, true) })
+onUnmounted(() => { document.removeEventListener('keydown', onKey); window.removeEventListener('resize', onScroll); window.removeEventListener('scroll', onScroll, true) })
+
+function startEdit(r: Row, apId: number | null, ev?: MouseEvent) {
   const k = cellKey(r, apId)
+  editRow.value = r
+  editApId.value = apId
+  anchor.value = (ev?.currentTarget as HTMLElement | undefined)?.getBoundingClientRect() ?? null
   editing.value = k
   draft2.value = ''
   const p = pending.value[k]
@@ -608,30 +641,12 @@ async function copyBackup() { copied.value = await copyText(shown.value?.text ??
                 </td>
 
                 <td class="site-col">
-                  <div v-if="editing === cellKey(r, null)" class="cmp-edit">
-                    <select v-if="r.kind === 'select'" v-model="draft" @change="commit(r, null, draft)">
-                      <option value="unmanaged">{{ t('Non gestito') }}</option>
-                      <option v-for="o in r.options" :key="o.value" :value="o.value">{{ o.label }}</option>
-                    </select>
-                    <textarea v-else-if="r.kind === 'list'" v-model="draft" rows="3" placeholder="aa:bb:cc:dd:ee:ff" />
-                    <input v-else v-model="draft" :type="r.kind === 'password' ? 'password' : r.kind === 'int' ? 'number' : 'text'"
-                           :placeholder="r.kind === 'password' ? t('nuova password') : t('vuoto = non gestito')" @keyup.enter="commit(r, null, draft)" />
-                    <template v-if="r.kind === 'password'">
-                      <input v-model="draft2" type="password" :placeholder="t('ripeti la password')" @keyup.enter="commit(r, null, draft)" />
-                      <small v-if="pwdError && draft2" class="error">{{ pwdError }}</small>
-                    </template>
-                    <div class="cmp-edit-btns">
-                      <button class="ghost small" @click="editing = null">{{ t('Annulla') }}</button>
-                      <button v-if="r.kind !== 'select'" class="primary small" :disabled="r.kind === 'password' && !!pwdError"
-                              @click="commit(r, null, draft)">OK</button>
-                    </div>
-                  </div>
-                  <span v-else-if="!managing" class="site-cell observed" :class="{ none: observed(r) == null }"
+                  <span v-if="!managing" class="site-cell observed" :class="{ none: observed(r) == null }"
                         :title="t('Solo monitoraggio: valore che hanno adesso gli AP (impostato da Nebula)')">
                     <span class="grow">{{ observed(r) ?? t('valori diversi') }}</span>
                   </span>
                   <button v-else class="site-cell" :class="pending[cellKey(r, null)] ? 'pend' : r.site == null ? 'none' : 'set'"
-                          :title="t('Clicca per cambiare')" @click="startEdit(r, null)">
+                          :title="t('Clicca per cambiare')" @click="startEdit(r, null, $event)">
                     <span v-if="!pending[cellKey(r, null)] && r.site != null && dot(r, siteLabel(r))" class="dot" :class="dot(r, siteLabel(r))" />
                     <span class="grow">{{ pending[cellKey(r, null)] ? pendingLabel(pending[cellKey(r, null)]) : r.site == null ? t("lascia all'AP") : siteLabel(r) }}</span>
                     <span class="pen">✎</span>
@@ -639,17 +654,9 @@ async function copyBackup() { copied.value = await copyText(shown.value?.text ??
                 </td>
 
                 <td v-for="a in aps" :key="a.id" class="ap-col">
-                  <div v-if="editing === cellKey(r, a.id)" class="cmp-edit">
-                    <select v-model="draft" @change="commit(r, a.id, draft)">
-                      <option value="inherit">{{ t('Come il sito') }}</option>
-                      <option value="none">{{ t('Non gestito') }}</option>
-                      <option v-for="o in apOptions(r, a.id)" :key="o.value" :value="o.value">{{ o.label }}</option>
-                    </select>
-                    <div class="cmp-edit-btns"><button class="ghost small" @click="editing = null">{{ t('Annulla') }}</button></div>
-                  </div>
                   <component :is="r.perAp && a.configurable ? 'button' : 'span'" class="ap-cell" :class="[apClass(r, a.id), { click: r.perAp && a.configurable }]"
                              :title="r.perAp && a.configurable ? t('Clicca per personalizzare questo AP') : t('Vale per tutto il sito: si cambia nella colonna Sito')"
-                             @click="r.perAp && a.configurable && startEdit(r, a.id)">
+                             @click="r.perAp && a.configurable && startEdit(r, a.id, $event)">
                     <template v-if="pending[cellKey(r, a.id)]">{{ pendingLabel(pending[cellKey(r, a.id)]) }}</template>
                     <template v-else>
                       <span v-if="dot(r, r.current(a.id))" class="dot" :class="dot(r, r.current(a.id))" />
@@ -670,4 +677,35 @@ async function copyBackup() { copied.value = await copyText(shown.value?.text ??
       </div>
     </div>
   </main>
+  <!-- modifica di una casella: pannellino sopra la tabella, ancorato alla casella; la tabella non si muove -->
+  <Teleport to="body">
+    <div v-if="editRow" class="pop-backdrop" @click="closeEdit" />
+    <div v-if="editRow" ref="popEl" class="pop card" :style="popStyle" role="dialog" :aria-label="editRow.label"
+         @keydown.esc="closeEdit">
+      <div class="pop-head">
+        <strong>{{ editRow.label }}</strong>
+        <span class="muted small">{{ editApId === null ? t('tutto il sito') : apNameOf(editApId) }}</span>
+      </div>
+      <div v-if="choiceMode" class="pop-choices">
+        <button v-for="o in popOptions" :key="o.value" class="pop-choice" :class="{ on: o.value === draft }"
+                @click="commit(editRow!, editApId, o.value)">
+          <span class="grow">{{ o.label }}</span><span v-if="o.value === draft" class="mark">✓</span>
+        </button>
+      </div>
+      <template v-else>
+        <textarea v-if="editRow.kind === 'list'" v-model="draft" rows="4" placeholder="aa:bb:cc:dd:ee:ff" />
+        <input v-else v-model="draft" :type="editRow.kind === 'password' ? 'password' : editRow.kind === 'int' ? 'number' : 'text'"
+               :placeholder="editRow.kind === 'password' ? t('nuova password') : t('vuoto = non gestito')"
+               @keyup.enter="commit(editRow!, editApId, draft)" />
+        <template v-if="editRow.kind === 'password'">
+          <input v-model="draft2" type="password" :placeholder="t('ripeti la password')" @keyup.enter="commit(editRow!, editApId, draft)" />
+          <small v-if="pwdError && draft2" class="error">{{ pwdError }}</small>
+        </template>
+        <div class="cmp-edit-btns">
+          <button class="ghost small" @click="closeEdit">{{ t('Annulla') }}</button>
+          <button class="primary small" :disabled="editRow.kind === 'password' && !!pwdError" @click="commit(editRow!, editApId, draft)">OK</button>
+        </div>
+      </template>
+    </div>
+  </Teleport>
 </template>
