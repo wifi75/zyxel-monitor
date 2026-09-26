@@ -92,6 +92,16 @@ def _in_radios(cfg: RunningConfig, *lines: str) -> list[str]:
     return out
 
 
+def _in_radio(cfg: RunningConfig, slot: int, *lines: str) -> list[str]:
+    p = cfg.radio_profile(slot)
+    return [f"wlan-radio-profile {p}", *lines, "exit"] if p else []
+
+
+def _radio_value(cfg: RunningConfig, slot: int, prefix: str) -> str | None:
+    p = cfg.radio_profile(slot)
+    return cfg.value(f"wlan-radio-profile {p}", prefix) if p else None
+
+
 def _rate(cfg: RunningConfig, direction: str) -> int | None:
     p = cfg.ssid_profile()
     v = cfg.value(f"wlan-ssid-profile {p}", f"{direction}-rate-limit") if p else None
@@ -385,6 +395,13 @@ ITEMS: list[Item] = [
          choices=["0", "-65", "-70", "-75", "-80", "-85"], unit="dBm", read=_kickout,
          build=lambda v, c: _in_radios(c, "no rssi-thres") if int(v) == 0
          else _in_radios(c, "rssi-thres", f"rssi-kickout {v}")),
+    Item("min_rate_24", "radio", "Velocità minima 2.4 GHz", "choice",
+         "Toglie le velocità più lente (1–5,5 Mbps): i dispositivi vicini occupano meno il canale. "
+         "Chi ha segnale molto debole potrebbe non collegarsi più. "
+         "Compare dopo Esplora comandi, sugli AP che la hanno.",
+         choices=["1", "2", "5.5", "6", "9", "11", "12", "18", "24"], unit="Mbps",
+         read=lambda c: _radio_value(c, 1, "2g-wlan-rate-control"),
+         build=lambda v, c: _in_radio(c, 1, f"2g-wlan-rate-control {v}")),
     Item("load_balancing", "radio", "Bilanciamento del carico", "bool",
          "Distribuisce i dispositivi fra le radio quando un AP è troppo affollato.",
          read=_lb, build=_lb_set),

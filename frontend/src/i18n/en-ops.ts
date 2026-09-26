@@ -86,4 +86,7 @@ addEn({
   'Nessuna lettura del segnale nel periodo.': 'No signal readings in this period.',
   'Collegamenti e roaming': 'Connections and roaming',
   'MAC privato': 'Private MAC',
+  'Velocità minima 2.4 GHz': 'Minimum rate 2.4 GHz',
+  'Toglie le velocità più lente (1–5,5 Mbps): i dispositivi vicini occupano meno il canale. Chi ha segnale molto debole potrebbe non collegarsi più. Compare dopo Esplora comandi, sugli AP che la hanno.':
+    'Removes the slowest rates (1–5.5 Mbps): nearby devices take less airtime. Devices with a very weak signal may no longer connect. Appears after Explore commands, on the APs that support it.',
 })

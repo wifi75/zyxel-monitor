@@ -213,7 +213,8 @@ async def explore_ap(ap_id: int):
         text = await ssh.run_lines(ap.host, ap.ssh_user, ap.ssh_password, ap.ssh_port, lines)
     except (OSError, ssh.asyncssh.Error, TimeoutError) as exc:
         raise HTTPException(502, f"SSH: {exc}") from None
-    return {"text": text}
+    from . import capabilities
+    return {"text": text, "learned": capabilities.learn(ap.name, text)}
 
 
 class HybridIn(BaseModel):

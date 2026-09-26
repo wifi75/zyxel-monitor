@@ -4,6 +4,8 @@ Il modello si legge dall'ultimo stato salvato (show version / SNMP). Le larghezz
 propone per ciascun modello: gli AP Wi-Fi 5 si fermano a 80 MHz sulla 5 GHz, i Wi-Fi 6 arrivano a 160.
 Un modello sconosciuto ha le capacità minime comuni, così non si propone mai qualcosa di troppo.
 """
+import json
+
 from .core.db import connect
 
 WIDTHS_WIFI5 = {"2.4GHz": ["20", "20/40"], "5GHz": ["20", "20/40", "20/40/80"]}
@@ -56,6 +58,37 @@ def fit_item(key: str, value, caps: dict):
     return value
 
 
-def available(key: str, current, kind: str) -> bool:
-    """Un AP "ha" una voce se la sua configurazione la contiene (la password si scrive anche se non si legge)."""
+# voci che un AP supporta solo se l'ha dichiarato lui: frase dell'aiuto della CLI ("?") letta con Esplora comandi
+HELP_SIGNS = {"min_rate_24": "2.4G Minimum rate control"}
+# valore che l'AP usa quando la voce non compare nella configurazione
+DEFAULTS = {"min_rate_24": "1"}
+
+
+def learn(ap_name: str, help_text: str) -> list[str]:
+    """Salva le voci che l'AP ha dichiarato di supportare nell'output di Esplora comandi."""
+    found = sorted(learned(ap_name) | {k for k, sign in HELP_SIGNS.items() if sign in help_text})
+    with connect() as db:
+        db.execute("INSERT INTO settings(key, value) VALUES (?,?) "
+                   "ON CONFLICT(key) DO UPDATE SET value = excluded.value", (f"caps:{ap_name}", json.dumps(found)))
+    return found
+
+
+def learned(ap_name: str) -> set[str]:
+    with connect() as db:
+        row = db.execute("SELECT value FROM settings WHERE key = ?", (f"caps:{ap_name}",)).fetchone()
+    return set(json.loads(row["value"])) if row else set()
+
+
+def current(key: str, value, ap_name: str):
+    """Valore da mostrare: quello letto, o quello predefinito se l'AP supporta la voce ma non la elenca."""
+    if value is None and key in DEFAULTS and key in learned(ap_name):
+        return DEFAULTS[key]
+    return value
+
+
+def available(key: str, current, kind: str, ap_name: str | None = None) -> bool:
+    """Un AP "ha" una voce se la sua configurazione la contiene (la password si scrive anche se non si legge)
+    o se l'ha dichiarata nell'aiuto della CLI."""
+    if key in HELP_SIGNS:
+        return current is not None or (ap_name is not None and key in learned(ap_name))
     return current is not None or kind == "password" or key in CREATABLE

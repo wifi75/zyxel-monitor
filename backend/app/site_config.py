@@ -69,7 +69,7 @@ async def apply_ap(ap: store.ApConfig, reason: str = "manuale", only: set[str] |
         item = ci.BY_KEY.get(key)
         if not item or (only is None and not item.enforce):
             continue
-        if not capabilities.available(key, item.read(cfg), item.kind):
+        if not capabilities.available(key, item.read(cfg), item.kind, ap.name):
             continue                              # voce assente su questo modello/firmware: non si inventa
         value = capabilities.fit_item(key, value, caps)   # es. WPA3 su un Wi-Fi 5 → WPA2
         if key == "hostname_sync":
@@ -135,6 +135,7 @@ def explore_commands(cfg: ci.RunningConfig) -> list[str]:
             lines += [f"wlan-radio-profile {prof}", "ch-width ?", f"{chan} ?",
                       # velocità minime, dispositivi solo 802.11b, multicast e soglia di distacco dei client deboli
                       f"{b}-basic-speed ?", f"{b}-support-speed ?", f"{b}-multicast-speed ?",
-                      f"{b}-wlan-rate-control ?", "reject-legacy-station ?", "rssi-kickout ?", "exit"]
+                      f"{b}-wlan-rate-control ?", "rssi-kickout ?", "exit"]
+            # mai "?" su comandi senza valori (es. reject-legacy-station): l'invio che segue li eseguirebbe
         lines += [f"wlan slot{slot}", "output-power ?", "exit"]
     return [*lines, "exit"]

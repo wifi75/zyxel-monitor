@@ -126,7 +126,7 @@ def list_items():
     def current(i):
         per_ap = {}
         for name, cfg in configs.items():
-            v = i.read(cfg)
+            v = capabilities.current(i.key, i.read(cfg), name)
             per_ap[name] = (v is not None) if i.kind == "password" else v
         return per_ap
 

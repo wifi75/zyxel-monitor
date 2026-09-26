@@ -78,3 +78,25 @@ def test_login_locks_after_repeated_failures(monkeypatch):
 def test_air_conditioner_with_private_mac_is_home_automation():
     from app.devices import device_type
     assert device_type("hisense-clima-studio", "ca:2c:4f:5e:e0:31") == "Domotica"
+
+
+def test_min_rate_offered_only_to_aps_that_declare_it(tmp_path, monkeypatch):
+    monkeypatch.setenv("DB_PATH", str(tmp_path / "t.db"))
+    from app.core.config import get_settings
+    get_settings.cache_clear()
+    from app import capabilities
+    from app.core.db import init_db
+    init_db()
+    help_text = "2g-wlan-rate-control \n<2.4G Minimum rate control 1,2,5.5,6,9,11,12,18,24,36,48,54>"
+    assert capabilities.learn("GARAGE", help_text) == ["min_rate_24"]
+    assert capabilities.available("min_rate_24", None, "choice", "GARAGE")
+    assert not capabilities.available("min_rate_24", None, "choice", "GIARDINO")
+    assert capabilities.current("min_rate_24", None, "GARAGE") == "1"
+    get_settings.cache_clear()
+
+
+def test_explore_never_asks_about_valueless_commands():
+    from app.config_items import RunningConfig
+    from app.site_config import explore_commands
+    cfg = RunningConfig("wlan slot1\n ap profile R2\n!\nwlan slot2\n ap profile R5\n!\n")
+    assert not any(line.startswith("reject-legacy-station") for line in explore_commands(cfg))

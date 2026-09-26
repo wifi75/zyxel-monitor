@@ -2,6 +2,12 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) — versioni: [SemVer](https://semver.org/lang/it/).
 
+## [0.25.7] - 2026-09-26
+### Aggiunto
+- Configurazione: voce «Velocità minima 2.4 GHz», mostrata solo sugli AP che l'hanno dichiarata nell'aiuto della CLI (si impara con Esplora comandi).
+### Corretto
+- Esplora comandi non chiede più aiuto su `reject-legacy-station`: essendo un comando senza valori, l'invio che segue lo eseguiva. Chi ha usato l'Esplora della 0.25.6 ha quel comando attivo fino al riavvio dell'AP.
+
 ## [0.25.6] - 2026-09-26
 ### Aggiunto
 - Esplora comandi chiede anche i valori ammessi per velocità minime, dispositivi solo 802.11b, multicast e soglia di distacco dei client deboli (per aggiungere la velocità minima in Configurazione).
