@@ -180,8 +180,12 @@ function showWeak() {
 /** porta all'elenco dei client (widget "Client connessi") */
 function showClients() {
   weakOnly.value = false
-  scrollToClients()
+  // widget "Client connessi" nella disposizione: ci si scende; altrimenti pannello con l'elenco
+  if (document.querySelector('.clients-anchor')) scrollToClients()
+  else clientsPanel.value = true
 }
+const clientsPanel = ref(false)
+watch(view, () => { clientsPanel.value = false })
 function scrollToClients() {
   window.setTimeout(() => document.querySelector('.clients-anchor')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50)
 }
@@ -364,6 +368,17 @@ const SSH_NA = "La CLI SSH di questo AP non fornisce ancora il dato: in Impostaz
     <div v-if="readOnly" class="banner">{{ t('Sei entrato in sola lettura: puoi guardare tutto ma non modificare.') }}</div>
     <div v-if="loadError" class="banner err">{{ t('Errore di caricamento: {error}', { error: loadError }) }}</div>
 
+
+    <div v-if="clientsPanel" class="panel-backdrop" @click.self="clientsPanel = false">
+      <section class="card panel" role="dialog" :aria-label="t('Client connessi')">
+        <div class="section-head">
+          <h2>{{ t('Client connessi') }}<template v-if="currentAp"> — {{ currentAp.ap }}</template></h2>
+          <span class="spacer" />
+          <button class="icon-btn" :title="t('Chiudi')" @click="clientsPanel = false">✕</button>
+        </div>
+        <ClientsTable :clients="scopedClients" :show-ap="!currentAp" :hours="hours" @rename="rename" />
+      </section>
+    </div>
 
     <SettingsView v-if="view === '#settings'" :status="aps" @changed="reloadSoon(); refreshMe()" />
 
@@ -671,6 +686,9 @@ const SSH_NA = "La CLI SSH di questo AP non fornisce ancora il dato: in Impostaz
 </template>
 
 <style scoped>
+.panel-backdrop { position: fixed; inset: 0; z-index: 50; background: color-mix(in srgb, var(--text) 35%, transparent);
+  display: grid; place-items: start center; padding: 40px 16px; overflow: auto; }
+.panel { width: min(1100px, 100%); max-height: calc(100vh - 80px); overflow: auto; }
 .band-list { list-style: none; margin: 6px 0 0; padding: 0; display: grid; gap: 4px; font-size: 13px; overflow: auto; }
 .band-list li { display: flex; gap: 8px; align-items: center; border-bottom: 1px solid var(--grid); padding: 3px 0; }
 .roam-sum { margin: 0 0 8px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-size: 13px; }
