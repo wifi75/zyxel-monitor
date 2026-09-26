@@ -22,6 +22,12 @@ addEn({
   'Nebula': 'Nebula',
   'Cloud Zyxel (licenza Pro)': 'Zyxel cloud (Pro license)',
   'Il mio account': 'My account',
+  'Clicca una banda per vedere quali dispositivi la usano.': 'Click a band to see which devices use it.',
+  '{n} spostamenti di {d} dispositivi': '{n} moves by {d} devices',
+  '{n} rimbalzano': '{n} bouncing',
+  'fra {aps}': 'between {aps}',
+  'Spostarsi fra AP è normale se il dispositivo si muove per casa. Se uno fermo (TV, presa, inverter) si sposta spesso, due AP si sovrappongono: abbassa la potenza di uno dei due.':
+    'Moving between APs is normal when the device moves around the house. If a stationary one (TV, plug, inverter) moves often, two APs overlap: lower the power of one of them.',
   'Clicca per vedere l’elenco dei client': 'Click to see the list of clients',
   // utenti
   'Utente {n} creato.': 'User {n} created.',

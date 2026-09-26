@@ -3,7 +3,9 @@ import { computed } from 'vue'
 import { seriesColor, themeKey } from '../chartColors'
 
 /** Poche categorie (es. bande radio): una barra divisa in proporzione e la legenda su una riga. */
-const props = defineProps<{ items: { label: string; value: number }[] }>()
+const props = defineProps<{ items: { label: string; value: number }[]; selected?: string | null }>()
+/** clic su una voce della legenda (es. per mostrare i dispositivi di quella banda) */
+const emit = defineEmits<{ pick: [label: string] }>()
 
 const total = computed(() => props.items.reduce((s, i) => s + i.value, 0) || 1)
 const parts = computed(() => {
@@ -18,7 +20,8 @@ const parts = computed(() => {
       <span v-for="p in parts" :key="p.label" :style="{ width: `${p.pct}%`, background: p.color }" :title="`${p.label}: ${p.value}`" />
     </div>
     <ul class="legend">
-      <li v-for="p in parts" :key="p.label">
+      <li v-for="p in parts" :key="p.label" :class="{ sel: selected === p.label }" role="button" tabindex="0"
+          @click="emit('pick', p.label)" @keydown.enter="emit('pick', p.label)">
         <span class="swatch" :style="{ background: p.color }" />
         <span>{{ p.label.replace('GHz', ' GHz') }}</span>
         <strong>{{ p.value }}</strong>
@@ -33,6 +36,8 @@ const parts = computed(() => {
 .bar { display: flex; height: 14px; border-radius: 7px; overflow: hidden; background: var(--surface-2); }
 .bar span { display: block; height: 100%; min-width: 3px; }
 .legend { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 13px; }
-.legend li { display: flex; align-items: center; gap: 6px; }
+.legend li { display: flex; align-items: center; gap: 6px; cursor: pointer; padding: 2px 6px; border-radius: var(--radius-s); }
+.legend li:hover { background: var(--surface-2); }
+.legend li.sel { background: var(--accent-soft); }
 .swatch { width: 10px; height: 10px; border-radius: 2px; }
 </style>

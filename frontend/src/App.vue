@@ -5,7 +5,6 @@ import {
   type Internet, type Roaming, type SignalByAp, type Sites, type Traffic, type Usage,
 } from './api'
 import BarList from './components/BarList.vue'
-import RoamPairs from './components/RoamPairs.vue'
 import ClientsTable from './components/ClientsTable.vue'
 import Dashboard from './components/Dashboard.vue'
 import EventsTable from './components/EventsTable.vue'
@@ -247,6 +246,10 @@ function countBy(list: Client[], key: (c: Client) => string) {
 }
 const byType = computed(() => countBy(scopedClients.value, c => c.device_type))
 const byBand = computed(() => countBy(scopedClients.value, c => c.band || '?'))
+/** banda scelta nel widget "Client per banda": elenco dei suoi dispositivi, dal segnale peggiore */
+const bandSel = ref<string | null>(null)
+const bandClients = computed(() => scopedClients.value.filter(c => (c.band || '?') === bandSel.value)
+  .sort((a, b) => (a.rssi_dbm ?? -999) - (b.rssi_dbm ?? -999)))
 const byAp = computed(() => countBy(clients.value, c => c.ap))
 const gbByAp = computed(() =>
   Object.entries(usage.value?.per_ap ?? {})
@@ -257,6 +260,9 @@ const blockedItems = computed(() =>
   (internet.value?.dns?.top_blocked ?? []).map(i => ({ label: i.domain, value: i.queries, title: i.list })))
 const siteItems = computed(() => (sites.value?.items ?? []).map(i => ({ label: i.site, value: i.queries })))
 const roamPairs = computed(() => roaming.value?.pairs ?? [])
+const roamTotal = computed(() => roamPairs.value.reduce((s, p) => s + p.count, 0))
+const roamMax = computed(() => Math.max(1, ...(roaming.value?.devices ?? []).map(d => d.count)))
+const roamBouncing = computed(() => (roaming.value?.devices ?? []).filter(d => d.bouncing).length)
 const usageItems = computed(() => (deviceUsage.value?.items ?? []).map(i => ({ label: i.name, value: i.bytes, title: i.ip })))
 const usageTypes = computed(() => (deviceUsage.value?.by_type ?? []).map(i => ({ label: i.type, value: i.bytes })))
 
@@ -465,7 +471,9 @@ const SSH_NA = "La CLI SSH di questo AP non fornisce ancora il dato: in Impostaz
 
           <template v-else-if="id === 'types'">
             <h2>{{ t('Dispositivi per tipologia') }}</h2>
-            <PieChart v-if="byType.length" :items="byType" />
+            <!-- pochi tipi: barra compatta; tanti: ciambella con legenda -->
+            <SplitBar v-if="byType.length && byType.length <= 4" :items="byType" />
+            <PieChart v-else-if="byType.length" :items="byType" />
             <p v-else class="muted">{{ t('Nessun client.') }}</p>
           </template>
 
@@ -507,7 +515,17 @@ const SSH_NA = "La CLI SSH di questo AP non fornisce ancora il dato: in Impostaz
 
           <template v-else-if="id === 'band'">
             <h2>{{ t('Client per banda') }}</h2>
-            <SplitBar v-if="byBand.length" :items="byBand" />
+            <template v-if="byBand.length">
+              <SplitBar :items="byBand" :selected="bandSel" @pick="bandSel = bandSel === $event ? null : $event" />
+              <p v-if="!bandSel" class="muted small">{{ t('Clicca una banda per vedere quali dispositivi la usano.') }}</p>
+              <ul v-else class="band-list">
+                <li v-for="c in bandClients" :key="c.mac">
+                  <span class="grow">{{ c.alias || c.hostname || c.ip || c.mac }}</span>
+                  <span v-if="!currentAp" class="muted small">{{ c.ap }}</span>
+                  <span class="sig small" :class="signal(c.rssi_dbm).level">{{ c.rssi_dbm ?? '—' }} dBm</span>
+                </li>
+              </ul>
+            </template>
             <p v-else class="muted">{{ t('Nessun client.') }}</p>
           </template>
 
@@ -555,15 +573,22 @@ const SSH_NA = "La CLI SSH di questo AP non fornisce ancora il dato: in Impostaz
             <h2>{{ t('Roaming') }} <span class="muted small">({{ periodLabel }})</span></h2>
             <p v-if="!roamPairs.length" class="muted small">{{ t('Nessuno spostamento fra access point nel periodo.') }}</p>
             <template v-else>
-              <RoamPairs :pairs="roamPairs" :threshold="roaming?.threshold ?? 4" />
-              <h3 class="small sub">{{ t('Chi si sposta di più') }}</h3>
-              <ul class="rows">
-                <li v-for="d in roaming?.devices ?? []" :key="d.mac">
-                  <span class="grow">{{ d.name }} <span class="muted small">· {{ d.aps.join(' ↔ ') }}</span></span>
-                  <span v-if="d.bouncing" class="badge ko" :title="t('Rimbalza fra AP: valuta di ridurre la potenza radio in Nebula')">{{ t('rimbalza') }}</span>
-                  <strong>{{ d.count }}</strong>
+              <p class="roam-sum">
+                {{ t('{n} spostamenti di {d} dispositivi', { n: roamTotal, d: roaming?.devices.length ?? 0 }) }}
+                <span v-if="roamBouncing" class="badge ko">{{ t('{n} rimbalzano', { n: roamBouncing }) }}</span>
+              </p>
+              <ul class="roam-list">
+                <li v-for="d in roaming?.devices ?? []" :key="d.mac" :class="{ bouncing: d.bouncing }">
+                  <div class="roam-line">
+                    <strong class="grow">{{ d.name }}</strong>
+                    <span v-if="d.bouncing" class="badge ko">{{ t('rimbalza') }}</span>
+                    <span class="roam-n">{{ d.count }}</span>
+                  </div>
+                  <span class="muted small">{{ t('fra {aps}', { aps: d.aps.join(' ↔ ') || '—' }) }}</span>
+                  <span class="roam-bar"><span :style="{ width: `${(d.count / roamMax) * 100}%` }" /></span>
                 </li>
               </ul>
+              <p class="muted small">{{ t('Spostarsi fra AP è normale se il dispositivo si muove per casa. Se uno fermo (TV, presa, inverter) si sposta spesso, due AP si sovrappongono: abbassa la potenza di uno dei due.') }}</p>
             </template>
           </template>
 
@@ -644,3 +669,16 @@ const SSH_NA = "La CLI SSH di questo AP non fornisce ancora il dato: in Impostaz
 
   <footer v-if="health && !logged" class="footer">v{{ health.version }} — {{ t('Ideato e sviluppato da {author}', { author: health.author }) }}</footer>
 </template>
+
+<style scoped>
+.band-list { list-style: none; margin: 6px 0 0; padding: 0; display: grid; gap: 4px; font-size: 13px; overflow: auto; }
+.band-list li { display: flex; gap: 8px; align-items: center; border-bottom: 1px solid var(--grid); padding: 3px 0; }
+.roam-sum { margin: 0 0 8px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-size: 13px; }
+.roam-list { list-style: none; margin: 0 0 8px; padding: 0; display: grid; gap: 8px; }
+.roam-list li { display: grid; gap: 2px; }
+.roam-line { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+.roam-n { font-variant-numeric: tabular-nums; font-weight: 700; }
+.roam-bar { height: 4px; border-radius: 2px; background: var(--surface-2); overflow: hidden; }
+.roam-bar span { display: block; height: 100%; background: var(--accent); }
+.roam-list li.bouncing .roam-bar span { background: var(--bad); }
+</style>

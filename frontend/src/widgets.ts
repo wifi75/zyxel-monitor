@@ -13,7 +13,7 @@ export const WIDGETS: WidgetDef[] = [
   { id: 'aps', title: 'Access point', views: ['overview'], w: 12, h: 5, minW: 3, minH: 3 },
   { id: 'internet', title: 'Internet', views: ['overview'], w: 12, h: 9, minW: 4, minH: 5 },
   { id: 'sites', title: 'Siti più visitati', views: ['overview', 'ap'], w: 3, h: 8 },
-  { id: 'types', title: 'Dispositivi per tipologia', views: ['overview', 'ap'], w: 3, h: 5 },
+  { id: 'types', title: 'Dispositivi per tipologia', views: ['overview', 'ap'], w: 3, h: 4, minH: 2 },
   { id: 'traffic_ap', title: 'Traffico per access point', views: ['overview'], w: 3, h: 5 },
   { id: 'blocked', title: 'Pubblicità e tracker bloccati', views: ['overview'], w: 3, h: 8 },
   { id: 'clients_ap', title: 'Client per access point', views: ['overview'], w: 3, h: 5 },
