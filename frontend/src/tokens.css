@@ -13,7 +13,10 @@
   /* toni di gruppo (menu, sezioni): tenui, derivati dal primario e dai semantici */
   --blue: #0f6e8c; --teal: #1f8a80; --green: #2f8a4c; --violet: #6456a8; --pink: #a8456e; --amber: #b86e00; --orange: #b85a1f;
   --font: "Public Sans", system-ui, sans-serif; --font-mono: "IBM Plex Mono", ui-monospace, monospace;
-  --radius: 6px; --radius-s: 4px; --ctl: 32px; --shadow: none; --row-alt: #faf9f6;
+  --radius: 6px; --radius-s: 4px; --ctl: 32px; --row-alt: #faf9f6;
+  /* profondità delle card: ombra calda e corta, più marcata al passaggio del mouse */
+  --shadow: 0 1px 2px rgba(34, 32, 28, .07), 0 3px 10px rgba(34, 32, 28, .06);
+  --shadow-hover: 0 2px 4px rgba(34, 32, 28, .08), 0 8px 22px rgba(34, 32, 28, .10);
   --t-fast: 120ms; --t-base: 200ms;
   /* serie dei grafici, nell'ordine: letta da chartColors.ts */
   --series: #0f6e8c, #2f8a4c, #b86e00, #6456a8, #c23a3a, #1f8a80, #a8456e, #6b8f1d, #6a655c, #b85a1f;
@@ -26,7 +29,9 @@
   --good: #3ecf8e; --ok: #a3d65c; --weak: #f2b441; --bad: #f0616d;
   --blue: #22b8cf; --teal: #2dd4bf; --green: #3ecf8e; --violet: #a394f0; --pink: #f07aa8; --amber: #f2b441; --orange: #f59161;
   --font: "IBM Plex Sans", system-ui, sans-serif; --font-mono: "JetBrains Mono", ui-monospace, monospace;
-  --radius: 4px; --radius-s: 3px; --ctl: 32px; --shadow: none; --row-alt: #182431;
+  --radius: 4px; --radius-s: 3px; --ctl: 32px; --row-alt: #182431;
+  --shadow: 0 1px 2px rgba(0, 0, 0, .45), 0 4px 14px rgba(0, 0, 0, .28);
+  --shadow-hover: 0 2px 4px rgba(0, 0, 0, .5), 0 10px 26px rgba(0, 0, 0, .38);
   --series: #22b8cf, #3ecf8e, #f2b441, #a394f0, #f0616d, #2dd4bf, #f07aa8, #a3d65c, #8b9cb0, #f59161;
   color-scheme: dark;
 }
@@ -50,7 +55,13 @@ button:not(.primary):hover { border-color: var(--accent); }
 .icon-btn { width: var(--ctl); height: var(--ctl); border-radius: var(--radius); }
 
 /* superfici: bordo, niente ombre né sfumature */
-.card, .kpi, .widget, .site-section, .cmp-card { border-radius: var(--radius) !important; box-shadow: none !important; }
+.card, .kpi, .widget, .site-section, .cmp-card { border-radius: var(--radius) !important; box-shadow: var(--shadow) !important;
+  transition: box-shadow var(--t-base), border-color var(--t-base); }
+.card:hover, .widget:hover, .kpi:hover { box-shadow: var(--shadow-hover) !important; }
+/* le card dentro altre card restano piatte: l'ombra serve solo al primo livello */
+.card .card, .widget .card { box-shadow: none !important; }
+/* i riquadri degli indicatori restano in rilievo anche dentro il loro widget */
+.widget-body > .kpis .kpi { background: var(--surface) !important; border: 1px solid var(--border) !important; }
 .site-section { background: var(--surface) !important; }
 .kpi.rich { background: var(--surface) !important; border-color: var(--border) !important; }
 .dot { background: var(--accent) !important; box-shadow: none; border-radius: 2px; }
