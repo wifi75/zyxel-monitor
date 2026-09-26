@@ -90,6 +90,7 @@ const level = (pct: number | null) => pct == null ? '' : pct >= (data.value?.bus
 <style scoped>
 .band-block + .band-block { margin-top: 10px; }
 .trend { height: 150px; margin-top: 6px; }
+.trend :deep(.chart-box) { height: 100%; }
 .band-block h3 { margin: 0 0 4px; }
 table.compact td, table.compact th { padding: 4px 8px; }
 .util { display: inline-flex; align-items: center; gap: 6px; font-variant-numeric: tabular-nums; }
