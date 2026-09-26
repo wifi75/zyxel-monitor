@@ -278,8 +278,8 @@ export const api = {
   preview: (keys: string[] | null, radio: boolean) =>
     req<{ aps: PlanAp[] }>('/policy/preview', { method: 'POST', body: JSON.stringify({ keys, radio }) }),
   cancelPreview: () => req<{ ok: boolean }>('/policy/preview', { method: 'DELETE' }),
-  rollout: (keys: string[] | null, radio: boolean, firstAp: number | null) =>
-    req<{ ok: boolean; message: string }>('/policy/rollout', { method: 'POST', body: JSON.stringify({ keys, radio, first_ap: firstAp }) }),
+  rollout: (keys: string[] | null, radio: boolean, firstAp: number | null, direct = false) =>
+    req<{ ok: boolean; message: string }>('/policy/rollout', { method: 'POST', body: JSON.stringify({ keys, radio, first_ap: firstAp, direct }) }),
   backupAll: () => req<{ results: PolicyResult[] }>('/policy/backups', { method: 'POST' }),
   backups: () => req<Backup[]>('/policy/backups'),
   siteItems: () => req<SiteItem[]>('/policy/items'),

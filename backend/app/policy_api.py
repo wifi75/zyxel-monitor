@@ -182,6 +182,7 @@ class RolloutIn(BaseModel):
     keys: list[str] | None = None     # voci del sito da applicare; None = tutte quelle da mantenere
     radio: bool = False               # anche le regole radio (potenza, canale, larghezza)
     first_ap: int | None = None       # AP su cui provare per primo
+    direct: bool = False              # True = subito su tutti, senza prova (con backup)
 
 
 @router.get("/guard")
@@ -208,7 +209,7 @@ def preview_cancel():
 
 @router.post("/rollout")
 async def rollout(body: RolloutIn):
-    return await guard.start(set(body.keys) if body.keys is not None else None, body.radio, body.first_ap)
+    return await guard.start(set(body.keys) if body.keys is not None else None, body.radio, body.first_ap, body.direct)
 
 
 @router.post("/backups")

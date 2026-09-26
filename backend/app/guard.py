@@ -20,7 +20,7 @@ from .core.db import connect
 log = logging.getLogger("guard")
 
 ENABLED_KEY = "config_enabled"
-WAIT = 300          # secondi di osservazione dopo ogni passo
+WAIT = 120          # secondi di osservazione dopo ogni passo
 DROP = 0.30         # calo dei dispositivi collegati oltre il quale si ripristina
 HOLD = 600          # durata massima di un'anteprima aperta
 GUARD_REASON = "prova controllata"
@@ -212,17 +212,27 @@ async def _apply_quick(keys: set[str]) -> None:
                  else "Applicazione non riuscita su qualche AP")
 
 
-async def start(keys: set[str] | None, radio: bool, first_id: int | None) -> dict:
+async def _apply_direct(keys: set[str] | None, radio: bool) -> None:
+    """Senza prova: backup e invio su tutti gli AP insieme. Il backup resta per il ripristino a mano."""
+    results = [(await _apply(ap, keys, radio))[0] for ap in _targets()]
+    ok = all(r["ok"] for r in results)
+    state.update(status="done" if ok else "error", results=results,
+                 message="Applicato subito su tutti gli AP, senza prova (backup salvati)" if ok
+                 else "Applicazione non riuscita su qualche AP")
+    _event("Modifica applicata senza prova controllata")
+
+
+async def start(keys: set[str] | None, radio: bool, first_id: int | None, direct: bool = False) -> dict:
     global _task, _hold_until
     if state.get("status") == "running":
         return {"ok": False, "message": "C'è già una prova in corso"}
     if why := blocked(GUARD_REASON):
         return {"ok": False, "message": why}
     _hold_until = 0.0
-    if is_quick(keys, radio):
+    if is_quick(keys, radio) or direct:
         state.clear()
         state.update(status="running", phase="applicazione rapida", started=int(time.time()))
-        await _apply_quick(keys)
+        await (_apply_quick(keys) if is_quick(keys, radio) else _apply_direct(keys, radio))
         return {"ok": True, "message": state.get("message", "")}
     state.clear()
     state.update(status="running", started=int(time.time()))

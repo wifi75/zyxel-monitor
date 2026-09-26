@@ -87,12 +87,13 @@ async function cancelPlan() {
 const QUICK_KEYS = new Set(['led_off', 'scheduled_reboot', 'snmp_rw', 'ntp_server', 'hostname_sync'])
 const quickPlan = computed(() => !!plan.value && !plan.value.radio && !!plan.value.keys?.length
   && plan.value.keys.every(k => QUICK_KEYS.has(k)))
-async function startRollout() {
+async function startRollout(direct = false) {
   const p = plan.value
   if (!p) return
+  if (direct && !quickPlan.value && !window.confirm(t('Applicare subito a tutti gli AP senza prova? Viene salvato un backup, ma se qualche dispositivo si stacca non si torna indietro da soli.'))) return
   busy.value = 'apply'
   try {
-    const r = await api.rollout(p.keys, p.radio, firstAp.value)
+    const r = await api.rollout(p.keys, p.radio, firstAp.value, direct)
     if (!r.ok) error.value = t(r.message)
     plan.value = null
   } catch (e) { error.value = (e as Error).message } finally { busy.value = ''; await loadGuard() }
@@ -567,10 +568,12 @@ async function copyBackup() { copied.value = await copyText(shown.value?.text ??
         </div>
       </div>
       <p v-if="quickPlan" class="small muted">{{ t('Questa modifica non tocca il Wi-Fi: nessun dispositivo si stacca, quindi si applica subito a tutti gli AP senza prova.') }}</p>
-      <p v-else class="small muted">{{ t("L'AP selezionato riceve la modifica per primo. Dopo 5 minuti si contano i dispositivi collegati: se non sono calati si passa agli altri AP, altrimenti si torna al backup fatto subito prima.") }}</p>
+      <p v-else class="small muted">{{ t("L'AP selezionato riceve la modifica per primo. Dopo 2 minuti si contano i dispositivi collegati: se non sono calati si passa agli altri AP, altrimenti si torna al backup fatto subito prima.") }}</p>
       <div class="actions"><span class="grow" />
         <button class="ghost" :disabled="!!busy" @click="cancelPlan">{{ t('Annulla') }}</button>
-        <button class="primary" :disabled="!!busy || !plan.aps.some(a => a.commands.length)" @click="startRollout">
+        <button v-if="!quickPlan" class="ghost" :disabled="!!busy || !plan.aps.some(a => a.commands.length)" @click="startRollout(true)">
+          {{ t('Applica subito a tutti') }}</button>
+        <button class="primary" :disabled="!!busy || !plan.aps.some(a => a.commands.length)" @click="startRollout(quickPlan)">
           {{ quickPlan ? t('Applica subito') : t('Prova e poi applica a tutti') }}</button>
       </div>
     </section>
