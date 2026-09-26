@@ -2,6 +2,12 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) — versioni: [SemVer](https://semver.org/lang/it/).
 
+## [0.25.6] - 2026-09-26
+### Aggiunto
+- Esplora comandi chiede anche i valori ammessi per velocità minime, dispositivi solo 802.11b, multicast e soglia di distacco dei client deboli (per aggiungere la velocità minima in Configurazione).
+### Corretto
+- Climatizzatori riconosciuti come domotica anche con MAC privato.
+
 ## [0.25.5] - 2026-09-26
 ### Corretto
 - Prova controllata: mentre la modifica si estende agli altri AP si vede su quale si sta applicando, invece di un conto alla rovescia fermo a 0:00.
