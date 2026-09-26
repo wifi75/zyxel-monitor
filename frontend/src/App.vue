@@ -22,6 +22,7 @@ import AppLogo from './components/AppLogo.vue'
 import type { IconName } from './icons'
 import ChannelPlan from './components/ChannelPlan.vue'
 import FirmwareCard from './components/FirmwareCard.vue'
+import SplitBar from './components/SplitBar.vue'
 import TopologyMap from './components/TopologyMap.vue'
 
 // pagine di gestione caricate solo quando si aprono: la panoramica parte più leggera
@@ -501,7 +502,7 @@ const SSH_NA = "La CLI SSH di questo AP non fornisce ancora il dato: in Impostaz
 
           <template v-else-if="id === 'band'">
             <h2>{{ t('Client per banda') }}</h2>
-            <PieChart v-if="byBand.length" :items="byBand" />
+            <SplitBar v-if="byBand.length" :items="byBand" />
             <p v-else class="muted">{{ t('Nessun client.') }}</p>
           </template>
 

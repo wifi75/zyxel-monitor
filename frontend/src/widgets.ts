@@ -17,7 +17,7 @@ export const WIDGETS: WidgetDef[] = [
   { id: 'traffic_ap', title: 'Traffico per access point', views: ['overview'], w: 3, h: 5 },
   { id: 'blocked', title: 'Pubblicità e tracker bloccati', views: ['overview'], w: 3, h: 8 },
   { id: 'clients_ap', title: 'Client per access point', views: ['overview'], w: 3, h: 5 },
-  { id: 'band', title: 'Client per banda', views: ['overview', 'ap'], w: 3, h: 5 },
+  { id: 'band', title: 'Client per banda', views: ['overview', 'ap'], w: 3, h: 3, minH: 2 },
   { id: 'topology', title: 'Mappa della rete', views: ['overview'], w: 6, h: 7, minW: 4, minH: 5 },
   { id: 'channels', title: 'Piano dei canali', views: ['overview'], w: 6, h: 7, minW: 4, minH: 4 },
   { id: 'firmware', title: 'Firmware', views: ['overview'], w: 4, h: 6, minW: 3, minH: 4 },
