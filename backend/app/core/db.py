@@ -185,6 +185,8 @@ def connect():
 LATER_COLUMNS = {
     "ap_status": {"cpu_pct": "INTEGER", "mem_pct": "INTEGER"},
     "radio_policy": {"channel": "TEXT", "width": "TEXT"},
+    "devices": {"critical": "INTEGER NOT NULL DEFAULT 0"},     # dispositivo importante: avviso se si scollega
+    "users": {"role": "TEXT NOT NULL DEFAULT 'admin'"},         # admin | viewer (sola lettura)
 }
 
 

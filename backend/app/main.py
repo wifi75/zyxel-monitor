@@ -5,14 +5,17 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, Request
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from .alerts import router as alerts_router
 from .api import router
+from .backup import router as backup_router
+from .export_api import router as export_router
+from .users_api import router as users_router
 from .channels import router as channels_router
 from .core.db import init_db
-from .core.security import ensure_default_user
+from .core.security import ensure_default_user, read_token, role_of
 from .core.store import seed_from_env
 from .core.version import APP_AUTHOR, APP_NAME, APP_VERSION
 from .poller import run_forever
@@ -51,6 +54,25 @@ app.include_router(policy_router)
 app.include_router(alerts_router)
 app.include_router(channels_router)
 app.include_router(report_router)
+app.include_router(backup_router)
+app.include_router(export_router)
+app.include_router(users_router)
+
+# richieste che cambiano qualcosa ma restano permesse anche agli utenti in sola lettura
+VIEWER_WRITES = ("/api/login", "/api/password", "/api/layout")
+
+
+@app.middleware("http")
+async def read_only_users(request: Request, call_next):
+    """Gli utenti in sola lettura vedono tutto ma non possono modificare nulla (AP, impostazioni, dispositivi)."""
+    path = request.url.path
+    if request.method not in ("GET", "HEAD", "OPTIONS") and path.startswith("/api/") \
+            and not path.startswith(VIEWER_WRITES):
+        auth = request.headers.get("authorization", "")
+        user = read_token(auth[7:]) if auth.lower().startswith("bearer ") else None
+        if user and role_of(user) != "admin":
+            return JSONResponse({"detail": "Utente in sola lettura: non puoi modificare"}, status_code=403)
+    return await call_next(request)
 
 
 @app.middleware("http")

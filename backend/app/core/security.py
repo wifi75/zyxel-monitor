@@ -84,6 +84,12 @@ def read_token(token: str) -> str | None:
 _bearer = HTTPBearer(auto_error=False)
 
 
+def role_of(username: str) -> str:
+    with connect() as db:
+        row = db.execute("SELECT role FROM users WHERE username = ?", (username,)).fetchone()
+    return row["role"] if row else "viewer"
+
+
 def current_user(cred: HTTPAuthorizationCredentials | None = Depends(_bearer)) -> str:
     user = read_token(cred.credentials) if cred else None
     if not user:

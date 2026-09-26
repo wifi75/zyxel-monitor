@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field
 
 from .core.db import connect
 from .core.security import (
-    MIN_PASSWORD_LEN, create_token, current_user, hash_password, verify_password,
+    MIN_PASSWORD_LEN, create_token, current_user, hash_password, role_of, verify_password,
 )
 from .core.version import APP_AUTHOR, APP_NAME, APP_VERSION
 from .devices import device_type
@@ -82,7 +82,7 @@ def login(body: LoginIn):
 def me(user: str = Depends(current_user)):
     with connect() as db:
         row = db.execute("SELECT is_default FROM users WHERE username = ?", (user,)).fetchone()
-    return {"username": user, "default_password": bool(row and row["is_default"])}
+    return {"username": user, "default_password": bool(row and row["is_default"]), "role": role_of(user)}
 
 
 @router.post("/password")
