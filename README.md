@@ -36,7 +36,8 @@ how much traffic, which channels are crowded, when the Internet line dropped.
 - [Screenshots](#screenshots)
 - [How it works](#how-it-works)
 - [Compatible access points](#compatible-access-points)
-- [Installation](#installation-with-docker)
+- [Installation with Docker](#installation-with-docker)
+- [Installation on Linux without Docker](#installation-on-a-linux-server-without-docker)
 - [Configuration](#configuration-env)
 - [Security](#security)
 - [Development](#local-development)
@@ -205,6 +206,77 @@ updates it, and open pages reload by themselves).
 ### OPNsense prerequisites (optional)
 - *Unbound DNS*: statistics enabled;
 - an API key (*System → Access → Users → key icon*); the panel only reads.
+
+## Installation on a Linux server (without Docker)
+
+Tested layout for Debian 12/13 and Ubuntu 24.04; the panel runs as a `systemd` service under its own user.
+
+**1. Packages** — Python 3.11 or newer, the SNMP tools (`snmpget`, `snmpbulkwalk`), Git and Node.js 22 (only
+to build the interface):
+```bash
+sudo apt install -y python3 python3-venv snmp git curl
+curl -fsSL https://deb.nodesource.com/setup_22.x | sudo bash - && sudo apt install -y nodejs
+```
+
+**2. User and code**
+```bash
+sudo useradd --system --home /opt/zyxel-monitor --shell /usr/sbin/nologin zyxel
+sudo git clone https://github.com/wifi75/zyxel-monitor.git /opt/zyxel-monitor
+sudo chown -R zyxel: /opt/zyxel-monitor
+cd /opt/zyxel-monitor
+```
+
+**3. Backend, interface and vendor list**
+```bash
+sudo -u zyxel python3 -m venv .venv
+sudo -u zyxel .venv/bin/pip install -r backend/requirements.txt
+sudo -u zyxel sh -c 'cd frontend && npm ci && npm run build'
+sudo -u zyxel ln -sfn ../frontend/dist backend/static
+# MAC vendors (optional): the IEEE site refuses clients without a browser User-Agent
+sudo -u zyxel curl -fsSL -A 'Mozilla/5.0' -o backend/oui.csv https://standards-oui.ieee.org/oui/oui.csv
+```
+
+**4. Configuration** — copy the example and fill in at least the APs and the passwords:
+```bash
+sudo -u zyxel cp .env.example .env && sudo -u zyxel nano .env
+sudo chmod 600 .env
+```
+Add `DB_PATH=/opt/zyxel-monitor/data/monitor.db` to keep the database in a fixed place.
+
+**5. Service** — `/etc/systemd/system/zyxel-monitor.service`:
+```ini
+[Unit]
+Description=Zyxel Monitor
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=zyxel
+WorkingDirectory=/opt/zyxel-monitor/backend
+EnvironmentFile=/opt/zyxel-monitor/.env
+ExecStart=/opt/zyxel-monitor/.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+```
+```bash
+sudo systemctl daemon-reload && sudo systemctl enable --now zyxel-monitor
+journalctl -u zyxel-monitor -f          # log
+```
+The dashboard answers on `http://<server-ip>:8000`. The server must be on the same LAN as the APs (the panel
+reads the ARP table to find IPs). For HTTPS put a reverse proxy in front, as described under [Security](#security).
+
+**Update to a new version**
+```bash
+cd /opt/zyxel-monitor
+sudo -u zyxel git pull
+sudo -u zyxel .venv/bin/pip install -r backend/requirements.txt
+sudo -u zyxel sh -c 'cd frontend && npm ci && npm run build'
+sudo systemctl restart zyxel-monitor
+```
+Open pages reload by themselves once the new version is up.
 
 ## Configuration (`.env`)
 

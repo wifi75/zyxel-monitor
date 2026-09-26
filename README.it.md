@@ -199,6 +199,78 @@ redeploy* lo aggiorna e le pagine aperte si ricaricano da sole.
 - *Unbound DNS*: statistiche attive;
 - una chiave API (*System → Access → Users → icona chiave*); il pannello legge soltanto.
 
+## Installazione su un server Linux (senza Docker)
+
+Procedura per Debian 12/13 e Ubuntu 24.04; il pannello gira come servizio `systemd` con un utente dedicato.
+
+**1. Pacchetti** — Python 3.11 o più recente, gli strumenti SNMP (`snmpget`, `snmpbulkwalk`), Git e Node.js 22
+(serve solo per compilare l'interfaccia):
+```bash
+sudo apt install -y python3 python3-venv snmp git curl
+curl -fsSL https://deb.nodesource.com/setup_22.x | sudo bash - && sudo apt install -y nodejs
+```
+
+**2. Utente e codice**
+```bash
+sudo useradd --system --home /opt/zyxel-monitor --shell /usr/sbin/nologin zyxel
+sudo git clone https://github.com/wifi75/zyxel-monitor.git /opt/zyxel-monitor
+sudo chown -R zyxel: /opt/zyxel-monitor
+cd /opt/zyxel-monitor
+```
+
+**3. Backend, interfaccia ed elenco dei produttori**
+```bash
+sudo -u zyxel python3 -m venv .venv
+sudo -u zyxel .venv/bin/pip install -r backend/requirements.txt
+sudo -u zyxel sh -c 'cd frontend && npm ci && npm run build'
+sudo -u zyxel ln -sfn ../frontend/dist backend/static
+# produttori dal MAC (facoltativo): il sito IEEE rifiuta le richieste senza User-Agent da browser
+sudo -u zyxel curl -fsSL -A 'Mozilla/5.0' -o backend/oui.csv https://standards-oui.ieee.org/oui/oui.csv
+```
+
+**4. Configurazione** — copia l'esempio e compila almeno gli AP e le password:
+```bash
+sudo -u zyxel cp .env.example .env && sudo -u zyxel nano .env
+sudo chmod 600 .env
+```
+Aggiungi `DB_PATH=/opt/zyxel-monitor/data/monitor.db` per tenere il database in un posto fisso.
+
+**5. Servizio** — `/etc/systemd/system/zyxel-monitor.service`:
+```ini
+[Unit]
+Description=Zyxel Monitor
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=zyxel
+WorkingDirectory=/opt/zyxel-monitor/backend
+EnvironmentFile=/opt/zyxel-monitor/.env
+ExecStart=/opt/zyxel-monitor/.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+```
+```bash
+sudo systemctl daemon-reload && sudo systemctl enable --now zyxel-monitor
+journalctl -u zyxel-monitor -f          # log
+```
+La dashboard risponde su `http://<ip-server>:8000`. Il server deve stare nella stessa LAN degli AP (il pannello
+legge la tabella ARP per trovare gli IP). Per l'HTTPS serve un reverse proxy davanti, come descritto in
+[Sicurezza](#sicurezza).
+
+**Aggiornare a una nuova versione**
+```bash
+cd /opt/zyxel-monitor
+sudo -u zyxel git pull
+sudo -u zyxel .venv/bin/pip install -r backend/requirements.txt
+sudo -u zyxel sh -c 'cd frontend && npm ci && npm run build'
+sudo systemctl restart zyxel-monitor
+```
+Le pagine aperte si ricaricano da sole quando la versione nuova è attiva.
+
 ## Configurazione (`.env`)
 
 Dopo il primo avvio AP, credenziali e OPNsense si gestiscono dal pannello (stanno nel database); il `.env`
