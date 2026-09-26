@@ -2,6 +2,12 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) — versioni: [SemVer](https://semver.org/lang/it/).
 
+## [0.29.5] - 2026-09-26
+### Documentazione
+- README: installazione su un server Linux senza Docker, come servizio `systemd`, con aggiornamento.
+- README: schema del funzionamento come immagine (inglese e italiano) al posto del diagramma Mermaid.
+- README italiano con la riga completa di badge; badge delle lingue dell'interfaccia.
+
 ## [0.29.4] - 2026-09-26
 ### Aggiunto
 - README: sezione sugli access point compatibili (provati sul campo e attesi compatibili, dalle famiglie NWA/WAC/WAX/WBE) e su come aggiungerne uno.

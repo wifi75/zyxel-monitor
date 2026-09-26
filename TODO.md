@@ -17,6 +17,7 @@
 - [x] Giro delle schede sul tema chiaro da computer, con i dati dimostrativi (v0.29.3).
 - [ ] Revisione sul tema scuro e su smartphone, con i dati reali.
 - [ ] Rendere stabili i canali 1/6/11 e il rifiuto 802.11b impostandoli anche in Nebula (oggi solo nella running-config).
+- [ ] Provare l'installazione Linux senza Docker descritta nel README su un server vero (es. VM claude-ops).
 - [ ] Wi-Fi 7: banda 6 GHz e canali da 320 MHz non configurabili; provare un modello «dovrebbe funzionare» se capita.
 - [ ] Output CLI di GIARDINO (NWA1123-AC PRO, fw 6.x) per verificare i lettori su quel modello.
 - [x] Client per banda in Panoramica, carico dei canali per AP, produttore dal MAC (v0.25.0).
