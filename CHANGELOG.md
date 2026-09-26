@@ -2,6 +2,15 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) — versioni: [SemVer](https://semver.org/lang/it/).
 
+## [0.29.1] - 2026-09-26
+### Aggiunto
+- README in inglese (principale) e in italiano (`README.it.md`), con screenshot e una sezione su come funziona tutto: ciclo di lettura, fonti dei dati, gestione con prova controllata, avvisi.
+- Modalità dimostrativa (`ZM_DEMO=1`) con una casa inventata (`scripts/demo_data.py`) e script degli screenshot (`scripts/screenshots.py`).
+### Corretto
+- Indicatori: la mini-linea sta sul fondo del riquadro e non copre più il numero; etichette lunghe su due righe.
+- Tipi di dispositivo tradotti in inglese; l'icona dei widget non copre più il titolo di Internet; titoli lunghi accorciati invece di finire sul contenuto.
+- Pagina Dispositivi: niente più tabella oltre il bordo con produttori dal nome lungo.
+
 ## [0.29.0] - 2026-09-26
 ### Modificato
 - Intestazione dell'AP: pallino di stato, nome grande, modello e una tessera per banda con canale, client e occupazione colorata; cliccandola si aprono i dispositivi di quella banda.
