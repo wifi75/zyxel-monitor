@@ -83,6 +83,10 @@ async function cancelPlan() {
   try { for (const undo of p.revert) await undo(); await api.cancelPreview() }
   catch (e) { error.value = (e as Error).message } finally { busy.value = ''; await load() }
 }
+/** voci di sistema che non toccano il Wi-Fi: si applicano subito, senza prova (come sul server) */
+const QUICK_KEYS = new Set(['led_off', 'scheduled_reboot', 'snmp_rw', 'ntp_server', 'hostname_sync'])
+const quickPlan = computed(() => !!plan.value && !plan.value.radio && !!plan.value.keys?.length
+  && plan.value.keys.every(k => QUICK_KEYS.has(k)))
 async function startRollout() {
   const p = plan.value
   if (!p) return
@@ -562,11 +566,12 @@ async function copyBackup() { copied.value = await copyText(shown.value?.text ??
           </div>
         </div>
       </div>
-      <p class="small muted">{{ t("L'AP selezionato riceve la modifica per primo. Dopo 5 minuti si contano i dispositivi collegati: se non sono calati si passa agli altri AP, altrimenti si torna al backup fatto subito prima.") }}</p>
+      <p v-if="quickPlan" class="small muted">{{ t('Questa modifica non tocca il Wi-Fi: nessun dispositivo si stacca, quindi si applica subito a tutti gli AP senza prova.') }}</p>
+      <p v-else class="small muted">{{ t("L'AP selezionato riceve la modifica per primo. Dopo 5 minuti si contano i dispositivi collegati: se non sono calati si passa agli altri AP, altrimenti si torna al backup fatto subito prima.") }}</p>
       <div class="actions"><span class="grow" />
         <button class="ghost" :disabled="!!busy" @click="cancelPlan">{{ t('Annulla') }}</button>
         <button class="primary" :disabled="!!busy || !plan.aps.some(a => a.commands.length)" @click="startRollout">
-          {{ t('Prova e poi applica a tutti') }}</button>
+          {{ quickPlan ? t('Applica subito') : t('Prova e poi applica a tutti') }}</button>
       </div>
     </section>
 

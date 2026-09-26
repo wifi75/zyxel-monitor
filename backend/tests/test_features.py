@@ -161,3 +161,25 @@ def test_wifi_generation_from_model():
     assert generation("WAC6103D-I") == 5
     assert generation("NWA50BE PRO") == 7 and generation("WBE660S") == 7
     assert "20/40/80/160" in of_model("WBE660S")["widths"]["5GHz"]
+
+
+def test_radio_sends_only_what_changes():
+    from app.config_items import RunningConfig
+    from app.policy import radio_diff, radio_now
+    cfg = RunningConfig("wlan slot1\n ap profile R2\n output-power 30dBm\n!\nwlan slot2\n ap profile R5\n output-power 30dBm\n!\n"
+                        "wlan-radio-profile R2\n 2g-channel 11\n ch-width 20\n!\nwlan-radio-profile R5\n dcs activate\n"
+                        " ch-width 20/40/80\n!\n")
+    same = {"tx_power": 30, "channel": "11", "width": "20"}
+    assert radio_diff(same, radio_now(cfg, "2.4GHz")) == {}
+    # solo la larghezza del 5 GHz cambia: niente potenza né canale
+    assert radio_diff({"tx_power": 30, "channel": "auto", "width": "20/40/80/160"}, radio_now(cfg, "5GHz")) == \
+        {"width": "20/40/80/160"}
+    assert radio_diff({"tx_power": 30, "channel": "auto", "width": "80"}, radio_now(cfg, "5GHz")) == {}
+
+
+def test_only_system_settings_skip_the_trial():
+    from app.guard import is_quick
+    assert is_quick({"led_off"}, radio=False)
+    assert not is_quick({"led_off", "wifi_password"}, radio=False)
+    assert not is_quick({"led_off"}, radio=True)
+    assert not is_quick(None, radio=False)

@@ -196,6 +196,22 @@ async def _run(keys: set[str] | None, radio: bool, first_id: int | None) -> None
     _event("Modifica applicata con prova controllata" + (f"; non rientrati: {', '.join(lost)}" if lost else ""))
 
 
+# voci di sistema che non toccano il Wi-Fi: nessun dispositivo si stacca, quindi niente prova né attesa
+QUICK_KEYS = {"led_off", "scheduled_reboot", "snmp_rw", "ntp_server", "hostname_sync"}
+
+
+def is_quick(keys: set[str] | None, radio: bool) -> bool:
+    return not radio and bool(keys) and keys <= QUICK_KEYS
+
+
+async def _apply_quick(keys: set[str]) -> None:
+    results = [await site_config.apply_ap(ap, reason=GUARD_REASON, only=keys) for ap in _targets()]
+    ok = all(r["ok"] for r in results)
+    state.update(status="done" if ok else "error", results=results,
+                 message="Applicato subito su tutti gli AP (voce che non stacca i dispositivi)" if ok
+                 else "Applicazione non riuscita su qualche AP")
+
+
 async def start(keys: set[str] | None, radio: bool, first_id: int | None) -> dict:
     global _task, _hold_until
     if state.get("status") == "running":
@@ -203,6 +219,11 @@ async def start(keys: set[str] | None, radio: bool, first_id: int | None) -> dic
     if why := blocked(GUARD_REASON):
         return {"ok": False, "message": why}
     _hold_until = 0.0
+    if is_quick(keys, radio):
+        state.clear()
+        state.update(status="running", phase="applicazione rapida", started=int(time.time()))
+        await _apply_quick(keys)
+        return {"ok": True, "message": state.get("message", "")}
     state.clear()
     state.update(status="running", started=int(time.time()))
 

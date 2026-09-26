@@ -22,6 +22,9 @@ addEn({
   'Nebula': 'Nebula',
   'Cloud Zyxel (licenza Pro)': 'Zyxel cloud (Pro license)',
   'Il mio account': 'My account',
+  'Questa modifica non tocca il Wi-Fi: nessun dispositivo si stacca, quindi si applica subito a tutti gli AP senza prova.':
+    'This change does not touch Wi-Fi: no device disconnects, so it is applied to all APs at once without a trial.',
+  'Applica subito': 'Apply now',
   'Dati in raccolta': 'Collecting data',
   'Servono alcuni minuti dopo l’avvio.': 'It takes a few minutes after start-up.',
   'Apri Configurazione': 'Open Configuration',
