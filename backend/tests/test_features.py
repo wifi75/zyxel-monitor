@@ -132,3 +132,16 @@ def test_legacy_reject_read_and_commands():
     item = BY_KEY["legacy_reject"]
     assert item.read(cfg) is True
     assert item.build(False, cfg) == ["wlan-radio-profile R2", "no reject-legacy-station", "exit"]
+
+
+def test_critical_device_alert_after_five_minutes_and_on_return():
+    from app.alerts import critical_changes
+    rows = [{"mac": "aa", "name": "inverter", "last_seen": 1000, "ap": "GARAGE"}]
+    lines, still = critical_changes(rows, online=set(), alerted=set(), now=1200)
+    assert not lines and not still                       # solo 200 s: si aspetta
+    lines, still = critical_changes(rows, online=set(), alerted=set(), now=1400)
+    assert "scollegato" in lines[0] and still == {"aa"}
+    lines, still = critical_changes(rows, online=set(), alerted=still, now=2000)
+    assert not lines                                     # già avvisato: niente ripetizioni
+    lines, still = critical_changes(rows, online={"aa"}, alerted=still, now=2100)
+    assert "di nuovo collegato" in lines[0] and not still

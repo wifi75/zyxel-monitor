@@ -2,6 +2,43 @@ import { addEn } from './index'
 
 // avvisi, report, mappa, canali, firmware, storico dispositivo
 addEn({
+  // utenti
+  'Utente {n} creato.': 'User {n} created.',
+  'Eliminare l’utente {n}?': 'Delete user {n}?',
+  'Utenti': 'Users',
+  'Gli utenti in sola lettura vedono dashboard, dispositivi e report, ma non possono cambiare AP, impostazioni o configurazione.':
+    'Read-only users see dashboard, devices and reports, but cannot change APs, settings or configuration.',
+  'amministratore': 'administrator',
+  'sola lettura': 'read-only',
+  'Nome utente': 'Username',
+  'Password (min. 10 caratteri)': 'Password (min. 10 characters)',
+  'Aggiungi utente': 'Add user',
+  'Sei entrato in sola lettura: puoi guardare tutto ma non modificare.': 'You are signed in read-only: you can look at everything but not change it.',
+  // backup
+  'Backup del database': 'Database backup',
+  'Scarica adesso': 'Download now',
+  'Storico, dispositivi, impostazioni e backup degli AP stanno in un solo file. Ogni notte dopo le 3 se ne salva una copia; si tengono le ultime {n}.':
+    'History, devices, settings and AP backups live in a single file. Every night after 3 a copy is saved; the last {n} are kept.',
+  'Per tenerle fuori da Docker, in Portainer monta una cartella del NAS su questo percorso:':
+    'To keep them outside Docker, mount a NAS folder on this path in Portainer:',
+  'Nessuna copia notturna ancora.': 'No nightly copy yet.',
+  // canali consigliati
+  'Accendi prima la gestione dal pannello in Configurazione.': 'First turn on panel management in Configuration.',
+  'Impostare questi canali con la prova controllata?': 'Set these channels with the controlled trial?',
+  'Prova avviata: segui l’esito in Configurazione.': 'Trial started: follow the result in Configuration.',
+  'Applica i canali consigliati': 'Apply suggested channels',
+  'Con la prova controllata: prima un AP, poi gli altri se i dispositivi restano collegati. Ricordati di impostarli anche in Nebula.':
+    'With the controlled trial: one AP first, then the others if devices stay connected. Remember to set them in Nebula too.',
+  // dispositivi
+  'Esporta CSV': 'Export CSV',
+  'Esporta CSV (30 giorni)': 'Export CSV (30 days)',
+  'Scollegamenti e cambi di AP nelle ultime 24 ore': 'Disconnections and AP changes in the last 24 hours',
+  'Dispositivo importante': 'Important device',
+  'importante': 'important',
+  '{d} scollegamenti, {r} cambi di AP nelle ultime 24 ore': '{d} disconnections, {r} AP changes in the last 24 hours',
+  'Importante: avviso su Telegram se resta scollegato. Clicca per togliere.': 'Important: Telegram alert if it stays disconnected. Click to remove.',
+  'Segna come importante: avviso su Telegram se resta scollegato': 'Mark as important: Telegram alert if it stays disconnected',
+  'Dispositivi importanti scollegati': 'Important devices disconnected',
   // avvisi
   'Salvato.': 'Saved.',
   'Togliere il token del bot? Gli avvisi si fermano.': 'Remove the bot token? Alerts will stop.',
