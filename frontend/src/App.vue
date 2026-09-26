@@ -261,10 +261,8 @@ async function rename(c: { mac: string; alias: string | null; hostname: string |
 }
 
 // ---- cambio password ----
-/** "Cambia password" apre Impostazioni → Il mio account */
+/** il banner della password predefinita apre Impostazioni → Il mio account */
 function openAccount() { settingsSection.value = 'account'; view.value = '#settings' }
-/** "Impostazioni" dal menu: se era aperto l'account si torna alla prima sezione */
-function openSettings() { if (settingsSection.value === 'account') settingsSection.value = 'opnsense'; view.value = '#settings' }
 async function refreshMe() {
   try { defaultPassword.value = (await api.me()).default_password } catch { /* resta com'era */ }
 }
@@ -317,11 +315,8 @@ const SSH_NA = "La CLI SSH di questo AP non fornisce ancora il dato: in Impostaz
 
       <div class="nav-group tone-teal">
         <div class="nav-title">{{ t('Sistema') }}</div>
-        <button class="nav-item" :class="{ active: view === '#settings' && settingsSection !== 'account' }" @click="openSettings">
+        <button class="nav-item" :class="{ active: view === '#settings' }" @click="view = '#settings'">
           <span class="nav-ico"><Icon name="gear" :size="17" /></span><span class="grow">{{ t('Impostazioni') }}</span>
-        </button>
-        <button class="nav-item" :class="{ active: view === '#settings' && settingsSection === 'account' }" @click="openAccount">
-          <span class="nav-ico"><Icon name="key" :size="17" /></span><span class="grow">{{ t('Cambia password') }}</span>
         </button>
       </div>
 
