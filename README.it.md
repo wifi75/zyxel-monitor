@@ -13,7 +13,7 @@
 [![Docker](https://img.shields.io/badge/Deploy-Docker-2496ED?logo=docker&logoColor=white)](docker-compose.yml)
 [![Fonti](https://img.shields.io/badge/Fonti-SNMP%20%7C%20SSH%20%7C%20OPNsense-5A6B7B)](#da-dove-arrivano-i-dati)
 [![API](https://img.shields.io/badge/API-76%20endpoint-0A7EA4)](backend/app/api.py)
-[![Test](https://img.shields.io/badge/Tests-40%20pytest-0A9EDC?logo=pytest&logoColor=white)](backend/tests)
+[![Test](https://img.shields.io/badge/Test-43%20pytest-0A9EDC?logo=pytest&logoColor=white)](backend/tests)
 [![Lint](https://img.shields.io/badge/Lint-ruff-D7FF64?logo=ruff&logoColor=black)](ruff.toml)
 [![SemVer](https://img.shields.io/badge/SemVer-2.0.0-blue)](https://semver.org/lang/it/)
 [![Keep a Changelog](https://img.shields.io/badge/Changelog-Keep%20a%20Changelog-E05735)](CHANGELOG.md)
@@ -105,6 +105,11 @@ scrive mai sugli AP. Quando accendi la gestione (pagina Configurazione):
 - **Anteprima** — prima di inviare qualsiasi cosa vedi i comandi esatti per ogni AP (password mascherate).
 - **Prova controllata** — la modifica va prima su un AP; dopo 2 minuti il pannello confronta i dispositivi
   collegati a tutto il sito. Solo se non sono calati la estende agli altri AP, e poi ricontrolla.
+- **Solo ciò che cambia** — il pannello legge la configurazione attuale di ogni AP e invia solo le voci
+  diverse, solo agli AP interessati: rimandare valori già giusti farebbe ripartire le radio per niente.
+- **Applica subito** — le voci di sistema che non toccano il Wi-Fi (LED, riavvio programmato, NTP, SNMP, nome
+  dell'AP) si applicano subito. Per tutto il resto l'anteprima offre anche *Applica subito a tutti*, senza
+  prova (il backup di ogni AP viene salvato lo stesso).
 - **Ripristino automatico** — se i dispositivi collegati calano oltre il 30%, ogni AP toccato torna al backup
   fatto subito prima e va in pausa. I dispositivi che non sono rientrati vengono elencati.
 - **Capacità per AP** — larghezze, WPA3 e opzioni si propongono solo dove il modello le supporta; alcune voci

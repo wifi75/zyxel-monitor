@@ -13,7 +13,7 @@
 [![Docker](https://img.shields.io/badge/Deploy-Docker-2496ED?logo=docker&logoColor=white)](docker-compose.yml)
 [![Sources](https://img.shields.io/badge/Sources-SNMP%20%7C%20SSH%20%7C%20OPNsense-5A6B7B)](#where-the-data-comes-from)
 [![API](https://img.shields.io/badge/API-76%20endpoints-0A7EA4)](backend/app/api.py)
-[![Tests](https://img.shields.io/badge/Tests-40%20pytest-0A9EDC?logo=pytest&logoColor=white)](backend/tests)
+[![Tests](https://img.shields.io/badge/Tests-43%20pytest-0A9EDC?logo=pytest&logoColor=white)](backend/tests)
 [![Lint](https://img.shields.io/badge/Lint-ruff-D7FF64?logo=ruff&logoColor=black)](ruff.toml)
 [![SemVer](https://img.shields.io/badge/SemVer-2.0.0-blue)](https://semver.org)
 [![Keep a Changelog](https://img.shields.io/badge/Changelog-Keep%20a%20Changelog-E05735)](CHANGELOG.md)
@@ -115,6 +115,12 @@ APs. When you switch management on (Configuration page):
 - **Controlled trial** — the change goes to one AP first; after 2 minutes the panel compares the devices
   connected to the whole site. Only if they did not drop does it extend the change to the other APs, and
   then checks again.
+- **Only what changes** — the panel reads each AP's running configuration and sends only the settings that
+  differ, only to the APs concerned: re-sending values that are already right would restart the radios for
+  nothing.
+- **Apply now** — system settings that do not touch Wi-Fi (LEDs, scheduled reboot, NTP, SNMP, AP name) are
+  applied at once. For everything else the preview also offers *Apply to all now*, without the trial (a
+  backup of each AP is still saved).
 - **Automatic rollback** — if connected devices drop by more than 30 %, every AP that was touched goes back
   to the backup taken right before, and is paused. Devices that did not come back are listed.
 - **Capabilities per AP** — widths, WPA3 and options are offered only where the model supports them; some

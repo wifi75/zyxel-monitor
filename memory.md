@@ -47,6 +47,7 @@
 - Capacità per modello in `capabilities.py`: Wi-Fi 6 = modelli "AX" (160 MHz, WPA3); Wi-Fi 5 fino a 80 MHz e solo WPA2. Voci assenti nella config di un AP = "non disponibile", mai inviate.
 - Firmware 6.x (WAC6103D-I V6.28, output reale del 2026-09-25): password in chiaro su `wpa-psk` (7.x: `encrypted-wpa-psk`), orari come `mon enable 04:00-22:00` nel profilo SSID. Nebula ha `rssi-kickout -70` (Smart steering) e `dot11r activate`: sospetti per l'inverter.
 - In solo monitoraggio la colonna Sito mostra il valore comune degli AP (quello di Nebula) e il ✓/⚠ confronta gli AP fra loro.
+- v0.31.2 (2026-09-26): niente più `window.confirm/prompt` — conferme e richieste passano da `dialog.ts` (`ask`, `askText`) e `AppDialog.vue`, montato in `App.vue`; la conferma di «Applica subito a tutti» è dentro l'anteprima.
 - v0.31.0 (2026-09-26): «Applica subito a tutti» (`guard.start(direct=True)`, backup sì, osservazione no) su richiesta di Tiziano, che trovava lenta la prova a ogni modifica; `guard.WAIT` 120 s.
 - v0.30.0 (2026-09-26): `policy.apply_ap` confronta con la running-config (`radio_diff`) e manda solo le differenze; prima rimandava potenza/canale/larghezza a tutti gli AP a ogni modifica. `guard.QUICK_KEYS` = voci di sistema applicate senza prova.
 - v0.29.5 (2026-09-26): solo documentazione — installazione Linux con systemd nei README (non ancora provata su un server vero), schema `docs/architecture.svg` / `docs/architettura.svg` generato a mano come SVG.
