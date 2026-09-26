@@ -2,6 +2,13 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) — versioni: [SemVer](https://semver.org/lang/it/).
 
+## [0.28.5] - 2026-09-26
+### Modificato
+- Client per banda: cliccando 2.4 GHz o 5 GHz nella legenda compare l'elenco dei dispositivi di quella banda, con segnale e AP.
+- Roaming: al posto della tabella «arrivano da / vanno verso», un elenco per dispositivo con numero di spostamenti, fra quali AP e chi rimbalza, più una riga che spiega quando preoccuparsi.
+- Dispositivi per tipologia: barra compatta quando i tipi sono al massimo 4, ciambella solo quando sono di più.
+- Tipo del dispositivo dedotto anche dal produttore del MAC quando il nome non basta (Espressif, Tuya, Amazon, Hikvision…): meno «Altro».
+
 ## [0.28.4] - 2026-09-26
 ### Aggiunto
 - Il riquadro «Client connessi» è cliccabile: porta all'elenco dei client dell'AP o di tutto il sito.

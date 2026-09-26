@@ -10,7 +10,7 @@
 [![Docker](https://img.shields.io/badge/Deploy-Docker-2496ED?logo=docker&logoColor=white)](docker-compose.yml)
 [![Fonti](https://img.shields.io/badge/Fonti-SNMP%20%7C%20SSH%20%7C%20OPNsense-5A6B7B)](#come-legge-i-dati)
 [![API](https://img.shields.io/badge/API-76%20endpoint-0A7EA4)](backend/app/api.py)
-[![Test](https://img.shields.io/badge/Test-39%20pytest-0A9EDC?logo=pytest&logoColor=white)](backend/tests)
+[![Test](https://img.shields.io/badge/Test-40%20pytest-0A9EDC?logo=pytest&logoColor=white)](backend/tests)
 [![Lint](https://img.shields.io/badge/Lint-ruff-D7FF64?logo=ruff&logoColor=black)](ruff.toml)
 [![SemVer](https://img.shields.io/badge/SemVer-2.0.0-blue)](https://semver.org/lang/it/)
 [![Keep a Changelog](https://img.shields.io/badge/Changelog-Keep%20a%20Changelog-E05735)](CHANGELOG.md)
