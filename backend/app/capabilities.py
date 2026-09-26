@@ -21,10 +21,12 @@ CREATABLE = {"guest_name", "guest_password", "wifi_schedule", "mac_block", "ntp_
 
 
 def generation(model: str | None) -> int | None:
-    """6 per i modelli "AX" (Wi-Fi 6), 5 per gli "AC"/WAC, None se il modello non è noto."""
+    """7 per i modelli "BE" (NWA50BE, WBE660S…), 6 per gli "AX", 5 per gli "AC"/WAC, None se non è noto."""
     m = (model or "").upper()
     if not m:
         return None
+    if "BE" in m.replace("-", ""):
+        return 7
     if "AX" in m:
         return 6
     return 5
@@ -32,8 +34,10 @@ def generation(model: str | None) -> int | None:
 
 def of_model(model: str | None) -> dict:
     gen = generation(model)
-    return {"model": model, "wifi": gen, "widths": WIDTHS_WIFI6 if gen == 6 else WIDTHS_WIFI5,
-            "choices": CHOICES_WIFI6 if gen == 6 else CHOICES_WIFI5}
+    # Wi-Fi 7 sulle bande 2.4/5 GHz ha le stesse larghezze e la stessa sicurezza del Wi-Fi 6
+    modern = gen is not None and gen >= 6
+    return {"model": model, "wifi": gen, "widths": WIDTHS_WIFI6 if modern else WIDTHS_WIFI5,
+            "choices": CHOICES_WIFI6 if modern else CHOICES_WIFI5}
 
 
 def models() -> dict[str, str | None]:

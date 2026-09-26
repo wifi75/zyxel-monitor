@@ -153,3 +153,11 @@ def test_type_from_vendor_when_name_says_nothing(monkeypatch):
     monkeypatch.setattr(oui, "vendor", lambda mac: "Espressif")
     assert device_type("lwip0", "24:62:ab:d7:1b:bc") == "Microcontrollori"
     assert device_type("shelly-cancello", "24:62:ab:d7:1b:bc") == "Domotica"   # il nome vale di più
+
+
+def test_wifi_generation_from_model():
+    from app.capabilities import generation, of_model
+    assert generation("NWA50AX PRO") == 6
+    assert generation("WAC6103D-I") == 5
+    assert generation("NWA50BE PRO") == 7 and generation("WBE660S") == 7
+    assert "20/40/80/160" in of_model("WBE660S")["widths"]["5GHz"]
