@@ -2,6 +2,10 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) — versioni: [SemVer](https://semver.org/lang/it/).
 
+## [0.31.1] - 2026-09-26
+### Modificato
+- «Applica subito a tutti»: la conferma compare dentro l'anteprima, accanto ai pulsanti, invece della finestra del browser in cima alla pagina.
+
 ## [0.31.0] - 2026-09-26
 ### Aggiunto
 - Anteprima delle modifiche: pulsante «Applica subito a tutti», senza prova controllata (il backup di ogni AP viene salvato lo stesso).
