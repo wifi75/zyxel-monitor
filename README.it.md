@@ -69,25 +69,7 @@ app sul telefono (PWA, in HTTPS).
 
 ## Come funziona
 
-```mermaid
-flowchart LR
-  subgraph LAN
-    AP1["AP (SSH)<br/>NWA50AX PRO"]
-    AP2["AP (SNMP o SSH)<br/>WAC6103D-I · NWA1123-AC PRO"]
-    OPN["OPNsense<br/>DHCP · DNS · gateway · NetFlow"]
-  end
-  subgraph "Zyxel Monitor (Docker)"
-    P["Lettura<br/>ogni 60 s"] --> DB[("SQLite")]
-    DB --> API["FastAPI<br/>/api/..."]
-    API --> UI["Dashboard Vue 3"]
-    G["Protezioni<br/>prova + ripristino"] -->|comandi SSH| AP1
-    AL["Avvisi"] --> TG["Telegram"]
-  end
-  AP1 -->|output della CLI| P
-  AP2 -->|SNMP / CLI| P
-  OPN -->|API REST, sola lettura| P
-  DB --> AL
-```
+![Come funziona Zyxel Monitor: legge AP e OPNsense, salva in SQLite, serve la dashboard e manda gli avvisi](docs/architettura.svg)
 
 ### Il ciclo di lettura
 Ogni `POLL_INTERVAL` secondi (60 di default) il pannello:

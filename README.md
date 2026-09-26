@@ -78,25 +78,7 @@ widgets), read-only users, CSV export, nightly database backup, installable as a
 
 ## How it works
 
-```mermaid
-flowchart LR
-  subgraph LAN
-    AP1["AP (SSH)<br/>NWA50AX PRO"]
-    AP2["AP (SNMP or SSH)<br/>WAC6103D-I · NWA1123-AC PRO"]
-    OPN["OPNsense<br/>DHCP · DNS · gateways · NetFlow"]
-  end
-  subgraph "Zyxel Monitor (Docker)"
-    P["Poller<br/>every 60 s"] --> DB[("SQLite")]
-    DB --> API["FastAPI<br/>/api/..."]
-    API --> UI["Vue 3 dashboard"]
-    G["Guard<br/>trial + rollback"] -->|SSH commands| AP1
-    AL["Alerts"] --> TG["Telegram"]
-  end
-  AP1 -->|CLI output| P
-  AP2 -->|SNMP / CLI| P
-  OPN -->|REST API, read-only| P
-  DB --> AL
-```
+![How Zyxel Monitor works: it reads the APs and OPNsense, stores in SQLite, serves the dashboard and sends alerts](docs/architecture.svg)
 
 ### The polling cycle
 Every `POLL_INTERVAL` seconds (60 by default) the poller:
