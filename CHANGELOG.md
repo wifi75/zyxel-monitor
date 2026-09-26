@@ -2,6 +2,10 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) — versioni: [SemVer](https://semver.org/lang/it/).
 
+## [0.28.6] - 2026-09-26
+### Corretto
+- Clic su «Client connessi»: se il widget con l'elenco non è nella dashboard si apre un pannello con i client, invece di non fare nulla.
+
 ## [0.28.5] - 2026-09-26
 ### Modificato
 - Client per banda: cliccando 2.4 GHz o 5 GHz nella legenda compare l'elenco dei dispositivi di quella banda, con segnale e AP.
