@@ -177,6 +177,8 @@ async def _run(keys: set[str] | None, radio: bool, first_id: int | None) -> None
     before = _snapshot()
     state["clients_before"] = len(before)
     for ap in others:
+        # backup e invio via SSH richiedono un po' per ogni AP: si dice su quale si sta lavorando
+        state.update(phase=f"applico su {ap.name}", check_at=None)
         res, bid = await _apply(ap, keys, radio)
         state["results"].append(res)
         if bid:

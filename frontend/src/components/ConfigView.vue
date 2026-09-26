@@ -480,7 +480,8 @@ async function copyBackup() { copied.value = await copyText(shown.value?.text ??
     <div v-if="rollout && rollout.status !== 'idle'" class="note"
          :class="rollout.status === 'running' ? 'warn' : rollout.status === 'done' ? 'ok' : 'ko'">
       <template v-if="running">
-        <strong>{{ t('Prova in corso') }}: {{ rollout.phase }}</strong> — {{ t('verifica fra') }} {{ countdown }}
+        <strong>{{ t('Prova in corso') }}: {{ rollout.phase }}</strong>
+        <template v-if="rollout.check_at"> — {{ t('verifica fra') }} {{ countdown }}</template>
         · {{ t('dispositivi collegati prima') }}: {{ rollout.clients_before }}
       </template>
       <template v-else>
