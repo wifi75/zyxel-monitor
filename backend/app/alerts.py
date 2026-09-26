@@ -27,8 +27,9 @@ from .core.security import current_user
 log = logging.getLogger("alerts")
 router = APIRouter(prefix="/api/alerts", dependencies=[Depends(current_user)])
 
-KINDS = ("ap_down", "ap_up", "wan_down", "wan_up", "new_device", "config", "busy")
-DEFAULT_KINDS = ("ap_down", "ap_up", "wan_down", "wan_up", "new_device", "config")
+KINDS = ("ap_down", "ap_up", "wan_down", "wan_up", "new_device", "config", "busy", "critical")
+DEFAULT_KINDS = ("ap_down", "ap_up", "wan_down", "wan_up", "new_device", "config", "critical")
+CRITICAL_AFTER = 300      # un dispositivo importante assente da più di 5 minuti fa scattare l'avviso
 WEEKLY_HOUR = 9           # lunedì, ora locale
 BUSY_COOLDOWN = 6 * 3600  # un canale saturo si segnala al massimo ogni 6 ore per AP e banda
 
@@ -140,6 +141,38 @@ def busy_radios(kinds: list[str]) -> list[str]:
     return out
 
 
+def critical_changes(rows: list[dict], online: set[str], alerted: set[str], now: int) -> tuple[list[str], set[str]]:
+    """Messaggi per i dispositivi importanti scollegati da oltre CRITICAL_AFTER o tornati; nuovo insieme degli
+    avvisati (salvato, così dopo un riavvio del server non si ripete l'avviso né si perde il rientro)."""
+    lines, still = [], set(alerted)
+    for r in rows:
+        name = html.escape(r["name"])
+        if r["mac"] in online:
+            if r["mac"] in still:
+                still.discard(r["mac"])
+                ap = html.escape(r["ap"] or "?")
+                lines.append(f"🟢 Dispositivo importante di nuovo collegato: <b>{name}</b> su {ap}")
+        elif r["mac"] not in still and now - r["last_seen"] > CRITICAL_AFTER:
+            still.add(r["mac"])
+            mins = (now - r["last_seen"]) // 60
+            lines.append(f"🔴 Dispositivo importante scollegato: <b>{name}</b> da {mins} minuti "
+                         f"(ultimo AP {html.escape(r['ap'] or '?')})")
+    return lines, still
+
+
+def critical_lines(kinds: list[str]) -> tuple[list[str], set[str] | None]:
+    """Messaggi e nuovo stato da salvare solo dopo un invio riuscito (altrimenti l'avviso si ritenta)."""
+    if "critical" not in kinds:
+        return [], None
+    with connect() as db:
+        rows = [dict(r) for r in db.execute(
+            """SELECT d.mac, COALESCE(a.name, d.hostname, d.last_ip, d.mac) AS name, d.last_seen, d.last_ap AS ap
+               FROM devices d LEFT JOIN aliases a ON a.mac = d.mac WHERE d.critical = 1""")]
+        online = {r["mac"] for r in db.execute("SELECT mac FROM clients")}
+        alerted = set(json.loads(_get(db, "alert_critical_down", "[]")))
+    return critical_changes(rows, online, alerted, int(time.time()))
+
+
 async def check() -> None:
     """Chiamato dal poller a ogni ciclo."""
     cfg = config()
@@ -152,16 +185,19 @@ async def check() -> None:
         rows = [dict(r) for r in db.execute("SELECT * FROM events WHERE id > ? ORDER BY id LIMIT 500", (int(last),))]
     events, last_id = pending_events(rows, now, _grace())
     lines = [_format(e) for e in events if e["kind"] in cfg["kinds"]]
-    lines += busy_radios(cfg["kinds"]) if enabled(cfg) else []
+    crit, crit_state = critical_lines(cfg["kinds"]) if enabled(cfg) else ([], None)
+    lines += (busy_radios(cfg["kinds"]) if enabled(cfg) else []) + crit
     if lines and enabled(cfg):
         try:
             await send("\n".join(lines), cfg)
         except Exception as exc:     # Telegram irraggiungibile: gli eventi si riprovano al giro dopo
             log.warning("invio avviso non riuscito: %s", exc)
             return
-    if last_id is not None:
-        with connect() as db:
+    with connect() as db:
+        if last_id is not None:
             _put(db, "alert_last_event", str(last_id))
+        if crit_state is not None:
+            _put(db, "alert_critical_down", json.dumps(sorted(crit_state)))
     await _weekly(cfg)
 
 

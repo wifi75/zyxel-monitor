@@ -12,6 +12,7 @@ const msg = ref<{ ok: boolean; message: string } | null>(null)
 const KIND_LABEL: Record<string, string> = {
   ap_down: 'AP offline', ap_up: 'AP di nuovo online', wan_down: 'Linea Internet caduta', wan_up: 'Linea Internet tornata',
   new_device: 'Dispositivo nuovo', config: 'Modifiche alla configurazione', busy: 'Canale saturo',
+  critical: 'Dispositivi importanti scollegati',
 }
 
 function fill(s: AlertSettings) {

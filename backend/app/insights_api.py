@@ -41,10 +41,18 @@ def list_devices():
                LEFT JOIN aliases a ON a.mac = d.mac LEFT JOIN clients c ON c.mac = d.mac
                ORDER BY d.known, d.last_seen DESC"""
         ).fetchall()
+        # qualità nelle ultime 24 ore: scollegamenti e spostamenti fra AP
+        since = int(time.time()) - 86400
+        counts = {kind: dict(db.execute(
+            "SELECT mac, COUNT(*) FROM events WHERE kind = ? AND ts >= ? GROUP BY mac", (kind, since)).fetchall())
+            for kind in ("disconnect", "roam")}
     out = []
     for r in rows:
         d = dict(r)
         d["known"] = bool(d["known"])
+        d["critical"] = bool(d.get("critical"))
+        d["drops_24h"] = counts["disconnect"].get(d["mac"], 0)
+        d["roams_24h"] = counts["roam"].get(d["mac"], 0)
         d["online"] = d.pop("online_ap") is not None
         d["device_type"] = device_type(d["alias"] or d["hostname"], d["mac"])
         d["vendor"] = vendor(d["mac"])
@@ -60,6 +68,20 @@ class KnownIn(BaseModel):
 def set_known(mac: str, body: KnownIn):
     with connect() as db:
         cur = db.execute("UPDATE devices SET known = ? WHERE mac = ?", (int(body.known), mac.lower()))
+    if not cur.rowcount:
+        raise HTTPException(404, "Dispositivo non trovato")
+    return {"ok": True}
+
+
+class CriticalIn(BaseModel):
+    critical: bool
+
+
+@router.put("/devices/{mac}/critical")
+def set_critical(mac: str, body: CriticalIn):
+    """Dispositivo importante (inverter, cancello...): avviso su Telegram se resta scollegato."""
+    with connect() as db:
+        cur = db.execute("UPDATE devices SET critical = ? WHERE mac = ?", (int(body.critical), mac.lower()))
     if not cur.rowcount:
         raise HTTPException(404, "Dispositivo non trovato")
     return {"ok": True}
