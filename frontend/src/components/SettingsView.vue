@@ -5,6 +5,8 @@ import { copyText } from '../format'
 import { t } from '../i18n'
 import ApEditor from './ApEditor.vue'
 import AlertsSettings from './AlertsSettings.vue'
+import BackupSettings from './BackupSettings.vue'
+import UsersSettings from './UsersSettings.vue'
 import NebulaPanel from './NebulaPanel.vue'
 
 const props = defineProps<{ status: Ap[] }>()
@@ -143,6 +145,10 @@ onMounted(() => { load(); loadGeneral() })
     </form>
 
     <AlertsSettings />
+
+    <UsersSettings />
+
+    <BackupSettings />
 
     <NebulaPanel />
   </main>

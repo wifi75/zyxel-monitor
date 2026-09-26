@@ -74,7 +74,12 @@ export interface Device {
   mac: string; first_seen: number; last_seen: number; last_ap: string | null; last_ip: string | null
   hostname: string | null; alias: string | null; known: boolean; online: boolean; rssi_dbm: number | null
   device_type: string; vendor?: string | null
+  /** importante: avviso se resta scollegato; qualità nelle ultime 24 ore */
+  critical?: boolean; drops_24h?: number; roams_24h?: number
 }
+export type Role = 'admin' | 'viewer'
+export interface User { username: string; role: Role }
+export interface BackupStatus { folder: string; keep: number; files: { name: string; size: number; ts: number }[] }
 export interface SignalHistory { step: number; points: { ts: number; avg: number | null; min: number | null; ap: string | null }[] }
 export interface SignalByAp {
   weak_dbm: number
@@ -193,11 +198,26 @@ async function req<T>(path: string, init: RequestInit = {}): Promise<T> {
   return res.json()
 }
 
+/** scarica un file protetto dal login (CSV, backup): il link diretto non porterebbe il token */
+export async function download(path: string, fallbackName: string): Promise<void> {
+  const headers: Record<string, string> = {}
+  if (auth.token) headers.Authorization = `Bearer ${auth.token}`
+  const res = await fetch(`/api${path}`, { headers })
+  if (res.status === 401) { auth.clear(); throw new Unauthorized() }
+  if (!res.ok) throw new Error(`Errore ${res.status}`)
+  const name = /filename="([^"]+)"/.exec(res.headers.get('content-disposition') ?? '')?.[1] ?? fallbackName
+  const url = URL.createObjectURL(await res.blob())
+  const a = document.createElement('a')
+  a.href = url; a.download = name
+  document.body.appendChild(a); a.click(); a.remove()
+  URL.revokeObjectURL(url)
+}
+
 export const api = {
   health: () => req<Health>('/health'),
   login: (username: string, password: string) =>
     req<{ token: string; default_password: boolean }>('/login', { method: 'POST', body: JSON.stringify({ username, password }) }),
-  me: () => req<{ username: string; default_password: boolean }>('/me'),
+  me: () => req<{ username: string; default_password: boolean; role?: Role }>('/me'),
   changePassword: (old_password: string, new_password: string) =>
     req('/password', { method: 'POST', body: JSON.stringify({ old_password, new_password }) }),
   aps: () => req<Ap[]>('/aps'),
@@ -205,6 +225,13 @@ export const api = {
   events: (limit = 200, ap?: string, mac?: string) =>
     req<Event[]>(`/events?limit=${limit}${ap ? `&ap=${encodeURIComponent(ap)}` : ''}${mac ? `&mac=${encodeURIComponent(mac)}` : ''}`),
   channels: () => req<Channels>('/channels'),
+  setCritical: (mac: string, critical: boolean) =>
+    req(`/devices/${encodeURIComponent(mac)}/critical`, { method: 'PUT', body: JSON.stringify({ critical }) }),
+  users: () => req<User[]>('/users'),
+  createUser: (username: string, password: string, role: Role) =>
+    req<User>('/users', { method: 'POST', body: JSON.stringify({ username, password, role }) }),
+  deleteUser: (username: string) => req(`/users/${encodeURIComponent(username)}`, { method: 'DELETE' }),
+  backupStatus: () => req<BackupStatus>('/backup'),
   channelsHistory: (hours: number) => req<ChannelHistory>(`/channels/history?hours=${hours}`),
   /** voce personalizzata per un AP: value null = come il sito; unmanaged = non gestita su quell'AP */
   setApItem: (key: string, apId: number, value: string | number | boolean | null, unmanaged = false) =>

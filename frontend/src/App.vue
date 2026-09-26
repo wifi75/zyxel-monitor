@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, defineAsyncComponent, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import {
-  api, auth, Unauthorized, type Ap, type Client, type Device, type DeviceUsage, type Event, type Health,
+  api, auth, download, Unauthorized, type Ap, type Client, type Device, type DeviceUsage, type Event, type Health,
   type Internet, type Roaming, type SignalByAp, type Sites, type Traffic, type Usage,
 } from './api'
 import BarList from './components/BarList.vue'
@@ -37,6 +37,7 @@ const REFRESH_MS = 30_000
 const health = ref<Health | null>(null)
 const logged = ref(!!auth.token)
 const defaultPassword = ref(false)
+const readOnly = ref(false)
 /** '' = panoramica, '#devices' = dispositivi, '#events' = eventi, '#settings' = impostazioni, altrimenti nome dell'AP */
 const view = ref('')
 /** modalità "Personalizza dashboard" */
@@ -97,7 +98,11 @@ async function loadScoped() {
 
 async function afterLogin() {
   logged.value = true
-  try { defaultPassword.value = (await api.me()).default_password } catch { /* gestito da load */ }
+  try {
+    const me = await api.me()
+    defaultPassword.value = me.default_password
+    readOnly.value = me.role === 'viewer'
+  } catch { /* gestito da load */ }
   await load()
 }
 
@@ -349,6 +354,7 @@ const SSH_NA = "La CLI SSH di questo AP non fornisce ancora il dato: in Impostaz
     <div v-if="defaultPassword" class="banner warn">
       {{ t('Stai usando la password predefinita.') }} <a href="#" @click.prevent="showPwd = true">{{ t('Cambiala adesso') }}</a>.
     </div>
+    <div v-if="readOnly" class="banner">{{ t('Sei entrato in sola lettura: puoi guardare tutto ma non modificare.') }}</div>
     <div v-if="loadError" class="banner err">{{ t('Errore di caricamento: {error}', { error: loadError }) }}</div>
 
     <form v-if="showPwd" class="card pwd" @submit.prevent="changePassword">
@@ -369,7 +375,11 @@ const SSH_NA = "La CLI SSH di questo AP non fornisce ancora il dato: in Impostaz
     <ReportView v-else-if="view === '#report'" />
 
     <main v-else-if="view === '#events'">
-      <section class="card"><h2 class="mb">{{ t('Storico collegamenti') }}</h2><EventsTable :events="events" show-ap /></section>
+      <section class="card">
+        <div class="section-head mb"><h2>{{ t('Storico collegamenti') }}</h2><span class="spacer" />
+          <button class="ghost" @click="download('/export/events.csv?days=30', 'eventi.csv')">{{ t('Esporta CSV (30 giorni)') }}</button></div>
+        <EventsTable :events="events" show-ap />
+      </section>
     </main>
 
     <!-- PANORAMICA o DETTAGLIO AP: griglia di widget spostabili e ridimensionabili -->
