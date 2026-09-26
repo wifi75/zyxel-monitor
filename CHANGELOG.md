@@ -2,6 +2,10 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) — versioni: [SemVer](https://semver.org/lang/it/).
 
+## [0.25.4] - 2026-09-26
+### Aggiunto
+- Esplora comandi chiede anche i valori ammessi da ogni radio per larghezza di banda, canali e potenza (solo richieste di aiuto, nessuna modifica): servono a mostrare in Configurazione solo ciò che l'AP supporta davvero.
+
 ## [0.25.3] - 2026-09-26
 ### Modificato
 - Client per banda: barra divisa con i numeri al posto della ciambella, in un riquadro alto la metà.
