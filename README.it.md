@@ -103,7 +103,7 @@ Traffico e velocità si calcolano dalla differenza fra contatori cumulativi; un 
 Nebula continua a imporre la sua configurazione, quindi **di default il pannello monitora soltanto** e non
 scrive mai sugli AP. Quando accendi la gestione (pagina Configurazione):
 - **Anteprima** — prima di inviare qualsiasi cosa vedi i comandi esatti per ogni AP (password mascherate).
-- **Prova controllata** — la modifica va prima su un AP; dopo 5 minuti il pannello confronta i dispositivi
+- **Prova controllata** — la modifica va prima su un AP; dopo 2 minuti il pannello confronta i dispositivi
   collegati a tutto il sito. Solo se non sono calati la estende agli altri AP, e poi ricontrolla.
 - **Ripristino automatico** — se i dispositivi collegati calano oltre il 30%, ogni AP toccato torna al backup
   fatto subito prima e va in pausa. I dispositivi che non sono rientrati vengono elencati.

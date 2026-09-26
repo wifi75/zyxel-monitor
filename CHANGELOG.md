@@ -2,6 +2,12 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) — versioni: [SemVer](https://semver.org/lang/it/).
 
+## [0.31.0] - 2026-09-26
+### Aggiunto
+- Anteprima delle modifiche: pulsante «Applica subito a tutti», senza prova controllata (il backup di ogni AP viene salvato lo stesso).
+### Modificato
+- Prova controllata più breve: il controllo dei dispositivi collegati avviene dopo 2 minuti invece di 5.
+
 ## [0.30.0] - 2026-09-26
 ### Corretto
 - Potenza, canale e larghezza: prima si rimandavano tutti a tutti gli AP a ogni modifica (14-15 comandi ciascuno, con le radio che ripartivano ovunque). Ora si legge la configurazione attuale e si invia solo ciò che cambia, solo all'AP interessato.

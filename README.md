@@ -112,7 +112,7 @@ Traffic and rates are computed from differences between cumulative counters; a c
 Nebula keeps pushing its own configuration, so **by default the panel only monitors** and never writes to the
 APs. When you switch management on (Configuration page):
 - **Preview** — the exact CLI commands for every AP are shown before anything is sent (passwords masked).
-- **Controlled trial** — the change goes to one AP first; after 5 minutes the panel compares the devices
+- **Controlled trial** — the change goes to one AP first; after 2 minutes the panel compares the devices
   connected to the whole site. Only if they did not drop does it extend the change to the other APs, and
   then checks again.
 - **Automatic rollback** — if connected devices drop by more than 30 %, every AP that was touched goes back
