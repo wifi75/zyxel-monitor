@@ -102,6 +102,12 @@ def _radio_value(cfg: RunningConfig, slot: int, prefix: str) -> str | None:
     return cfg.value(f"wlan-radio-profile {p}", prefix) if p else None
 
 
+def _radio_flag(cfg: RunningConfig, slot: int, line: str) -> bool | None:
+    """Voce senza valori nel profilo radio: presente = attiva; None se l'AP non ha il profilo."""
+    p = cfg.radio_profile(slot)
+    return cfg.has(f"wlan-radio-profile {p}", line) if p else None
+
+
 def _rate(cfg: RunningConfig, direction: str) -> int | None:
     p = cfg.ssid_profile()
     v = cfg.value(f"wlan-ssid-profile {p}", f"{direction}-rate-limit") if p else None
@@ -402,6 +408,11 @@ ITEMS: list[Item] = [
          choices=["1", "2", "5.5", "6", "9", "11", "12", "18", "24"], unit="Mbps",
          read=lambda c: _radio_value(c, 1, "2g-wlan-rate-control"),
          build=lambda v, c: _in_radio(c, 1, f"2g-wlan-rate-control {v}")),
+    Item("legacy_reject", "radio", "Rifiuta i dispositivi solo 802.11b", "bool",
+         "Senza dispositivi 802.11b gli AP non devono più rallentare ogni trasmissione per proteggerli: "
+         "il canale 2.4 GHz si libera. Esclude solo apparecchi di prima del 2003.",
+         read=lambda c: _radio_flag(c, 1, "reject-legacy-station"),
+         build=lambda v, c: _in_radio(c, 1, "reject-legacy-station" if v else "no reject-legacy-station")),
     Item("load_balancing", "radio", "Bilanciamento del carico", "bool",
          "Distribuisce i dispositivi fra le radio quando un AP è troppo affollato.",
          read=_lb, build=_lb_set),
@@ -422,6 +433,8 @@ ITEMS: list[Item] = [
          read=lambda c: None, build=lambda v, c: []),
 ]
 
+# voci che si possono personalizzare per un singolo AP (scelte e sì/no; testi e password restano del sito)
+PER_AP_KINDS = {"bool", "choice"}
 BY_KEY = {i.key: i for i in ITEMS}
 
 

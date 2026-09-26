@@ -130,8 +130,16 @@ def list_items():
             per_ap[name] = (v is not None) if i.kind == "password" else v
         return per_ap
 
+    names = {a.id: a.name for a in store.list_aps()}
+    ovr = site_config.overrides()
+
+    def per_ap(i):   # personalizzazioni: "none" = non gestita su quell'AP
+        return {names[ap_id]: ("none" if v[i.key] == site_config.UNMANAGED else v[i.key])
+                for ap_id, v in ovr.items() if ap_id in names and i.key in v and i.kind != "password"}
+
     return [{"key": i.key, "section": i.section, "label": i.label, "kind": i.kind, "help": i.help,
-             "choices": i.choices, "unit": i.unit, "value": shown(i), "current": current(i)}
+             "choices": i.choices, "unit": i.unit, "value": shown(i), "current": current(i),
+             "per_ap": i.kind in config_items.PER_AP_KINDS, "overrides": per_ap(i)}
             for i in config_items.ITEMS]
 
 
@@ -149,6 +157,30 @@ async def set_item(key: str, body: ItemIn, apply: bool = True):
     except ValueError as exc:
         raise HTTPException(422, f"{item.label}: {exc}") from None
     site_config.set_value(key, value)
+    return {"results": []}
+
+
+class ItemApIn(BaseModel):
+    value: int | str | bool | list[str] | None = None      # None = come il sito
+    unmanaged: bool = False                                # True = non gestita su questo AP
+
+
+@router.put("/items/{key}/aps/{ap_id}")
+async def set_item_ap(key: str, ap_id: int, body: ItemApIn):
+    """Personalizzazione di una voce per un solo AP (es. velocità minima solo sull'AP con tanta domotica)."""
+    item = config_items.BY_KEY.get(key)
+    if not item or item.kind not in config_items.PER_AP_KINDS:
+        raise HTTPException(404, "Impostazione non personalizzabile per AP")
+    if not store.get_ap(ap_id):
+        raise HTTPException(404, "Access point non trovato")
+    if body.unmanaged:
+        site_config.set_override(ap_id, key, site_config.UNMANAGED)
+        return {"results": []}
+    try:
+        value = None if body.value is None else config_items.parse_value(item, body.value)
+    except ValueError as exc:
+        raise HTTPException(422, f"{item.label}: {exc}") from None
+    site_config.set_override(ap_id, key, value)
     return {"results": []}
 
 

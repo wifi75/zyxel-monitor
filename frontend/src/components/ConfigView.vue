@@ -203,8 +203,13 @@ function itemRow(i: SiteItem): Row {
     : Array.isArray(i.value) ? i.value.join('\n') : String(i.value)
   return {
     id: `item-${i.key}`, group: ITEM_GROUP[i.key] ?? ITEM_GROUP[i.section] ?? 'sistema', label: t(i.label), hint: t(i.help),
-    kind, options, unit: i.unit, site, perAp: false, item: i,
+    kind, options, unit: i.unit, site, perAp: !!i.per_ap, item: i,
     current: id => { const name = aps.value.find(a => a.id === id)?.name; return name ? itemText(i, i.current?.[name]) : null },
+    override: id => {
+      const name = aps.value.find(a => a.id === id)?.name
+      const o = name ? i.overrides?.[name] : undefined
+      return o == null ? null : o === 'none' ? 'none' : String(o)
+    },
   }
 }
 
@@ -270,12 +275,15 @@ function cellState(r: Row, apId: number): 'same' | 'diff' | 'none' {
     const wantText = r.field === 'channel' ? channelLabel(want) : widthLabel(fitWidth(want, r.band!, apId))
     return now === wantText ? 'same' : 'diff'
   }
-  if (r.site == null || !r.item) return 'none'
+  if (!r.item) return 'none'
+  // personalizzazione dell'AP, se c'è, altrimenti il valore del sito
+  const own = r.override?.(apId)
+  if (own === 'none' || (own == null && r.site == null)) return 'none'
   if (r.kind === 'password') return 'same'
   const name = aps.value.find(a => a.id === apId)?.name
   const cur = name ? r.item.current?.[name] : undefined
   if (cur === undefined || cur === null) return 'same'          // non ancora letto
-  return norm(cur) === norm(fitChoice(r.item.key, r.item.value, apId)) ? 'same' : 'diff'
+  return norm(cur) === norm(fitChoice(r.item.key, own ?? r.item.value, apId)) ? 'same' : 'diff'
 }
 /** valore confrontabile: liste ordinate, booleani e numeri come testo */
 function norm(v: unknown): string {
@@ -388,6 +396,18 @@ async function applyAll() {
         radio = true
       } else {
         const i = r.item!
+        const conv = (x: string) => (i.kind === 'bool' ? x === 'true' : i.kind === 'int' ? Number(x) : x)
+        if (p.apId !== null) {
+          // personalizzazione di un solo AP: "inherit" = come il sito, "none" = non gestita su quell'AP
+          const apId = p.apId
+          const old = r.override?.(apId) ?? null
+          revert.push(() => api.setApItem(i.key, apId, old == null || old === 'none' ? null : conv(old), old === 'none'))
+          await api.setApItem(i.key, apId, p.value == null || p.value === 'inherit' || p.value === 'none' ? null : conv(p.value),
+            p.value === 'none')
+          itemKeys.push(i.key)
+          delete pending.value[cellKey(r, p.apId)]
+          continue
+        }
         const v = p.value == null ? null : i.kind === 'bool' ? p.value === 'true' : i.kind === 'int' ? Number(p.value)
           : i.kind === 'list' ? p.value.split(/[\s,;]+/).filter(Boolean) : p.value
         // la password vecchia non è nota al browser: annullando si toglie solo se prima non era gestita

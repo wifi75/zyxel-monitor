@@ -131,7 +131,10 @@ export interface SiteItem {
   key: string; section: string; label: string; kind: 'text' | 'int' | 'bool' | 'choice' | 'password' | 'list'; help: string
   choices: string[]; unit: string; value: string | number | boolean | string[] | null
   current: Record<string, string | number | boolean | string[] | null>
+  /** personalizzabile per singolo AP; overrides: {nome AP: valore | "none" (non gestita)} */
+  per_ap?: boolean; overrides?: Record<string, string | number | boolean | 'none'>
 }
+export interface ChannelHistory { step: number; ts: number[]; bands: Record<string, Record<string, (number | null)[]>> }
 export interface Backup { id: number; ap: string; ts: number; size: number }
 export interface PlanAp { ap: string; id: number; changes: string; commands: string[] }
 export interface Rollout {
@@ -202,6 +205,10 @@ export const api = {
   events: (limit = 200, ap?: string, mac?: string) =>
     req<Event[]>(`/events?limit=${limit}${ap ? `&ap=${encodeURIComponent(ap)}` : ''}${mac ? `&mac=${encodeURIComponent(mac)}` : ''}`),
   channels: () => req<Channels>('/channels'),
+  channelsHistory: (hours: number) => req<ChannelHistory>(`/channels/history?hours=${hours}`),
+  /** voce personalizzata per un AP: value null = come il sito; unmanaged = non gestita su quell'AP */
+  setApItem: (key: string, apId: number, value: string | number | boolean | null, unmanaged = false) =>
+    req(`/policy/items/${key}/aps/${apId}`, { method: 'PUT', body: JSON.stringify({ value, unmanaged }) }),
   report: (days: number) => req<Report>(`/report?days=${days}`),
   alerts: () => req<AlertSettings>('/alerts'),
   saveAlerts: (f: AlertForm) => req<AlertSettings>('/alerts', { method: 'PUT', body: JSON.stringify(f) }),

@@ -20,9 +20,45 @@ CHECK_EVERY = 900
 _last_check = 0.0
 
 
-def load() -> dict[str, object]:
+# personalizzazione di un AP: chiave "<voce>@ap:<id>" nella stessa tabella; UNMANAGED = voce non gestita su quell'AP
+UNMANAGED = {"unmanaged": True}
+
+
+def _rows() -> dict[str, object]:
     with connect() as db:
         return {r["key"]: json.loads(r["value"]) for r in db.execute("SELECT key, value FROM site_config")}
+
+
+def load() -> dict[str, object]:
+    """Valori del sito (senza le personalizzazioni dei singoli AP)."""
+    return {k: v for k, v in _rows().items() if "@" not in k}
+
+
+def overrides() -> dict[int, dict[str, object]]:
+    """{id AP: {voce: valore}} delle personalizzazioni."""
+    out: dict[int, dict[str, object]] = {}
+    for k, v in _rows().items():
+        if "@ap:" in k:
+            key, _, ap_id = k.partition("@ap:")
+            if ap_id.isdigit():
+                out.setdefault(int(ap_id), {})[key] = v
+    return out
+
+
+def for_ap(ap_id: int | None) -> dict[str, object]:
+    """Valori voluti per un AP: quelli del sito con sopra le sue personalizzazioni."""
+    wanted = load()
+    for key, v in overrides().get(ap_id, {}).items() if ap_id is not None else ():
+        if v == UNMANAGED:
+            wanted.pop(key, None)
+        else:
+            wanted[key] = v
+    return wanted
+
+
+def set_override(ap_id: int, key: str, value) -> None:
+    """value None = come il sito; UNMANAGED = non gestita su questo AP."""
+    set_value(f"{key}@ap:{ap_id}", value)
 
 
 def set_value(key: str, value) -> None:
@@ -52,7 +88,7 @@ async def apply_ap(ap: store.ApConfig, reason: str = "manuale", only: set[str] |
         return {"ap": ap.name, "ok": False, "message": why}
     if ap.name in paused():
         return {"ap": ap.name, "ok": True, "message": "In pausa: gestione sospesa dopo un ripristino"}
-    wanted = load()
+    wanted = for_ap(ap.id)
     if only is not None:
         wanted = {k: v for k, v in wanted.items() if k in only}
     if not wanted:
@@ -105,7 +141,7 @@ async def enforce() -> None:
     """Ogni 15 minuti: rilegge la configurazione degli AP e riapplica le voci cambiate."""
     global _last_check
     from .guard import blocked
-    if time.time() - _last_check < CHECK_EVERY or not load() or blocked("riallineamento automatico"):
+    if time.time() - _last_check < CHECK_EVERY or not _rows() or blocked("riallineamento automatico"):
         return
     _last_check = time.time()
     for r in await apply_all("riallineamento automatico"):
