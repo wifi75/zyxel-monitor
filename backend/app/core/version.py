@@ -1,3 +1,3 @@
 APP_NAME = "Zyxel Monitor"
-APP_VERSION = "0.28.7"
+APP_VERSION = "0.29.0"
 APP_AUTHOR = "Tiziano Cassone"

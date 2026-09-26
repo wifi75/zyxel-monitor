@@ -2,6 +2,14 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) — versioni: [SemVer](https://semver.org/lang/it/).
 
+## [0.29.0] - 2026-09-26
+### Modificato
+- Intestazione dell'AP: pallino di stato, nome grande, modello e una tessera per banda con canale, client e occupazione colorata; cliccandola si aprono i dispositivi di quella banda.
+- Indicatori: numero grande e unità piccola (niente più valori tagliati), mini-linea dell'andamento per download e upload, icona rossa quando c'è un problema.
+- Colore fisso per ogni AP, uguale in grafici, ciambelle, piano dei canali e mappa.
+- Titoli dei widget con icona colorata e menu «⋯» (pagina collegata, esportazione CSV).
+- Segnaposto animati al primo caricamento e stati vuoti con icona e spiegazione.
+
 ## [0.28.7] - 2026-09-26
 ### Modificato
 - Card con ombra leggera e più marcata al passaggio del mouse, nei due temi: la dashboard non è più piatta.
