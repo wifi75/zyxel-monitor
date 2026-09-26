@@ -1,5 +1,7 @@
 """Avvio FastAPI: API, collector in background e frontend statico."""
 import asyncio
+import json
+import os
 import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -34,10 +36,24 @@ STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
 async def lifespan(_: FastAPI):
     init_db()
     ensure_default_user()
+    if os.environ.get("ZM_DEMO"):
+        # modalità dimostrativa (screenshot): nessuna lettura degli AP, dati preparati da scripts/demo_data.py
+        _load_demo()
+        yield
+        return
     seed_from_env()
     task = asyncio.create_task(run_forever())
     yield
     task.cancel()
+
+
+def _load_demo() -> None:
+    from .core.db import connect
+    from .poller import internet_state
+    with connect() as db:
+        row = db.execute("SELECT value FROM settings WHERE key = '_demo_internet'").fetchone()
+    if row:
+        internet_state.update(json.loads(row["value"]))
 
 
 app = FastAPI(
