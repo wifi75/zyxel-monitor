@@ -2,6 +2,12 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) — versioni: [SemVer](https://semver.org/lang/it/).
 
+## [0.28.0] - 2026-09-26
+### Modificato
+- Impostazioni divise in sezioni con menu colorato (OPNsense e raccolta, Avvisi, Utenti, Backup, Nebula, Il mio account): una alla volta, schede scorrevoli sul telefono; campi di OPNsense raggruppati.
+### Corretto
+- «Cambia password» apre Impostazioni → Il mio account: prima il modulo compariva in cima alla pagina e, se si era scesi, sembrava non succedere nulla. Ora chiede anche di ripetere la nuova password.
+
 ## [0.27.1] - 2026-09-26
 ### Corretto
 - Widget Firmware: il modello si legge su ogni riga, anche per gli AP dello stesso modello.
