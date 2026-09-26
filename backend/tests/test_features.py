@@ -73,3 +73,8 @@ def test_login_locks_after_repeated_failures(monkeypatch):
     monkeypatch.setattr(api, "_fails", {"admin": [api.time.time()] * api.MAX_FAILS})
     assert api._locked("admin") > 0
     assert api._locked("altro") == 0
+
+
+def test_air_conditioner_with_private_mac_is_home_automation():
+    from app.devices import device_type
+    assert device_type("hisense-clima-studio", "ca:2c:4f:5e:e0:31") == "Domotica"

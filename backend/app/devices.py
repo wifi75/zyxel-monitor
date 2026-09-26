@@ -7,7 +7,8 @@ RULES: list[tuple[str, str]] = [
     ("Tablet", r"ipad|tab|tablet|kindle"),
     ("Computer", r"macbook|imac|mac-|mbp|laptop|notebook|desktop|pc|windows|thinkpad|surface"),
     ("TV e media", r"tv|chromecast|firetv|fire-tv|roku|appletv|apple-tv|sonos|echo|alexa|nest|homepod"),
-    ("Domotica", r"shelly|tasmota|sonoff|tuya|hue|meross|tapo|plug|presa|luce|luci|switch"),
+    ("Domotica", r"shelly|tasmota|sonoff|tuya|hue|meross|tapo|plug|presa|luce|luci|switch|tapparella"
+                 r"|clima|condizionatore|hisense|daikin"),
     ("Microcontrollori", r"esp|esp32|esp8266|arduino|wemos"),
     ("Energia", r"inverter|deye|bms|fronius|solar|victron|meter"),
     ("Stampanti", r"print|stampante|epson|canon|brother|hp-"),
