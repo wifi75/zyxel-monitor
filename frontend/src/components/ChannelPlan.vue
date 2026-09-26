@@ -23,6 +23,33 @@ function trend(band: string) {
   return Object.entries(per).map(([ap, data]) => ({ label: ap, data }))
 }
 const pct = (v: number) => `${v}%`
+
+// ---- applicare i canali consigliati: regole per AP salvate, poi prova controllata come in Configurazione ----
+const suggestions = computed(() => Object.entries(data.value?.bands ?? {})
+  .flatMap(([band, b]) => Object.entries(b.changes).map(([ap, ch]) => ({ band, ap, ch }))))
+const applyMsg = ref<{ ok: boolean; message: string } | null>(null)
+const applying = ref(false)
+async function applySuggested() {
+  applyMsg.value = null
+  const guard = await api.guard()
+  if (!guard.enabled) {
+    applyMsg.value = { ok: false, message: t('Accendi prima la gestione dal pannello in Configurazione.') }
+    return
+  }
+  const list = suggestions.value.map(s => `${s.ap}: ${s.band.replace('GHz', ' GHz')} → ${s.ch}`).join('\n')
+  if (!window.confirm(`${t('Impostare questi canali con la prova controllata?')}\n\n${list}`)) return
+  applying.value = true
+  try {
+    const policy = await api.policy()
+    const idOf = (name: string) => policy.aps.find(a => a.name === name)?.id
+    for (const s of suggestions.value) {
+      const id = idOf(s.ap)
+      if (id != null) await api.setApPolicy(id, s.band, 'channel', String(s.ch), false)
+    }
+    const r = await api.rollout([], true, idOf(suggestions.value[0].ap) ?? null)
+    applyMsg.value = { ok: r.ok, message: r.ok ? t('Prova avviata: segui l’esito in Configurazione.') : t(r.message) }
+  } catch (e) { applyMsg.value = { ok: false, message: (e as Error).message } } finally { applying.value = false }
+}
 onMounted(load)
 // si ricarica quando arriva una nuova lettura degli AP
 watch(() => props.aps.map(a => a.updated).join(), load)
@@ -82,14 +109,17 @@ const level = (pct: number | null) => pct == null ? '' : pct >= (data.value?.bus
       <li v-for="(i, n) in b.issues" :key="n" class="small">{{ issueText(i) }}</li>
     </ul>
   </div>
-  <p v-if="bands.some(([, b]) => Object.keys(b.changes).length)" class="muted small">
-    {{ t('I canali consigliati vanno impostati in Nebula: finché la gestione dal pannello è spenta, qui non si invia nulla agli AP.') }}
-  </p>
+  <div v-if="suggestions.length" class="apply">
+    <button class="primary small" :disabled="applying" @click="applySuggested">{{ applying ? t('Attendi…') : t('Applica i canali consigliati') }}</button>
+    <span class="muted small">{{ t('Con la prova controllata: prima un AP, poi gli altri se i dispositivi restano collegati. Ricordati di impostarli anche in Nebula.') }}</span>
+  </div>
+  <p v-if="applyMsg" class="note" :class="applyMsg.ok ? 'ok' : 'ko'">{{ applyMsg.message }}</p>
 </template>
 
 <style scoped>
 .band-block + .band-block { margin-top: 10px; }
 .trend { height: 150px; margin-top: 6px; }
+.apply { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 8px; }
 .trend :deep(.chart-box) { height: 100%; }
 .band-block h3 { margin: 0 0 4px; }
 table.compact td, table.compact th { padding: 4px 8px; }
