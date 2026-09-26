@@ -2,6 +2,12 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) — versioni: [SemVer](https://semver.org/lang/it/).
 
+## [0.30.0] - 2026-09-26
+### Corretto
+- Potenza, canale e larghezza: prima si rimandavano tutti a tutti gli AP a ogni modifica (14-15 comandi ciascuno, con le radio che ripartivano ovunque). Ora si legge la configurazione attuale e si invia solo ciò che cambia, solo all'AP interessato.
+### Aggiunto
+- Modifica rapida: le voci di sistema che non toccano il Wi-Fi (LED, riavvio programmato, NTP, SNMP in scrittura, nome dell'AP) si applicano subito a tutti gli AP, senza prova né attesa. La prova controllata resta per tutto ciò che può staccare dispositivi.
+
 ## [0.29.5] - 2026-09-26
 ### Documentazione
 - README: installazione su un server Linux senza Docker, come servizio `systemd`, con aggiornamento.
