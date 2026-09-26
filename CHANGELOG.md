@@ -4,6 +4,7 @@ Formato: [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) — versioni: 
 
 ## [0.25.1] - 2026-09-26
 ### Corretto
+- Piano dei canali: un solo avviso per canale con tutti gli AP coinvolti, invece di uno per ogni coppia.
 - Tabelle dentro i widget (Firmware, Piano dei canali) non più schiacciate: mostravano solo le prime righe e nascondevano le altre in uno scorrimento interno.
 
 ## [0.25.0] - 2026-09-26
