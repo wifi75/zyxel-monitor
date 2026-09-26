@@ -2,6 +2,10 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) — versioni: [SemVer](https://semver.org/lang/it/).
 
+## [0.28.3] - 2026-09-26
+### Modificato
+- Tolta la voce «Cambia password» dal menu principale: la password si cambia in Impostazioni → Il mio account.
+
 ## [0.28.2] - 2026-09-26
 ### Corretto
 - Il mio account: modulo del cambio password rifatto, con campi uno sotto l'altro, nome utente per i gestori di password del browser e controlli chiari prima dell'invio.
