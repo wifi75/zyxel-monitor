@@ -2,6 +2,10 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) — versioni: [SemVer](https://semver.org/lang/it/).
 
+## [0.26.1] - 2026-09-26
+### Corretto
+- Piano dei canali: il grafico dell'occupazione restava alto 300 px e copriva la tabella della banda successiva.
+
 ## [0.26.0] - 2026-09-26
 ### Aggiunto
 - Configurazione: voce «Rifiuta i dispositivi solo 802.11b» (`reject-legacy-station` nel profilo radio 2.4 GHz).
