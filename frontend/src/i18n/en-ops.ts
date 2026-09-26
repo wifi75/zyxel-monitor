@@ -44,8 +44,7 @@ addEn({
   'Versione': 'Version',
   'Gli AP di questo modello hanno versioni diverse': 'APs of this model run different versions',
   'diverso': 'differs',
-  'Gli aggiornamenti del firmware si fanno da Nebula: il pannello li segnala ma non li installa.':
-    'Firmware updates are done from Nebula: the panel flags them but does not install them.',
+  'Aggiornamenti del firmware da Nebula.': 'Firmware updates are done from Nebula.',
   // mappa
   'Mappa della rete': 'Network map',
   'stato non disponibile': 'status unavailable',

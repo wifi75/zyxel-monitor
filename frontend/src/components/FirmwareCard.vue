@@ -38,7 +38,7 @@ const models = computed(() => {
       </tbody>
     </table>
   </div>
-  <p class="muted small">{{ t('Gli aggiornamenti del firmware si fanno da Nebula: il pannello li segnala ma non li installa.') }}</p>
+  <p class="muted small">{{ t('Aggiornamenti del firmware da Nebula.') }}</p>
 </template>
 
 <style scoped>

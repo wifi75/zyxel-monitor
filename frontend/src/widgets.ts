@@ -20,7 +20,7 @@ export const WIDGETS: WidgetDef[] = [
   { id: 'band', title: 'Client per banda', views: ['overview', 'ap'], w: 3, h: 5 },
   { id: 'topology', title: 'Mappa della rete', views: ['overview'], w: 6, h: 7, minW: 4, minH: 5 },
   { id: 'channels', title: 'Piano dei canali', views: ['overview'], w: 6, h: 7, minW: 4, minH: 4 },
-  { id: 'firmware', title: 'Firmware', views: ['overview'], w: 4, h: 5, minW: 3, minH: 3 },
+  { id: 'firmware', title: 'Firmware', views: ['overview'], w: 4, h: 6, minW: 3, minH: 4 },
   { id: 'new_devices', title: 'Dispositivi nuovi', views: ['overview'], w: 4, h: 6 },
   { id: 'signal', title: 'Qualità del segnale', views: ['overview', 'ap'], w: 4, h: 6 },
   { id: 'roaming', title: 'Roaming', views: ['overview', 'ap'], w: 4, h: 6 },
