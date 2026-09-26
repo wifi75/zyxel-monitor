@@ -5,7 +5,7 @@
 [![Backend](https://img.shields.io/badge/Backend-FastAPI%200.141-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
 [![Frontend](https://img.shields.io/badge/Frontend-Vue%203.5-4FC08D?logo=vuedotjs&logoColor=white)](https://vuejs.org)
 [![Docker](https://img.shields.io/badge/Deploy-Docker-2496ED?logo=docker&logoColor=white)](docker-compose.yml)
-[![Test](https://img.shields.io/badge/Test-40%20pytest-0A9EDC?logo=pytest&logoColor=white)](backend/tests)
+[![Test](https://img.shields.io/badge/Test-41%20pytest-0A9EDC?logo=pytest&logoColor=white)](backend/tests)
 [![License](https://img.shields.io/badge/License-MIT-yellow)](LICENSE)
 
 Pannello self-hosted di monitoraggio e gestione per gli **access point Zyxel gestiti da Nebula con la licenza
@@ -125,6 +125,40 @@ osservare e per provare singole modifiche; i valori definitivi mettili anche in 
 Gli avvisi partono dagli eventi salvati, letti in ordine: nessuno si perde o arriva due volte, anche dopo un
 riavvio. Un AP che sparisce per una sola lettura e torna entro la tolleranza non genera avvisi. I dispositivi
 importanti avvisano dopo 5 minuti scollegati e di nuovo quando tornano.
+
+## Access point compatibili
+
+Il pannello parla con le interfacce di gestione degli AP (CLI via SSH e SNMP), che tutti gli AP business Zyxel
+delle famiglie **NWA / WAC / WAX / WBE** hanno in comune, sia sotto Nebula sia da soli. La compatibilità dipende
+quindi dal formato dell'output della CLI, non dalla licenza Nebula.
+
+**Provati su AP reali**
+
+| Modello | Wi-Fi | Firmware | Lettura |
+|---|---|---|---|
+| NWA50AX PRO | 6 | V7.12 | SSH |
+| WAC6103D-I | 5 | V6.28 | SNMP o SSH |
+| NWA1123-AC PRO | 5 | V6.28 | SNMP o SSH |
+
+**Dovrebbero funzionare** — stessa famiglia di CLI e stesse linee di firmware (6.x / 7.x), non ancora provati
+con questo pannello:
+
+| Wi-Fi | Modelli |
+|---|---|
+| 7 | NWA30BE, NWA50BE, NWA50BE PRO, NWA55BE, NWA90BE, NWA90BE PRO, NWA110BE, NWA130BE, NWA210BE, NWA240BE, WBE510D, WBE530, WBE630S, WBE660S |
+| 6 / 6E | NWA50AX, NWA55AXE, NWA90AX PRO, NWA110AX, NWA210AX, NWA210AXv2, NWA220AX-6E, WAX300H, WAX510D, WAX610D, WAX620D-6E, WAX630S, WAX640S-6E, WAX650S, WAX655E |
+| 5 | NWA1123-ACv3, WAC500, WAC500H, WAC6552D-S, WAC6553D-E |
+
+Come aggiungerne uno: *Gestione AP → Aggiungi → Rileva protocollo* controlla se rispondono SNMP o SSH e propone il metodo.
+Se un dato resta vuoto ("n.d."), apri *Gestione AP → Output CLI*, copia il testo e apri una issue: i lettori
+sono piccoli e le differenze fra modelli di solito si sistemano con una riga. I modelli Wi-Fi 7 vengono
+trattati come Wi-Fi 6 sulle bande 2.4/5 GHz; la banda 6 GHz e i canali da 320 MHz non sono ancora configurabili.
+
+**Non supportati**: i prodotti consumer Zyxel (Multy, Armor, router NBG) e gli AP di altre marche: hanno un
+sistema operativo e una CLI diversi.
+
+Fonti: [access point Nebula](https://www.zyxel.com/us/en/products_services/Nebula-Cloud-Networking-Access-Points-Nebula-Cloud-Managed-Access-Points/specification)
+e [guida utente serie NWA/WAC/WAX/WBE](https://download.zyxel.com/WAC500/user_guide/WAC500_V6.70_Ed1.pdf) di Zyxel.
 
 ## Installazione con Docker
 

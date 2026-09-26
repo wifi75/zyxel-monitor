@@ -34,6 +34,7 @@ how much traffic, which channels are crowded, when the Internet line dropped.
 - [What it does](#what-it-does)
 - [Screenshots](#screenshots)
 - [How it works](#how-it-works)
+- [Compatible access points](#compatible-access-points)
 - [Installation](#installation-with-docker)
 - [Configuration](#configuration-env)
 - [Security](#security)
@@ -145,6 +146,39 @@ to test single changes; set the final values in Nebula too.
 Alerts are built from the stored events, read in order of id, so nothing is lost or sent twice across
 restarts. An AP that disappears for a single reading and comes back within the tolerance does not alert.
 Important devices alert after 5 minutes offline and again when they come back.
+
+## Compatible access points
+
+The panel talks to the APs' own management interfaces (SSH CLI and SNMP), which all Zyxel business APs of
+the **NWA / WAC / WAX / WBE** families share, whether they are run by Nebula or stand-alone. Compatibility
+therefore depends on the CLI output format, not on the Nebula licence.
+
+**Tested on real hardware**
+
+| Model | Wi-Fi | Firmware | Read via |
+|---|---|---|---|
+| NWA50AX PRO | 6 | V7.12 | SSH |
+| WAC6103D-I | 5 | V6.28 | SNMP or SSH |
+| NWA1123-AC PRO | 5 | V6.28 | SNMP or SSH |
+
+**Expected to work** — same CLI family and firmware lines (6.x / 7.x), not yet tested with this panel:
+
+| Wi-Fi | Models |
+|---|---|
+| 7 | NWA30BE, NWA50BE, NWA50BE PRO, NWA55BE, NWA90BE, NWA90BE PRO, NWA110BE, NWA130BE, NWA210BE, NWA240BE, WBE510D, WBE530, WBE630S, WBE660S |
+| 6 / 6E | NWA50AX, NWA55AXE, NWA90AX PRO, NWA110AX, NWA210AX, NWA210AXv2, NWA220AX-6E, WAX300H, WAX510D, WAX610D, WAX620D-6E, WAX630S, WAX640S-6E, WAX650S, WAX655E |
+| 5 | NWA1123-ACv3, WAC500, WAC500H, WAC6552D-S, WAC6553D-E |
+
+How to add one: *AP management → Add → Detect protocol* checks whether SNMP or SSH answers and proposes the method.
+If a value stays empty ("n/a"), open *AP management → CLI output*, copy the text and open an issue: the
+parsers are small and model-specific differences are usually a one-line fix. Wi-Fi 7 models are handled like
+Wi-Fi 6 on the 2.4/5 GHz bands; the 6 GHz band and 320 MHz channels are not configurable yet.
+
+**Not supported**: Zyxel consumer products (Multy, Armor, NBG routers) and non-Zyxel APs — they run a
+different operating system and CLI.
+
+Sources: Zyxel's [Nebula access points](https://www.zyxel.com/us/en/products_services/Nebula-Cloud-Networking-Access-Points-Nebula-Cloud-Managed-Access-Points/specification)
+and the [NWA/WAC/WAX/WBE series user's guide](https://download.zyxel.com/WAC500/user_guide/WAC500_V6.70_Ed1.pdf).
 
 ## Installation with Docker
 
