@@ -18,7 +18,10 @@
 - [ ] Output CLI di GIARDINO (NWA1123-AC PRO, fw 6.x) per verificare i lettori su quel modello.
 - [x] Client per banda in Panoramica, carico dei canali per AP, produttore dal MAC (v0.25.0).
 - [ ] Classifica traffico per dispositivo se l'SSH dà i byte.
-- [ ] Occupazione del canale anche sugli AP SNMP (oggi solo SSH) e nello storico, non solo il valore attuale.
+- [x] Storico dell'occupazione del canale (v0.26.0).
+- [ ] Occupazione del canale anche sugli AP SNMP (oggi solo SSH).
+- [ ] Verificare sul campo `no reject-legacy-station` (sintassi per spegnerlo non ancora provata).
+- [ ] Esplora comandi su GIARDINO (NWA1123-AC PRO) per imparare le sue capacità.
 - [ ] Rete ospiti, smart steering, 802.11r dal pannello: solo dopo il distacco da Nebula (un solo capo per la configurazione).
 - [ ] Da verificare sul campo prima di usarli: comando 160 MHz (`ch-width 20/40/80/160`), sintassi 6.x per scrivere gli orari, ripristino backup e prova controllata su un AP reale.
 

@@ -2,6 +2,13 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) — versioni: [SemVer](https://semver.org/lang/it/).
 
+## [0.26.0] - 2026-09-26
+### Aggiunto
+- Configurazione: voce «Rifiuta i dispositivi solo 802.11b» (`reject-legacy-station` nel profilo radio 2.4 GHz).
+- Personalizzazione per singolo AP anche delle voci a scelta e sì/no (velocità minima, 802.11b, band steering, roaming, espulsione dei segnali deboli…): «come il sito», un valore proprio o «non gestito».
+- Piano dei canali: andamento dell'occupazione nel tempo per banda e AP (24 ore o 7 giorni).
+- Capacità imparate da Esplora comandi anche per le larghezze di banda: si propongono solo quelle che l'AP dichiara, entro il limite del modello.
+
 ## [0.25.7] - 2026-09-26
 ### Aggiunto
 - Configurazione: voce «Velocità minima 2.4 GHz», mostrata solo sugli AP che l'hanno dichiarata nell'aiuto della CLI (si impara con Esplora comandi).
