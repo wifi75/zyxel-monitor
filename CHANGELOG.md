@@ -2,6 +2,15 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) — versioni: [SemVer](https://semver.org/lang/it/).
 
+## [0.29.3] - 2026-09-26
+### Modificato
+- Giro di ottimizzazione delle schede: titolo fisso in alto quando si scorre il contenuto, spazi ridotti.
+- Client connessi: ricerca compatta accanto al conteggio, aiuto spostato nel suggerimento del titolo.
+- Tipologia, traffico e client per AP: barre divise con legenda completa (colori fissi degli AP) al posto delle ciambelle con i nomi tagliati.
+- Schede degli AP in panoramica: niente etichette tagliate, le righe delle bande mostrano canale e client (potenza e occupazione nel suggerimento).
+- Mappa della rete: i quattro AP stanno su una riga; stati vuoti senza il grande riquadro tratteggiato.
+- Screenshot del README aggiornati.
+
 ## [0.29.2] - 2026-09-26
 ### Modificato
 - Configurazione: cliccando una casella si apre un pannellino sopra la tabella, ancorato alla casella, con le scelte come pulsanti (un clic sceglie e chiude; Esc o clic fuori per annullare). Prima il menu si apriva dentro la casella e allargava tutta la riga.
