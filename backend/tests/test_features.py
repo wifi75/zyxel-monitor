@@ -145,3 +145,11 @@ def test_critical_device_alert_after_five_minutes_and_on_return():
     assert not lines                                     # già avvisato: niente ripetizioni
     lines, still = critical_changes(rows, online={"aa"}, alerted=still, now=2100)
     assert "di nuovo collegato" in lines[0] and not still
+
+
+def test_type_from_vendor_when_name_says_nothing(monkeypatch):
+    from app import oui
+    from app.devices import device_type
+    monkeypatch.setattr(oui, "vendor", lambda mac: "Espressif")
+    assert device_type("lwip0", "24:62:ab:d7:1b:bc") == "Microcontrollori"
+    assert device_type("shelly-cancello", "24:62:ab:d7:1b:bc") == "Domotica"   # il nome vale di più

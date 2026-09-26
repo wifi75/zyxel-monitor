@@ -25,6 +25,19 @@ def is_private_mac(mac: str) -> bool:
         return False
 
 
+# quando il nome non basta: produttori che fanno quasi solo un tipo di dispositivo
+# (Apple, Samsung e simili no: fanno di tutto)
+VENDOR_RULES: list[tuple[str, str]] = [
+    ("Domotica", r"tuya|shelly|allterco|sonoff|itead|meross|tp-link.*kasa|philips lighting|signify|lumi united"),
+    ("Microcontrollori", r"espressif|raspberry"),
+    ("TV e media", r"amazon|google|sonos|roku|hisense tv|lg innotek|chromecast"),
+    ("Telecamere", r"hikvision|dahua|reolink|ezviz|hangzhou"),
+    ("Stampanti", r"brother|seiko epson|canon|hewlett|lexmark"),
+    ("Console", r"nintendo|sony interactive"),
+]
+_VENDOR_COMPILED = [(t, re.compile(p, re.I)) for t, p in VENDOR_RULES]
+
+
 def device_type(name: str | None, mac: str) -> str:
     if name:
         for kind, rx in _COMPILED:
@@ -33,4 +46,9 @@ def device_type(name: str | None, mac: str) -> str:
     # iOS e Android recenti usano MAC privati: quasi sempre smartphone/tablet
     if is_private_mac(mac):
         return "Smartphone"
+    from .oui import vendor      # qui e non in cima: oui importa questo modulo
+    if v := vendor(mac):
+        for kind, rx in _VENDOR_COMPILED:
+            if rx.search(v):
+                return kind
     return "Altro"
