@@ -2,6 +2,17 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) — versioni: [SemVer](https://semver.org/lang/it/).
 
+## [0.27.0] - 2026-09-26
+### Aggiunto
+- Dispositivi importanti (★ in Dispositivi): avviso su Telegram se restano scollegati più di 5 minuti e quando tornano.
+- Qualità per dispositivo: scollegamenti e cambi di AP nelle ultime 24 ore.
+- Piano dei canali: pulsante «Applica i canali consigliati» con la prova controllata.
+- Backup del database: scaricabile da Impostazioni e copia automatica ogni notte (ultime 7) in `BACKUP_DIR`, da montare su una cartella del NAS.
+- Utenti in sola lettura: vedono tutto, ogni modifica viene rifiutata dal server.
+- Esportazione CSV di dispositivi ed eventi.
+- Installabile come app sul telefono (PWA) quando il pannello è in HTTPS.
+- Esplora comandi chiede anche i comandi `show rogue-ap` e `show wlan`, per trovare quello che elenca le reti dei vicini.
+
 ## [0.26.1] - 2026-09-26
 ### Corretto
 - Piano dei canali: il grafico dell'occupazione restava alto 300 px e copriva la tabella della banda successiva.

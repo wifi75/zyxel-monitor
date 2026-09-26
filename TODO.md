@@ -22,6 +22,10 @@
 - [ ] Occupazione del canale anche sugli AP SNMP (oggi solo SSH).
 - [ ] Verificare sul campo `no reject-legacy-station` (sintassi per spegnerlo non ancora provata).
 - [ ] Esplora comandi su GIARDINO (NWA1123-AC PRO) per imparare le sue capacità.
+- [x] Dispositivi importanti con avviso, qualità per dispositivo, backup del DB, utenti in sola lettura, CSV, PWA (v0.27.0).
+- [ ] Reti dei vicini: dall'output di Esplora (`show rogue-ap ?`, `show wlan ?`) trovare il comando e leggerlo nel Piano dei canali.
+- [ ] Occupazione e canali via SNMP: servono gli OID Zyxel.
+- [ ] Notifiche push della PWA (oggi si installa soltanto; gli avvisi arrivano su Telegram).
 - [ ] Rete ospiti, smart steering, 802.11r dal pannello: solo dopo il distacco da Nebula (un solo capo per la configurazione).
 - [ ] Da verificare sul campo prima di usarli: comando 160 MHz (`ch-width 20/40/80/160`), sintassi 6.x per scrivere gli orari, ripristino backup e prova controllata su un AP reale.
 
