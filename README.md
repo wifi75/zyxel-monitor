@@ -6,6 +6,7 @@
 [![Python](https://img.shields.io/badge/Python-3.13-3776AB?logo=python&logoColor=white)](https://www.python.org)
 [![Frontend](https://img.shields.io/badge/Frontend-Vue%203.5-4FC08D?logo=vuedotjs&logoColor=white)](https://vuejs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-6.0-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
+[![Languages](https://img.shields.io/badge/UI-Italian%20%7C%20English-FF5C7A)](frontend/src/i18n)
 [![Vite](https://img.shields.io/badge/Build-Vite%208-646CFF?logo=vite&logoColor=white)](https://vite.dev)
 [![Chart.js](https://img.shields.io/badge/Charts-Chart.js%204.5-FF6384?logo=chartdotjs&logoColor=white)](https://www.chartjs.org)
 [![Database](https://img.shields.io/badge/DB-SQLite-003B57?logo=sqlite&logoColor=white)](https://www.sqlite.org)

@@ -14,7 +14,10 @@
 - [ ] HTTPS per il pannello: procedura HAProxy nel README (v0.25.0), da configurare.
 - [x] Avvisi Telegram e report settimanale (v0.25.0).
 - [x] Grafici con i colori del tema chiaro/scuro (v0.25.0).
-- [ ] Revisione pagina per pagina nei due temi e su smartphone, comprese Report, Mappa e Piano dei canali.
+- [x] Giro delle schede sul tema chiaro da computer, con i dati dimostrativi (v0.29.3).
+- [ ] Revisione sul tema scuro e su smartphone, con i dati reali.
+- [ ] Rendere stabili i canali 1/6/11 e il rifiuto 802.11b impostandoli anche in Nebula (oggi solo nella running-config).
+- [ ] Wi-Fi 7: banda 6 GHz e canali da 320 MHz non configurabili; provare un modello «dovrebbe funzionare» se capita.
 - [ ] Output CLI di GIARDINO (NWA1123-AC PRO, fw 6.x) per verificare i lettori su quel modello.
 - [x] Client per banda in Panoramica, carico dei canali per AP, produttore dal MAC (v0.25.0).
 - [ ] Classifica traffico per dispositivo se l'SSH dà i byte.

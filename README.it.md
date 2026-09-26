@@ -3,9 +3,23 @@
 [English](README.md) · **Italiano**
 
 [![Backend](https://img.shields.io/badge/Backend-FastAPI%200.141-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
+[![Python](https://img.shields.io/badge/Python-3.13-3776AB?logo=python&logoColor=white)](https://www.python.org)
 [![Frontend](https://img.shields.io/badge/Frontend-Vue%203.5-4FC08D?logo=vuedotjs&logoColor=white)](https://vuejs.org)
+[![TypeScript](https://img.shields.io/badge/TypeScript-6.0-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
+[![Lingue](https://img.shields.io/badge/Interfaccia-Italiano%20%7C%20Inglese-FF5C7A)](frontend/src/i18n)
+[![Vite](https://img.shields.io/badge/Build-Vite%208-646CFF?logo=vite&logoColor=white)](https://vite.dev)
+[![Chart.js](https://img.shields.io/badge/Grafici-Chart.js%204.5-FF6384?logo=chartdotjs&logoColor=white)](https://www.chartjs.org)
+[![Database](https://img.shields.io/badge/DB-SQLite-003B57?logo=sqlite&logoColor=white)](https://www.sqlite.org)
 [![Docker](https://img.shields.io/badge/Deploy-Docker-2496ED?logo=docker&logoColor=white)](docker-compose.yml)
-[![Test](https://img.shields.io/badge/Test-41%20pytest-0A9EDC?logo=pytest&logoColor=white)](backend/tests)
+[![Fonti](https://img.shields.io/badge/Fonti-SNMP%20%7C%20SSH%20%7C%20OPNsense-5A6B7B)](#da-dove-arrivano-i-dati)
+[![API](https://img.shields.io/badge/API-76%20endpoint-0A7EA4)](backend/app/api.py)
+[![Test](https://img.shields.io/badge/Tests-40%20pytest-0A9EDC?logo=pytest&logoColor=white)](backend/tests)
+[![Lint](https://img.shields.io/badge/Lint-ruff-D7FF64?logo=ruff&logoColor=black)](ruff.toml)
+[![SemVer](https://img.shields.io/badge/SemVer-2.0.0-blue)](https://semver.org/lang/it/)
+[![Keep a Changelog](https://img.shields.io/badge/Changelog-Keep%20a%20Changelog-E05735)](CHANGELOG.md)
+[![Mantenuto](https://img.shields.io/badge/Mantenuto-s%C3%AC%20(2026)-brightgreen)](https://github.com/wifi75/zyxel-monitor/commits)
+[![Ultimo commit](https://img.shields.io/github/last-commit/wifi75/zyxel-monitor)](https://github.com/wifi75/zyxel-monitor/commits)
+[![Stelle](https://img.shields.io/github/stars/wifi75/zyxel-monitor?style=flat)](https://github.com/wifi75/zyxel-monitor/stargazers)
 [![License](https://img.shields.io/badge/License-MIT-yellow)](LICENSE)
 
 Pannello self-hosted di monitoraggio e gestione per gli **access point Zyxel gestiti da Nebula con la licenza
