@@ -2,6 +2,12 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) — versioni: [SemVer](https://semver.org/lang/it/).
 
+## [0.29.4] - 2026-09-26
+### Aggiunto
+- README: sezione sugli access point compatibili (provati sul campo e attesi compatibili, dalle famiglie NWA/WAC/WAX/WBE) e su come aggiungerne uno.
+### Corretto
+- I modelli Wi-Fi 7 («BE») sono riconosciuti: larghezze fino a 160 MHz e WPA3 come i Wi-Fi 6, non più limitati come i Wi-Fi 5.
+
 ## [0.29.3] - 2026-09-26
 ### Modificato
 - Giro di ottimizzazione delle schede: titolo fisso in alto quando si scorre il contenuto, spazi ridotti.
