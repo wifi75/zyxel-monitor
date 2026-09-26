@@ -13,6 +13,7 @@ from .collectors import opnsense
 from .core.db import connect
 from .core.security import current_user
 from .devices import device_type
+from .oui import vendor
 
 router = APIRouter(prefix="/api", dependencies=[Depends(current_user)])
 
@@ -46,6 +47,7 @@ def list_devices():
         d["known"] = bool(d["known"])
         d["online"] = d.pop("online_ap") is not None
         d["device_type"] = device_type(d["alias"] or d["hostname"], d["mac"])
+        d["vendor"] = vendor(d["mac"])
         out.append(d)
     return out
 

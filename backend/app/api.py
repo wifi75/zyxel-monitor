@@ -14,6 +14,7 @@ from .core.security import (
 )
 from .core.version import APP_AUTHOR, APP_NAME, APP_VERSION
 from .devices import device_type
+from .oui import vendor
 from .poller import INTERNET, internet_state
 
 router = APIRouter(prefix="/api")
@@ -48,12 +49,32 @@ class PasswordIn(BaseModel):
     new_password: str = Field(min_length=MIN_PASSWORD_LEN)
 
 
+# tentativi di accesso falliti per utente: dopo MAX_FAILS il login si blocca per LOCK_S secondi.
+# Si conta per nome utente e non per IP: dietro al reverse proxy tutte le richieste hanno lo stesso IP.
+MAX_FAILS = 5
+LOCK_S = 900
+_fails: dict[str, list[float]] = {}
+
+
+def _locked(username: str) -> int:
+    """Secondi di blocco rimasti, 0 se si può provare."""
+    now = time.time()
+    recent = [t for t in _fails.get(username, []) if now - t < LOCK_S]
+    _fails[username] = recent
+    return int(LOCK_S - (now - recent[0])) if len(recent) >= MAX_FAILS else 0
+
+
 @router.post("/login")
 def login(body: LoginIn):
+    key = body.username.strip().lower()
+    if wait := _locked(key):
+        raise HTTPException(429, f"Troppi tentativi falliti: riprova tra {wait // 60 + 1} minuti")
     with connect() as db:
         row = db.execute("SELECT * FROM users WHERE username = ?", (body.username,)).fetchone()
     if not row or not verify_password(body.password, row["password_hash"]):
+        _fails.setdefault(key, []).append(time.time())
         raise HTTPException(401, "Credenziali non valide")
+    _fails.pop(key, None)
     return {"token": create_token(row["username"]), "default_password": bool(row["is_default"])}
 
 
@@ -99,6 +120,7 @@ def list_clients():
     for r in rows:
         d = dict(r)
         d["device_type"] = device_type(d["alias"] or d["hostname"], d["mac"])
+        d["vendor"] = vendor(d["mac"])
         out.append(d)
     return out
 

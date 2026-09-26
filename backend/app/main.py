@@ -4,11 +4,13 @@ import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
+from .alerts import router as alerts_router
 from .api import router
+from .channels import router as channels_router
 from .core.db import init_db
 from .core.security import ensure_default_user
 from .core.store import seed_from_env
@@ -17,6 +19,7 @@ from .poller import run_forever
 from .insights_api import router as insights_router
 from .nebula_api import router as nebula_router
 from .policy_api import router as policy_router
+from .report import router as report_router
 from .settings_api import router as settings_router
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
@@ -45,6 +48,22 @@ app.include_router(settings_router)
 app.include_router(insights_router)
 app.include_router(nebula_router)
 app.include_router(policy_router)
+app.include_router(alerts_router)
+app.include_router(channels_router)
+app.include_router(report_router)
+
+
+@app.middleware("http")
+async def security_headers(request: Request, call_next):
+    """Intestazioni di sicurezza su ogni risposta; HSTS solo quando si arriva in HTTPS (anche dietro proxy)."""
+    resp = await call_next(request)
+    resp.headers.setdefault("X-Content-Type-Options", "nosniff")
+    resp.headers.setdefault("X-Frame-Options", "DENY")
+    resp.headers.setdefault("Referrer-Policy", "no-referrer")
+    resp.headers.setdefault("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
+    if request.headers.get("x-forwarded-proto", request.url.scheme) == "https":
+        resp.headers.setdefault("Strict-Transport-Security", "max-age=31536000")
+    return resp
 
 if STATIC_DIR.exists():
     app.mount("/assets", StaticFiles(directory=STATIC_DIR / "assets"), name="assets")
