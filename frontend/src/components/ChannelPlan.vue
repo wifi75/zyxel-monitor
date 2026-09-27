@@ -7,7 +7,8 @@ import { apColor } from '../apColors'
 import { ask } from '../dialog'
 
 /** Canali e occupazione di ogni radio, sovrapposizioni fra AP e canali consigliati (solo consiglio). */
-const props = defineProps<{ aps: Ap[] }>()
+/** band: mostra una sola banda (widget separati 2.4 e 5 GHz); senza, tutte */
+const props = defineProps<{ aps: Ap[]; band?: string }>()
 const data = ref<Channels | null>(null)
 const error = ref('')
 
@@ -27,7 +28,7 @@ function trend(band: string) {
 const pct = (v: number) => `${v}%`
 
 // ---- applicare i canali consigliati: regole per AP salvate, poi prova controllata come in Configurazione ----
-const suggestions = computed(() => Object.entries(data.value?.bands ?? {})
+const suggestions = computed(() => Object.entries(data.value?.bands ?? {}).filter(([b]) => !props.band || b === props.band)
   .flatMap(([band, b]) => Object.entries(b.changes).map(([ap, ch]) => ({ band, ap, ch }))))
 const applyMsg = ref<{ ok: boolean; message: string } | null>(null)
 const applying = ref(false)
@@ -56,7 +57,8 @@ onMounted(load)
 // si ricarica quando arriva una nuova lettura degli AP
 watch(() => props.aps.map(a => a.updated).join(), load)
 
-const bands = computed(() => Object.entries(data.value?.bands ?? {}).filter(([, b]) => b.radios.length))
+const bands = computed(() => Object.entries(data.value?.bands ?? {})
+  .filter(([name, b]) => b.radios.length && (!props.band || name === props.band)))
 
 function issueText(i: ChannelIssue): string {
   const aps = i.aps.join(', ')
@@ -72,7 +74,7 @@ const level = (pct: number | null) => pct == null ? '' : pct >= (data.value?.bus
 
 <template>
   <div class="section-head">
-    <h2>{{ t('Piano dei canali') }}</h2>
+    <h2>{{ band ? t('Canali {b}', { b: band.replace('GHz', ' GHz') }) : t('Piano dei canali') }}</h2>
     <select v-model.number="hours" :title="t('Periodo del grafico')">
       <option :value="24">{{ t('24 ore') }}</option><option :value="168">{{ t('7 giorni') }}</option>
     </select>
@@ -80,7 +82,7 @@ const level = (pct: number | null) => pct == null ? '' : pct >= (data.value?.bus
   <p v-if="error" class="error small">{{ error }}</p>
   <p v-else-if="!bands.length" class="muted">{{ t('Canali non ancora letti dagli AP.') }}</p>
   <div v-for="[band, b] in bands" :key="band" class="band-block">
-    <h3 class="small">{{ band.replace('GHz', ' GHz') }}</h3>
+    <h3 v-if="!props.band" class="small">{{ band.replace('GHz', ' GHz') }}</h3>
     <div class="table-wrap">
       <table class="compact">
         <thead><tr><th>AP</th><th>{{ t('Canale') }}</th><th>{{ t('Occupazione') }}</th><th>{{ t('Client') }}</th><th>{{ t('Consigliato') }}</th></tr></thead>

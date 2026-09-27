@@ -540,7 +540,9 @@ const SSH_NA = "La CLI SSH di questo AP non fornisce ancora il dato: in Impostaz
 
           <TopologyMap v-else-if="id === 'topology'" :aps="aps" :clients="clients" :internet="internet" @open="view = $event" />
 
-          <ChannelPlan v-else-if="id === 'channels'" :aps="aps" />
+          <ChannelPlan v-else-if="id === 'channels'" :aps="aps" band="2.4GHz" />
+
+          <ChannelPlan v-else-if="id === 'channels_5'" :aps="aps" band="5GHz" />
 
           <FirmwareCard v-else-if="id === 'firmware'" :aps="aps" />
 

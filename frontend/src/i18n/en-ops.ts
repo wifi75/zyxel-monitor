@@ -22,6 +22,9 @@ addEn({
   'Nebula': 'Nebula',
   'Cloud Zyxel (licenza Pro)': 'Zyxel cloud (Pro license)',
   'Il mio account': 'My account',
+  'Canali {b}': 'Channels {b}',
+  'Canali 2.4 GHz': 'Channels 2.4 GHz',
+  'Canali 5 GHz': 'Channels 5 GHz',
   'VLAN della rete Wi-Fi': 'Wi-Fi network VLAN',
   'Numero della VLAN su cui escono i dispositivi Wi-Fi (1 = rete normale). Un numero sbagliato lascia tutti senza rete: cambialo solo se la VLAN esiste già su switch e router.':
     'VLAN number for Wi-Fi devices (1 = normal network). A wrong number leaves everyone offline: change it only if the VLAN already exists on switch and router.',
