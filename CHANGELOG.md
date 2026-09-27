@@ -2,6 +2,10 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) — versioni: [SemVer](https://semver.org/lang/it/).
 
+## [0.36.0] - 2026-09-27
+### Aggiunto
+- Colori della dashboard: in «Personalizza» compare il pannello dei colori con 8 tavolozze (Predefinita, Vivace, Oceano, Tramonto, Foresta, Lavanda, Pastello, Grafite), il colore delle card degli AP e l'intensità delle sfumature. L'effetto si vede subito, la scelta resta salvata nel browser e funziona anche con il tema scuro.
+
 ## [0.35.2] - 2026-09-27
 ### Corretto
 - Motivo dei distacchi: conta solo le riconfigurazioni dell'AP avvenute prima del distacco (non quelle subito dopo, né quelle generiche) e riconosce anche i riavvii rapidi dell'AP.

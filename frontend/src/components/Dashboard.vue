@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import PalettePicker from './PalettePicker.vue'
 import { GridItem, GridLayout } from 'grid-layout-plus'
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { api, type SavedLayout, type ViewKind, type WidgetPos } from '../api'
@@ -79,6 +80,7 @@ async function reset() {
     <button class="ghost small" @click="reset">{{ t('Ripristina') }}</button>
     <button class="primary small" @click="editing = false">{{ t('Fatto') }}</button>
   </div>
+  <PalettePicker v-if="editing" />
 
   <div v-if="narrow" class="dash-stack">
     <WidgetShell v-for="p in stacked" :id="p.i" :key="p.i" :editing="editing" :loading="loading && p.i !== 'kpis'"
