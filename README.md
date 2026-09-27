@@ -12,8 +12,8 @@
 [![Database](https://img.shields.io/badge/DB-SQLite-003B57?logo=sqlite&logoColor=white)](https://www.sqlite.org)
 [![Docker](https://img.shields.io/badge/Deploy-Docker-2496ED?logo=docker&logoColor=white)](docker-compose.yml)
 [![Sources](https://img.shields.io/badge/Sources-SNMP%20%7C%20SSH%20%7C%20OPNsense-5A6B7B)](#where-the-data-comes-from)
-[![API](https://img.shields.io/badge/API-77%20endpoints-0A7EA4)](backend/app/api.py)
-[![Tests](https://img.shields.io/badge/Tests-50%20pytest-0A9EDC?logo=pytest&logoColor=white)](backend/tests)
+[![API](https://img.shields.io/badge/API-80%20endpoints-0A7EA4)](backend/app/api.py)
+[![Tests](https://img.shields.io/badge/Tests-51%20pytest-0A9EDC?logo=pytest&logoColor=white)](backend/tests)
 [![Lint](https://img.shields.io/badge/Lint-ruff-D7FF64?logo=ruff&logoColor=black)](ruff.toml)
 [![SemVer](https://img.shields.io/badge/SemVer-2.0.0-blue)](https://semver.org)
 [![Keep a Changelog](https://img.shields.io/badge/Changelog-Keep%20a%20Changelog-E05735)](CHANGELOG.md)
@@ -67,7 +67,7 @@ network, roaming options, minimum data rate, 802.11b rejection, LEDs, scheduled 
 and overridden per AP, always applied through a **controlled trial** with automatic rollback (see below).
 
 **Everything else** — light and dark theme, Italian and English, customisable dashboard (drag and resize
-widgets), read-only users, CSV export, nightly database backup, installable as a phone app (PWA, over HTTPS).
+widgets, 32 colour palettes, one per widget if you like), read-only users, CSV export, nightly database backup, installable as a phone app (PWA, over HTTPS).
 
 ## Screenshots
 
@@ -151,7 +151,7 @@ Important devices alert after 5 minutes offline and again when they come back.
 | Clients by usage (download + upload) | ✅ | from OPNsense NetFlow/Insight (daily totals); without OPNsense not available — the AP CLI has no per-client byte counters |
 | Topology | ✅ | network map |
 | Summary report | ✅ | 24 h / 7 / 30 days, weekly on Telegram |
-| Event log | ✅ | per device and per AP, CSV export |
+| Event log | ✅ | per device and per AP, CSV export; each disconnection shows its likely reason, signal and duration |
 | Why a device disconnects | ✅ | device *Diagnosis* (not in Nebula) |
 | Channel utilisation, channel plan | ✅ | with history and suggested 1/6/11 |
 | Alerts | ✅ | Telegram, incl. important devices offline |

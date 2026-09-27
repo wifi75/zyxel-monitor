@@ -12,8 +12,8 @@
 [![Database](https://img.shields.io/badge/DB-SQLite-003B57?logo=sqlite&logoColor=white)](https://www.sqlite.org)
 [![Docker](https://img.shields.io/badge/Deploy-Docker-2496ED?logo=docker&logoColor=white)](docker-compose.yml)
 [![Fonti](https://img.shields.io/badge/Fonti-SNMP%20%7C%20SSH%20%7C%20OPNsense-5A6B7B)](#da-dove-arrivano-i-dati)
-[![API](https://img.shields.io/badge/API-77%20endpoint-0A7EA4)](backend/app/api.py)
-[![Test](https://img.shields.io/badge/Test-50%20pytest-0A9EDC?logo=pytest&logoColor=white)](backend/tests)
+[![API](https://img.shields.io/badge/API-80%20endpoint-0A7EA4)](backend/app/api.py)
+[![Test](https://img.shields.io/badge/Test-51%20pytest-0A9EDC?logo=pytest&logoColor=white)](backend/tests)
 [![Lint](https://img.shields.io/badge/Lint-ruff-D7FF64?logo=ruff&logoColor=black)](ruff.toml)
 [![SemVer](https://img.shields.io/badge/SemVer-2.0.0-blue)](https://semver.org/lang/it/)
 [![Keep a Changelog](https://img.shields.io/badge/Changelog-Keep%20a%20Changelog-E05735)](CHANGELOG.md)
@@ -55,7 +55,7 @@ Wi-Fi, rete ospiti, opzioni di roaming, velocità minima, rifiuto dei dispositiv
 programmato… impostati per tutto il sito e personalizzabili per singolo AP, sempre con la **prova controllata**
 e il ripristino automatico (vedi sotto).
 
-**Il resto**: tema chiaro e scuro, italiano e inglese, dashboard personalizzabile (widget da spostare e
+**Il resto**: tema chiaro e scuro, italiano e inglese, dashboard personalizzabile (32 tavolozze di colori, anche una per widget; widget da spostare e
 ridimensionare), utenti in sola lettura, esportazione CSV, backup notturno del database, installabile come
 app sul telefono (PWA, in HTTPS).
 
@@ -140,7 +140,7 @@ importanti avvisano dopo 5 minuti scollegati e di nuovo quando tornano.
 | Client per consumo (scaricato + inviato) | ✅ | da NetFlow/Insight di OPNsense (totali giornalieri); senza OPNsense no: la CLI degli AP non ha contatori di byte per client |
 | Topologia | ✅ | mappa della rete |
 | Report | ✅ | 24 ore / 7 / 30 giorni, settimanale su Telegram |
-| Registro eventi | ✅ | per dispositivo e per AP, esportazione CSV |
+| Registro eventi | ✅ | per dispositivo e per AP, esportazione CSV; ogni distacco mostra motivo probabile, segnale e durata |
 | Perché un dispositivo si scollega | ✅ | *Diagnosi* del dispositivo (Nebula non ce l'ha) |
 | Occupazione dei canali, piano dei canali | ✅ | con storico e canali 1/6/11 consigliati |
 | Avvisi | ✅ | Telegram, compresi i dispositivi importanti scollegati |
