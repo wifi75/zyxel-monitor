@@ -186,7 +186,8 @@ async def current_values(ap: store.ApConfig) -> dict[str, object]:
 def explore_commands(cfg: ci.RunningConfig) -> list[str]:
     """Solo richieste di aiuto ("?") dentro i profili già esistenti: non cambiano nulla."""
     # reti dei vicini: comandi di sola lettura da scoprire ("show" eseguito senza argomenti non cambia nulla)
-    lines = ["show rogue-ap ?", "show wlan ?", "configure terminal"]
+    lines = ["show rogue-ap detection status", "show rogue-ap detection info", "show rogue-ap detection monitoring",
+             "show wlan channels", "configure terminal"]
     for header in (f"wlan-security-profile {cfg.security_profile()}", f"wlan-ssid-profile {cfg.ssid_profile()}",
                    "wlan-macfilter-profile BLOCKED1", f"wlan-radio-profile {cfg.radio_profile(1)}"):
         if "None" not in header:
