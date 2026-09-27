@@ -2,6 +2,11 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) — versioni: [SemVer](https://semver.org/lang/it/).
 
+## [0.31.3] - 2026-09-27
+### Corretto
+- **Riallineamento che riavviava il Wi-Fi ogni 15 minuti**: le voci a scelta di testo (Sicurezza, Band steering…) risultavano sempre diverse da quelle sull'AP e venivano rimandate a tutti gli AP a ogni controllo, staccando tutti i dispositivi. Ora il confronto è corretto.
+- Protezione: se una voce va rimandata più di due volte in 6 ore perché l'AP torna sempre al valore di prima (es. lo reimposta Nebula), il pannello smette di rimandarla e lo segnala negli eventi.
+
 ## [0.31.2] - 2026-09-26
 ### Modificato
 - Tutte le conferme e le richieste di un nome (elimina, riavvia, rinomina, esci da Nebula, ripristina…) usano una finestra del pannello, centrata e con il tema, invece di quella del browser in cima alla pagina.

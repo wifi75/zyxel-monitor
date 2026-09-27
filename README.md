@@ -13,7 +13,7 @@
 [![Docker](https://img.shields.io/badge/Deploy-Docker-2496ED?logo=docker&logoColor=white)](docker-compose.yml)
 [![Sources](https://img.shields.io/badge/Sources-SNMP%20%7C%20SSH%20%7C%20OPNsense-5A6B7B)](#where-the-data-comes-from)
 [![API](https://img.shields.io/badge/API-76%20endpoints-0A7EA4)](backend/app/api.py)
-[![Tests](https://img.shields.io/badge/Tests-43%20pytest-0A9EDC?logo=pytest&logoColor=white)](backend/tests)
+[![Tests](https://img.shields.io/badge/Tests-45%20pytest-0A9EDC?logo=pytest&logoColor=white)](backend/tests)
 [![Lint](https://img.shields.io/badge/Lint-ruff-D7FF64?logo=ruff&logoColor=black)](ruff.toml)
 [![SemVer](https://img.shields.io/badge/SemVer-2.0.0-blue)](https://semver.org)
 [![Keep a Changelog](https://img.shields.io/badge/Changelog-Keep%20a%20Changelog-E05735)](CHANGELOG.md)
