@@ -108,6 +108,15 @@ def _radio_flag(cfg: RunningConfig, slot: int, line: str) -> bool | None:
     return cfg.has(f"wlan-radio-profile {p}", line) if p else None
 
 
+def _int(v: str | None) -> int | None:
+    return int(v) if v and v.strip().isdigit() else None
+
+
+def _enabled(v: str | None) -> bool | None:
+    """"enable"/"disable" della CLI → sì/no; None se la riga non c'è."""
+    return None if v is None else v.strip().lower() == "enable"
+
+
 def _rate(cfg: RunningConfig, direction: str) -> int | None:
     p = cfg.ssid_profile()
     v = cfg.value(f"wlan-ssid-profile {p}", f"{direction}-rate-limit") if p else None
@@ -387,6 +396,33 @@ ITEMS: list[Item] = [
          "senza rete: cambialo solo se la VLAN esiste già su switch e router.",
          read=lambda c: int(v) if (v := _ssid_value(c, "vlan-id")) and v.isdigit() else None,
          build=lambda v, c: _in_ssid(c, f"vlan-id {int(v)}")),
+    # sintassi dalla CLI Reference Guide Zyxel NWA/WAC/WAX (v6.10), capitolo "Wireless LAN Profiles"
+    Item("block_intra", "rete", "Blocco del traffico fra dispositivi Wi-Fi (Intra-BSS)", "bool",
+         "I dispositivi collegati alla stessa rete Wi-Fi non possono parlarsi fra loro (solo con Internet e la rete "
+         "via cavo). Utile per gli ospiti; lascialo spento se usi Chromecast, AirPlay o la domotica in locale.",
+         read=lambda c: _ssid_flag(c, "block-intra"),
+         build=lambda v, c: _in_ssid(c, "block-intra" if v else "no block-intra")),
+    Item("uapsd", "rete", "Risparmio energetico U-APSD (WMM Power Save)", "bool",
+         "Allunga la batteria di telefoni e dispositivi a batteria. Alcuni dispositivi vecchi funzionano peggio.",
+         read=lambda c: _ssid_flag(c, "uapsd"),
+         build=lambda v, c: _in_ssid(c, "uapsd" if v else "no uapsd")),
+    Item("dcs_interval", "radio", "Canale automatico: ogni quanto ricontrolla", "int",
+         "Minuti fra un controllo del canale automatico (DCS) e il successivo (Nebula: 720).", unit="min",
+         read=lambda c: _int(_radio_value(c, 1, "dcs time-interval")),
+         build=lambda v, c: _in_radios(c, f"dcs time-interval {int(v)}")),
+    Item("dcs_client_aware", "radio", "Canale automatico: non cambiare con client collegati", "bool",
+         "Se attivo, l'AP non cambia canale finché ci sono dispositivi collegati: nessuno viene staccato.",
+         read=lambda c: _enabled(_radio_value(c, 1, "dcs client-aware")),
+         build=lambda v, c: _in_radios(c, f"dcs client-aware {'enable' if v else 'disable'}")),
+    Item("dcs_avoid_dfs", "radio", "Canale automatico: evita i canali DFS (5 GHz)", "bool",
+         "Evita i canali condivisi con i radar: niente cambi improvvisi di canale che staccano i dispositivi.",
+         read=lambda c: _enabled(_radio_value(c, 2, "dcs dfs-aware")),
+         build=lambda v, c: _in_radio(c, 2, f"dcs dfs-aware {'enable' if v else 'disable'}")),
+    Item("dcs_deployment", "radio", "Canale automatico: canali 2.4 GHz usati", "choice",
+         "3 canali = 1, 6, 11 (consigliato); 4 canali = 1, 5, 9, 13.",
+         choices=["3-channel", "4-channel"],
+         read=lambda c: _radio_value(c, 1, "dcs channel-deployment"),
+         build=lambda v, c: _in_radio(c, 1, f"dcs channel-deployment {v}")),
     Item("band_steering", "radio", "Band steering", "choice",
          "Spinge i dispositivi compatibili sulla 5 GHz, più veloce. Standard = suggerisce, forzato = insiste.",
          choices=["disable", "standard", "force"],

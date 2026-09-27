@@ -22,6 +22,24 @@ addEn({
   'Nebula': 'Nebula',
   'Cloud Zyxel (licenza Pro)': 'Zyxel cloud (Pro license)',
   'Il mio account': 'My account',
+  'Blocco del traffico fra dispositivi Wi-Fi (Intra-BSS)': 'Block traffic between Wi-Fi devices (Intra-BSS)',
+  'I dispositivi collegati alla stessa rete Wi-Fi non possono parlarsi fra loro (solo con Internet e la rete via cavo). Utile per gli ospiti; lascialo spento se usi Chromecast, AirPlay o la domotica in locale.':
+    'Devices on the same Wi-Fi cannot talk to each other (only to the Internet and the wired network). Useful for guests; keep it off if you use Chromecast, AirPlay or local home automation.',
+  'Risparmio energetico U-APSD (WMM Power Save)': 'U-APSD power saving (WMM Power Save)',
+  'Allunga la batteria di telefoni e dispositivi a batteria. Alcuni dispositivi vecchi funzionano peggio.':
+    'Extends battery life of phones and battery devices. Some old devices work worse.',
+  'Canale automatico: ogni quanto ricontrolla': 'Automatic channel: check interval',
+  'Minuti fra un controllo del canale automatico (DCS) e il successivo (Nebula: 720).': 'Minutes between automatic channel (DCS) checks (Nebula: 720).',
+  'Canale automatico: non cambiare con client collegati': 'Automatic channel: keep it while clients are connected',
+  "Se attivo, l'AP non cambia canale finché ci sono dispositivi collegati: nessuno viene staccato.":
+    'When on, the AP does not change channel while devices are connected: nobody gets dropped.',
+  'Canale automatico: evita i canali DFS (5 GHz)': 'Automatic channel: avoid DFS channels (5 GHz)',
+  'Evita i canali condivisi con i radar: niente cambi improvvisi di canale che staccano i dispositivi.':
+    'Avoids radar-shared channels: no sudden channel changes that drop devices.',
+  'Canale automatico: canali 2.4 GHz usati': 'Automatic channel: 2.4 GHz channels used',
+  '3 canali = 1, 6, 11 (consigliato); 4 canali = 1, 5, 9, 13.': '3 channels = 1, 6, 11 (recommended); 4 channels = 1, 5, 9, 13.',
+  '3 canali (1, 6, 11)': '3 channels (1, 6, 11)',
+  '4 canali (1, 5, 9, 13)': '4 channels (1, 5, 9, 13)',
   'Canali {b}': 'Channels {b}',
   'Canali 2.4 GHz': 'Channels 2.4 GHz',
   'Canali 5 GHz': 'Channels 5 GHz',

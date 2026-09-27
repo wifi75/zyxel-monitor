@@ -141,7 +141,8 @@ function beyondModel(r: Row, apId: number): boolean {
   return !!want && fitWidth(want, r.band, apId) !== want
 }
 /** voci che si possono attivare anche se l'AP oggi non le ha (le crea il comando), come sul server */
-const CREATABLE = new Set(['guest_name', 'guest_password', 'wifi_schedule', 'mac_block', 'ntp_server', 'wifi_password'])
+const CREATABLE = new Set(['guest_name', 'guest_password', 'wifi_schedule', 'mac_block', 'ntp_server', 'wifi_password',
+  'dcs_interval', 'dcs_client_aware', 'dcs_avoid_dfs', 'dcs_deployment'])
 /** l'AP non ha questa voce nella sua configurazione: modello o firmware non la prevedono */
 function unavailable(r: Row, apId: number): boolean {
   if (!r.item || r.item.kind === 'password' || CREATABLE.has(r.item.key)) return false
@@ -183,6 +184,7 @@ const ITEM_GROUP: Record<string, string> = {
 }
 const CHOICE_LABEL: Record<string, string> = {
   disable: 'Spento', standard: 'Standard', force: 'Forzato', off: 'Spento', wpa2: 'WPA2', wpa3: 'WPA3', 'wpa2/wpa3': 'WPA2 + WPA3',
+  '3-channel': '3 canali (1, 6, 11)', '4-channel': '4 canali (1, 5, 9, 13)',
   'daily-04': 'Ogni giorno 4:00', 'sun-04': 'Domenica 4:00', 'sat-04': 'Sabato 4:00', '0': 'Disattivata',
 }
 /** etichette [spento, acceso] per le voci sì/no: parole concrete invece di "attivo/spento" */

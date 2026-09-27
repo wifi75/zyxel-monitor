@@ -244,3 +244,18 @@ def test_vlan_read_and_command():
     cfg = RunningConfig("wlan slot1\n ssid profile 1 SSID1\n!\nwlan-ssid-profile SSID1\n ssid WiFi\n vlan-id 1\n!\n")
     assert BY_KEY["vlan_id"].read(cfg) == 1
     assert BY_KEY["vlan_id"].build(20, cfg) == ["wlan-ssid-profile SSID1", "vlan-id 20", "exit"]
+
+
+def test_intra_bss_uapsd_and_dcs_items():
+    from app.config_items import BY_KEY, RunningConfig
+    cfg = RunningConfig("wlan slot1\n ap profile R2\n ssid profile 1 SSID1\n!\nwlan slot2\n ap profile R5\n!\n"
+                        "wlan-ssid-profile SSID1\n ssid WiFi\n uapsd\n!\n"
+                        "wlan-radio-profile R2\n dcs time-interval 720\n dcs client-aware enable\n"
+                        " dcs channel-deployment 3-channel\n!\nwlan-radio-profile R5\n dcs dfs-aware enable\n!\n")
+    assert BY_KEY["block_intra"].read(cfg) is False and BY_KEY["uapsd"].read(cfg) is True
+    assert BY_KEY["block_intra"].build(True, cfg) == ["wlan-ssid-profile SSID1", "block-intra", "exit"]
+    assert BY_KEY["dcs_interval"].read(cfg) == 720
+    assert BY_KEY["dcs_client_aware"].read(cfg) is True
+    assert BY_KEY["dcs_avoid_dfs"].read(cfg) is True
+    assert BY_KEY["dcs_deployment"].read(cfg) == "3-channel"
+    assert BY_KEY["dcs_avoid_dfs"].build(False, cfg) == ["wlan-radio-profile R5", "dcs dfs-aware disable", "exit"]

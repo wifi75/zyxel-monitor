@@ -17,7 +17,9 @@ WIDTHS_WIFI6 = {"2.4GHz": ["20", "20/40"], "5GHz": ["20", "20/40", "20/40/80", "
 CHOICES_WIFI5 = {"security_mode": ["wpa2"]}
 CHOICES_WIFI6 = {"security_mode": ["wpa2", "wpa2/wpa3", "wpa3"]}
 # voci che si possono attivare anche se l'AP oggi non le ha nella configurazione (le crea il comando)
-CREATABLE = {"guest_name", "guest_password", "wifi_schedule", "mac_block", "ntp_server", "wifi_password"}
+CREATABLE = {"guest_name", "guest_password", "wifi_schedule", "mac_block", "ntp_server", "wifi_password",
+             # impostazioni DCS: senza riga nella configurazione valgono i predefiniti, ma il comando c'è
+             "dcs_interval", "dcs_client_aware", "dcs_avoid_dfs", "dcs_deployment"}
 
 
 def generation(model: str | None) -> int | None:
