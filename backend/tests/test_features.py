@@ -259,3 +259,14 @@ def test_intra_bss_uapsd_and_dcs_items():
     assert BY_KEY["dcs_avoid_dfs"].read(cfg) is True
     assert BY_KEY["dcs_deployment"].read(cfg) == "3-channel"
     assert BY_KEY["dcs_avoid_dfs"].build(False, cfg) == ["wlan-radio-profile R5", "dcs dfs-aware disable", "exit"]
+
+
+def test_radio_realignment_stops_after_repeats(monkeypatch):
+    from app import site_config
+    monkeypatch.setattr(site_config, "_event", lambda ap, info: None)
+    site_config._reapplied.clear()
+    site_config.stuck.clear()
+    key = "radio:2.4GHz:channel"
+    assert not site_config._conflict("GARAGE", key, "2.4 GHz canale", False)
+    assert not site_config._conflict("GARAGE", key, "2.4 GHz canale", False)
+    assert site_config._conflict("GARAGE", key, "2.4 GHz canale", False)
