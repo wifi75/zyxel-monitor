@@ -183,3 +183,22 @@ def test_only_system_settings_skip_the_trial():
     assert not is_quick({"led_off", "wifi_password"}, radio=False)
     assert not is_quick({"led_off"}, radio=True)
     assert not is_quick(None, radio=False)
+
+
+def test_text_choices_compare_as_text():
+    from app.config_items import BY_KEY, same
+    assert same(BY_KEY["security_mode"], "wpa2", "wpa2")
+    assert same(BY_KEY["band_steering"], "standard", "standard")
+    assert not same(BY_KEY["band_steering"], "standard", "disable")
+    assert same(BY_KEY["rssi_kickout"], "-70", "-70")
+
+
+def test_realignment_stops_after_repeated_reapply(monkeypatch):
+    from app import site_config
+    monkeypatch.setattr(site_config, "_event", lambda ap, info: None)
+    site_config._reapplied.clear()
+    site_config.stuck.clear()
+    assert not site_config._conflict("ZN", "band_steering", "Band steering", False)
+    assert not site_config._conflict("ZN", "band_steering", "Band steering", False)
+    assert site_config._conflict("ZN", "band_steering", "Band steering", False)     # terza volta: basta
+    assert ("ZN", "band_steering") in site_config.stuck

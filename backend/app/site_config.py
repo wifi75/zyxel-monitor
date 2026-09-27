@@ -18,6 +18,13 @@ from .core.db import connect
 log = logging.getLogger("site_config")
 CHECK_EVERY = 900
 _last_check = 0.0
+# riallineamenti per (AP, voce): se la stessa voce va rimandata più di MAX_REAPPLY volte in REAPPLY_WINDOW
+# qualcosa la rimette com'era (Nebula, o un valore che l'AP non accetta): si smette e si avvisa, invece di
+# far ripartire il Wi-Fi all'infinito
+MAX_REAPPLY = 2
+REAPPLY_WINDOW = 6 * 3600
+_reapplied: dict[tuple[str, str], list[float]] = {}
+stuck: dict[tuple[str, str], float] = {}
 
 
 # personalizzazione di un AP: chiave "<voce>@ap:<id>" nella stessa tabella; UNMANAGED = voce non gestita su quell'AP
@@ -73,6 +80,23 @@ def set_value(key: str, value) -> None:
             )
 
 
+def _conflict(ap: str, key: str, label: str, dry_run: bool) -> bool:
+    """True se la voce è già stata rimandata troppe volte: il riallineamento la salta (e lo dice una volta)."""
+    if (ap, key) in stuck:
+        return True
+    if dry_run:
+        return False
+    now = time.time()
+    recent = [t for t in _reapplied.get((ap, key), []) if now - t < REAPPLY_WINDOW]
+    if len(recent) >= MAX_REAPPLY:
+        stuck[(ap, key)] = now
+        _event(ap, f"{label}: rimandato {len(recent)} volte ma l'AP torna sempre al valore di prima (probabilmente "
+                   "lo reimposta Nebula). Il pannello smette di rimandarlo: impostalo in Nebula o lascialo all'AP.")
+        return True
+    _reapplied[(ap, key)] = [*recent, now]
+    return False
+
+
 def _event(ap: str, info: str) -> None:
     with connect() as db:
         db.execute("INSERT INTO events(ts, kind, ap, info) VALUES (?,?,?,?)", (int(time.time()), "config", ap, info))
@@ -111,6 +135,10 @@ async def apply_ap(ap: store.ApConfig, reason: str = "manuale", only: set[str] |
         if key == "hostname_sync":
             cmds = ci.hostname_commands(ap.name, cfg) if value else []
         elif item.enforce and ci.same(item, value, item.read(cfg)):
+            _reapplied.pop((ap.name, key), None)
+            stuck.pop((ap.name, key), None)
+            continue
+        elif reason == "riallineamento automatico" and _conflict(ap.name, key, item.label, dry_run):
             continue
         else:
             cmds = item.build(value, cfg)

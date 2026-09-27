@@ -497,5 +497,7 @@ def same(item: Item, want, have) -> bool:
         try:
             return int(want) == int(have)
         except (TypeError, ValueError):
-            return False
+            # scelte di testo (wpa2, standard…): confronto diretto. Prima qui si rispondeva sempre "diverso"
+            # e il riallineamento le rimandava a tutti gli AP ogni 15 minuti, riavviando il Wi-Fi
+            return str(want).strip().lower() == str(have).strip().lower()
     return str(want) == str(have) if item.kind == "text" else bool(want) == bool(have)
