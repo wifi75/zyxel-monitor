@@ -2,6 +2,11 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) — versioni: [SemVer](https://semver.org/lang/it/).
 
+## [0.36.1] - 2026-09-27
+### Aggiunto
+- 32 tavolozze: alle 8 esistenti si aggiungono 12 tinte unite e 12 armonie (Rosso, Corallo, Arancio, Oro, Lime, Smeraldo, Acqua, Cielo, Cobalto, Indaco, Ametista, Magenta).
+- Card degli AP: oltre ai colori pronti si può scegliere un colore qualsiasi.
+
 ## [0.36.0] - 2026-09-27
 ### Aggiunto
 - Colori della dashboard: in «Personalizza» compare il pannello dei colori con 8 tavolozze (Predefinita, Vivace, Oceano, Tramonto, Foresta, Lavanda, Pastello, Grafite), il colore delle card degli AP e l'intensità delle sfumature. L'effetto si vede subito, la scelta resta salvata nel browser e funziona anche con il tema scuro.

@@ -19,15 +19,32 @@ export const PALETTES: Palette[] = [
   { id: 'lavender', name: 'Lavanda', tones: ['#7c3aed', '#9333ea', '#6d28d9', '#a855f7', '#db2777', '#c026d3', '#8b5cf6'] },
   { id: 'pastel', name: 'Pastello', tones: ['#60a5fa', '#5eead4', '#86efac', '#c4b5fd', '#f9a8d4', '#fcd34d', '#fdba74'] },
   { id: 'graphite', name: 'Grafite', tones: ['#475569', '#52525b', '#57534e', '#4b5563', '#64748b', '#71717a', '#6b7280'] },
+  ...generated(),
 ]
+
+type Tones = NonNullable<Palette['tones']>
+/** tavolozze ricavate da una tinta: "tinta unita" (sfumature dello stesso colore) e "armonia" (colori vicini) */
+function generated(): Palette[] {
+  const HUES: [number, string][] = [
+    [0, 'Rosso'], [20, 'Corallo'], [35, 'Arancio'], [48, 'Oro'], [80, 'Lime'], [140, 'Smeraldo'],
+    [175, 'Acqua'], [195, 'Cielo'], [215, 'Cobalto'], [245, 'Indaco'], [280, 'Ametista'], [320, 'Magenta'],
+  ]
+  const hsl = (h: number, s: number, l: number) => `hsl(${((h % 360) + 360) % 360} ${s}% ${l}%)`
+  const mono = (h: number) => [0, 1, 2, 3, 4, 5, 6].map(i => hsl(h, 70 - i * 4, 32 + i * 5)) as Tones
+  const harmony = (h: number) => [0, 25, 50, -25, -50, 75, -75].map(d => hsl(h + d, 65, 44)) as Tones
+  return HUES.flatMap(([h, name]) => [
+    { id: `mono-${h}`, name, tones: mono(h) },
+    { id: `harm-${h}`, name: `${name} armonia`, tones: harmony(h) },
+  ])
+}
 
 /** colore della sfumatura delle card degli AP online */
 export const CARD_TONES = ['good', 'blue', 'teal', 'violet', 'pink', 'amber', 'orange'] as const
-export type CardTone = typeof CARD_TONES[number]
+export type CardTone = typeof CARD_TONES[number] | 'custom'
 
-export interface Look { palette: string; card: CardTone; shade: number }
+export interface Look { palette: string; card: CardTone; shade: number; custom: string }
 const KEY = 'zm-palette'
-const DEFAULT: Look = { palette: 'default', card: 'good', shade: 1 }
+const DEFAULT: Look = { palette: 'default', card: 'good', shade: 1, custom: '#0f9d58' }
 
 function initial(): Look {
   try {
@@ -47,7 +64,7 @@ function apply() {
     if (!c) root.removeProperty(v)
     else root.setProperty(v, theme.value === 'dark' ? `color-mix(in srgb, ${c} 65%, #fff)` : c)
   })
-  root.setProperty('--card-tone', `var(--${look.value.card})`)
+  root.setProperty('--card-tone', look.value.card === 'custom' ? look.value.custom : `var(--${look.value.card})`)
   root.setProperty('--shade', String(look.value.shade))
 }
 
