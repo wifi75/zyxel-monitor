@@ -2,6 +2,11 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) — versioni: [SemVer](https://semver.org/lang/it/).
 
+## [0.32.0] - 2026-09-27
+### Aggiunto
+- Diagnosi del dispositivo (Dispositivi → apri la riga): quante volte si è scollegato, connessione tipica, segnale al momento dei distacchi, soglia di espulsione; cause probabili in parole semplici con il rimedio (espulsione per segnale debole, riconfigurazione dell'AP, AP spento, cambi continui di banda, rimbalzi fra AP, indirizzo MAC privato a rotazione); cronologia con segnale e causa di ogni distacco. 24 ore o 7 giorni.
+- Configurazione: «Velocità minima 5 GHz» sugli AP che la dichiarano.
+
 ## [0.31.3] - 2026-09-27
 ### Corretto
 - **Riallineamento che riavviava il Wi-Fi ogni 15 minuti**: le voci a scelta di testo (Sicurezza, Band steering…) risultavano sempre diverse da quelle sull'AP e venivano rimandate a tutti gli AP a ogni controllo, staccando tutti i dispositivi. Ora il confronto è corretto.
