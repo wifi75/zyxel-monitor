@@ -13,7 +13,7 @@
 [![Docker](https://img.shields.io/badge/Deploy-Docker-2496ED?logo=docker&logoColor=white)](docker-compose.yml)
 [![Sources](https://img.shields.io/badge/Sources-SNMP%20%7C%20SSH%20%7C%20OPNsense-5A6B7B)](#where-the-data-comes-from)
 [![API](https://img.shields.io/badge/API-77%20endpoints-0A7EA4)](backend/app/api.py)
-[![Tests](https://img.shields.io/badge/Tests-49%20pytest-0A9EDC?logo=pytest&logoColor=white)](backend/tests)
+[![Tests](https://img.shields.io/badge/Tests-50%20pytest-0A9EDC?logo=pytest&logoColor=white)](backend/tests)
 [![Lint](https://img.shields.io/badge/Lint-ruff-D7FF64?logo=ruff&logoColor=black)](ruff.toml)
 [![SemVer](https://img.shields.io/badge/SemVer-2.0.0-blue)](https://semver.org)
 [![Keep a Changelog](https://img.shields.io/badge/Changelog-Keep%20a%20Changelog-E05735)](CHANGELOG.md)
@@ -156,7 +156,7 @@ Important devices alert after 5 minutes offline and again when they come back.
 | Channel utilisation, channel plan | ✅ | with history and suggested 1/6/11 |
 | Alerts | ✅ | Telegram, incl. important devices offline |
 | Applications usage (DPI) | ❌ | needs the AP's deep inspection, cloud only |
-| Neighbouring networks (rogue AP) | ⚠️ | command found (`show rogue-ap detection`), reading not implemented yet |
+| Neighbouring networks (rogue AP) | ⚠️ | *Explore commands* now reads `show rogue-ap detection monitoring`; the widget comes once the output format is known |
 
 **Configuration** (panel management is off by default; Nebula stays the master)
 
@@ -174,9 +174,11 @@ Important devices alert after 5 minutes offline and again when they come back.
 | WLAN rate control 2.4 / 5 GHz | ✅ | minimum rate, on APs that declare it |
 | Load balancing | ✅ | |
 | LED lights, NTP, scheduled reboot | ✅ | |
-| Layer 2 isolation, Intra-BSS blocking, U-APSD | ❌ | commands exist but their syntax is not documented; asking the CLI would risk executing them |
-| DCS interval, client aware, avoid DFS, channel deployment | ❌ | same reason |
-| 802.11d, 6 GHz band, MLO (Wi-Fi 7) | ❌ | not on these APs / not verified |
+| Intra-BSS blocking, U-APSD | ✅ | syntax from Zyxel's CLI Reference Guide |
+| DCS interval, client aware, avoid DFS, channel deployment | ✅ | |
+| Layer 2 isolation | ❌ | needs an isolation profile with its own rules; not built yet |
+| 802.11d | ❌ | no CLI command in the reference guide |
+| 6 GHz band, MLO (Wi-Fi 7) | ❌ | not on these APs / not verified |
 | Smart Mesh, Ethernet failover, AP grouping | ❌ | Nebula cloud functions, no CLI equivalent |
 | Firmware upgrade | ❌ | Nebula only; the panel flags different versions |
 

@@ -2,6 +2,11 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) — versioni: [SemVer](https://semver.org/lang/it/).
 
+## [0.34.0] - 2026-09-27
+### Aggiunto
+- Configurazione, con la sintassi della CLI Reference Guide Zyxel: blocco del traffico Intra-BSS, U-APSD, canale automatico (intervallo, non cambiare con client collegati, evita canali DFS, canali 2.4 GHz usati).
+- Esplora comandi legge anche le reti dei vicini (`show rogue-ap detection monitoring`, `status`, `info`) e `show wlan channels`: solo lettura.
+
 ## [0.33.2] - 2026-09-27
 ### Modificato
 - Schede degli AP in panoramica più compatte e widget alto quanto il contenuto: niente più spazio vuoto sotto le schede (una disposizione salvata con la vecchia altezza si adatta da sola).

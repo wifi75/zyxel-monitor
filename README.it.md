@@ -13,7 +13,7 @@
 [![Docker](https://img.shields.io/badge/Deploy-Docker-2496ED?logo=docker&logoColor=white)](docker-compose.yml)
 [![Fonti](https://img.shields.io/badge/Fonti-SNMP%20%7C%20SSH%20%7C%20OPNsense-5A6B7B)](#da-dove-arrivano-i-dati)
 [![API](https://img.shields.io/badge/API-77%20endpoint-0A7EA4)](backend/app/api.py)
-[![Test](https://img.shields.io/badge/Test-49%20pytest-0A9EDC?logo=pytest&logoColor=white)](backend/tests)
+[![Test](https://img.shields.io/badge/Test-50%20pytest-0A9EDC?logo=pytest&logoColor=white)](backend/tests)
 [![Lint](https://img.shields.io/badge/Lint-ruff-D7FF64?logo=ruff&logoColor=black)](ruff.toml)
 [![SemVer](https://img.shields.io/badge/SemVer-2.0.0-blue)](https://semver.org/lang/it/)
 [![Keep a Changelog](https://img.shields.io/badge/Changelog-Keep%20a%20Changelog-E05735)](CHANGELOG.md)
@@ -145,7 +145,7 @@ importanti avvisano dopo 5 minuti scollegati e di nuovo quando tornano.
 | Occupazione dei canali, piano dei canali | ✅ | con storico e canali 1/6/11 consigliati |
 | Avvisi | ✅ | Telegram, compresi i dispositivi importanti scollegati |
 | Uso delle applicazioni (DPI) | ❌ | richiede l'analisi del traffico dell'AP, solo nel cloud |
-| Reti dei vicini (rogue AP) | ⚠️ | comando trovato (`show rogue-ap detection`), lettura non ancora fatta |
+| Reti dei vicini (rogue AP) | ⚠️ | *Esplora comandi* legge `show rogue-ap detection monitoring`; il widget arriva quando si conosce il formato |
 
 **Configurazione** (la gestione dal pannello è spenta di default; comanda Nebula)
 
@@ -163,9 +163,11 @@ importanti avvisano dopo 5 minuti scollegati e di nuovo quando tornano.
 | Controllo velocità WLAN 2.4 / 5 GHz | ✅ | velocità minima, sugli AP che la dichiarano |
 | Bilanciamento del carico | ✅ | |
 | LED, NTP, riavvio programmato | ✅ | |
-| Isolamento Layer 2, blocco Intra-BSS, U-APSD | ❌ | i comandi esistono ma la sintassi non è documentata; chiederla alla CLI rischierebbe di eseguirli |
-| Intervallo DCS, client aware, evita DFS, channel deployment | ❌ | stesso motivo |
-| 802.11d, banda 6 GHz, MLO (Wi-Fi 7) | ❌ | non presenti su questi AP / non verificati |
+| Blocco Intra-BSS, U-APSD | ✅ | sintassi dalla CLI Reference Guide di Zyxel |
+| Intervallo DCS, client aware, evita DFS, channel deployment | ✅ | |
+| Isolamento Layer 2 | ❌ | richiede un profilo di isolamento con regole proprie; non ancora fatto |
+| 802.11d | ❌ | nessun comando CLI nella guida |
+| Banda 6 GHz, MLO (Wi-Fi 7) | ❌ | non presenti su questi AP / non verificati |
 | Smart Mesh, Ethernet failover, AP grouping | ❌ | funzioni del cloud Nebula, senza equivalente nella CLI |
 | Aggiornamento firmware | ❌ | solo da Nebula; il pannello segnala le versioni diverse |
 
