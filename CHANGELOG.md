@@ -2,6 +2,14 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) — versioni: [SemVer](https://semver.org/lang/it/).
 
+## [0.35.2] - 2026-09-27
+### Corretto
+- Motivo dei distacchi: conta solo le riconfigurazioni dell'AP avvenute prima del distacco (non quelle subito dopo, né quelle generiche) e riconosce anche i riavvii rapidi dell'AP.
+- Potenza, canale e larghezza: il blocco dei riallineamenti si azzera quando la voce torna allineata, invece di restare attivo fino al riavvio del pannello.
+- Dopo una modifica fatta dal pannello la configurazione degli AP viene riletta subito: niente valori vecchi mostrati come "diverso" per 10 minuti.
+### Modificato
+- Pagina Eventi più veloce (indice per dispositivo); la compattazione notturna del database non ferma più il pannello.
+
 ## [0.35.1] - 2026-09-27
 ### Corretto
 - Un AP riavviato in fretta (fra due letture) non compariva negli eventi: ora il riavvio si riconosce dall'uptime ripartito e viene registrato.

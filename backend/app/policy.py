@@ -152,6 +152,12 @@ async def apply_ap(ap: store.ApConfig, only_changed: bool = False, reason: str =
         if want.get("width"):
             want["width"] = capabilities.fit_width(want["width"], band, caps)   # es. 160 MHz su un Wi-Fi 5 → 80
         diff = radio_diff(want, radio_now(cfg, band))
+        if not dry_run:
+            from .site_config import _reapplied, stuck
+            for field in FIELDS:
+                if field not in diff:           # allineata: si ricomincia a contare da zero
+                    _reapplied.pop((ap.name, f"radio:{band}:{field}"), None)
+                    stuck.pop((ap.name, f"radio:{band}:{field}"), None)
         if reason == "riallineamento automatico":
             # come per le impostazioni del sito: se l'AP torna sempre al suo valore (lo reimposta Nebula,
             # es. canale automatico) dopo due tentativi si smette, invece di far ripartire la radio all'infinito

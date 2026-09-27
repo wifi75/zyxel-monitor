@@ -378,6 +378,7 @@ async def _session(host: str, user: str, password: str, port: int, lines: list[s
 
 async def configure(host: str, user: str, password: str, port: int, commands: list[str]) -> str:
     """Esegue comandi in "configure terminal" e restituisce l'output (gli errori della CLI restano nel testo)."""
+    _config_cache.pop(host, None)       # la prossima lettura rilegge la running-config appena cambiata
     return await _session(host, user, password, port, ["configure terminal", *commands, "exit"])
 
 

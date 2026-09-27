@@ -57,6 +57,7 @@ CREATE TABLE IF NOT EXISTS events (
     info  TEXT
 );
 CREATE INDEX IF NOT EXISTS ix_events_ts ON events(ts);
+CREATE INDEX IF NOT EXISTS ix_events_mac ON events(mac, kind, ts);
 
 -- campioni: contatori di traffico grezzi e numero client
 CREATE TABLE IF NOT EXISTS samples (

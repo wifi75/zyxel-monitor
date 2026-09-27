@@ -60,8 +60,9 @@ async def poll_once() -> None:
 
     with connect() as db:
         aliases = {row["mac"]: row["name"] for row in db.execute("SELECT mac, name FROM aliases")}
-        prev_status = {row["ap"]: row["online"] for row in db.execute("SELECT ap, online FROM ap_status")}
-        prev_uptime = {row["ap"]: row["uptime_s"] for row in db.execute("SELECT ap, uptime_s FROM ap_status")}
+        prev = db.execute("SELECT ap, online, uptime_s FROM ap_status").fetchall()
+        prev_status = {row["ap"]: row["online"] for row in prev}
+        prev_uptime = {row["ap"]: row["uptime_s"] for row in prev}
         prev_clients = {row["mac"]: dict(row) for row in db.execute("SELECT * FROM clients")}
         # AP eliminati o disattivati dal pannello: spariscono dalla dashboard
         names_now = [ap.name for ap in aps]
@@ -302,7 +303,7 @@ async def run_forever() -> None:
             await site_config.enforce() # impostazioni del sito, controllate ogni 15 minuti
             await alerts.check()        # avvisi Telegram sugli eventi appena registrati
             if backup.nightly():        # copia del database, una volta al giorno dopo le 3
-                compact()               # subito dopo la copia: si compatta il database
+                await asyncio.to_thread(compact)   # subito dopo la copia, senza fermare il pannello
             if time.time() - last_prune > 3600:
                 prune()
                 last_prune = time.time()

@@ -192,13 +192,15 @@ def explain(db, rows: list[dict]) -> None:
         if back:
             where = "stesso AP" if back["ap"] == ap else back["ap"]
             parts.append(f"tornato dopo {_ago(back['ts'] - ts)} ({where})")
-        cfg = db.execute("""SELECT info FROM events WHERE kind = 'config' AND (ap = ? OR ap = '' OR ap IS NULL)
-                            AND ts BETWEEN ? AND ? ORDER BY ABS(ts - ?) LIMIT 1""",
-                         (ap, ts - CONFIG_WINDOW, ts + CONFIG_WINDOW, ts)).fetchone()
-        down = db.execute("SELECT 1 FROM events WHERE kind = 'ap_down' AND ap = ? AND ts BETWEEN ? AND ?",
+        # il distacco si vede alla lettura successiva alla causa: contano solo le riconfigurazioni già avvenute
+        cfg = db.execute("""SELECT info FROM events WHERE kind = 'config' AND ap = ?
+                            AND ts BETWEEN ? AND ? ORDER BY ts DESC LIMIT 1""",
+                         (ap, ts - CONFIG_WINDOW, ts)).fetchone()
+        down = db.execute("""SELECT 1 FROM events WHERE ap = ? AND ts BETWEEN ? AND ?
+                             AND (kind = 'ap_down' OR (kind = 'ap_up' AND info LIKE 'AP riavviato%'))""",
                           (ap, ts - CONFIG_WINDOW, ts + CONFIG_WINDOW)).fetchone()
         if down:
-            reason = "AP spento o irraggiungibile"
+            reason = "AP spento, riavviato o irraggiungibile"
         elif cfg:
             reason = f"Riconfigurazione dell'AP, il Wi-Fi è ripartito ({cfg['info']})"
         elif rssi is not None and kick is not None and rssi <= kick + NEAR:
