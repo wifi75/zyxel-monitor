@@ -85,9 +85,9 @@ def fit_item(key: str, value, caps: dict):
 
 
 # voci che un AP supporta solo se l'ha dichiarato lui: frase dell'aiuto della CLI ("?") letta con Esplora comandi
-HELP_SIGNS = {"min_rate_24": "2.4G Minimum rate control"}
+HELP_SIGNS = {"min_rate_24": "2.4G Minimum rate control", "min_rate_5": "5G Minimum rate control"}
 # valore che l'AP usa quando la voce non compare nella configurazione
-DEFAULTS = {"min_rate_24": "1"}
+DEFAULTS = {"min_rate_24": "1", "min_rate_5": "6"}
 
 
 def learn(ap_name: str, help_text: str) -> list[str]:

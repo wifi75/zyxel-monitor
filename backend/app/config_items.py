@@ -408,6 +408,12 @@ ITEMS: list[Item] = [
          choices=["1", "2", "5.5", "6", "9", "11", "12", "18", "24"], unit="Mbps",
          read=lambda c: _radio_value(c, 1, "2g-wlan-rate-control"),
          build=lambda v, c: _in_radio(c, 1, f"2g-wlan-rate-control {v}")),
+    Item("min_rate_5", "radio", "Velocità minima 5 GHz", "choice",
+         "Toglie le velocità più lente sul 5 GHz: i dispositivi lontani occupano meno il canale. "
+         "Compare dopo Esplora comandi, sugli AP che la hanno.",
+         choices=["6", "9", "12", "18", "24"], unit="Mbps",
+         read=lambda c: _radio_value(c, 2, "5g-wlan-rate-control"),
+         build=lambda v, c: _in_radio(c, 2, f"5g-wlan-rate-control {v}")),
     Item("legacy_reject", "radio", "Rifiuta i dispositivi solo 802.11b", "bool",
          "Senza dispositivi 802.11b gli AP non devono più rallentare ogni trasmissione per proteggerli: "
          "il canale 2.4 GHz si libera. Esclude solo apparecchi di prima del 2003.",
