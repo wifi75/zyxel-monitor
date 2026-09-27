@@ -622,3 +622,13 @@ button.ghost.active { background: var(--accent-soft); color: var(--accent); }
 .ap-bands .radio span { white-space: nowrap; }
 /* stati vuoti nei widget: riquadro tenue, non un grande bordo tratteggiato */
 .widget-body .empty { border: none; background: var(--surface-2); border-radius: var(--radius); flex: none; min-height: 0; padding: 18px 14px; }
+
+/* schede AP in panoramica: compatte, il widget è alto quanto il contenuto (niente spazio vuoto sotto) */
+.widget:has(> .widget-body > .ap-grid) { padding: 8px 10px !important; }
+.ap-grid .ap { grid-template-rows: 38px 48px 52px auto; gap: 6px; padding: 8px 10px !important; }
+.ap header { height: 38px; }
+.ap h3 { font-size: 15px; }
+.tile { height: 48px; padding-top: 4px !important; padding-bottom: 4px !important; }
+.tile strong { font-size: 17px; }
+.ap-bands { grid-auto-rows: 23px; gap: 6px; height: 52px; }
+.ap-bands .radio { height: 23px; }

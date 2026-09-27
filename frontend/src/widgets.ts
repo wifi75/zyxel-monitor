@@ -5,6 +5,8 @@ import type { IconName } from './icons'
 export interface WidgetDef {
   id: string; title: string; views: ViewKind[]
   w: number; h: number; minW?: number; minH?: number
+  /** altezza delle versioni precedenti: una disposizione salvata con questo valore passa al nuovo `h` */
+  oldH?: number
   /** icona e tono del titolo; azioni del menu "⋯": pagina collegata e CSV */
   icon?: IconName; tone?: string
   link?: { view: string; label: string }; csv?: { path: string; name: string }
@@ -14,7 +16,7 @@ export const COLS = 12
 
 export const WIDGETS: WidgetDef[] = [
   { id: 'kpis', title: 'Indicatori', views: ['overview', 'ap'], w: 12, h: 2, minW: 3, minH: 2 },
-  { id: 'aps', title: 'Access point', views: ['overview'], w: 12, h: 5, minW: 3, minH: 3, tone: 'blue' },
+  { id: 'aps', title: 'Access point', views: ['overview'], w: 12, h: 4, minW: 3, minH: 3, oldH: 5, tone: 'blue' },
   { id: 'internet', title: 'Internet', views: ['overview'], w: 12, h: 9, minW: 4, minH: 5, icon: 'globe', tone: 'teal' },
   { id: 'sites', title: 'Siti più visitati', views: ['overview', 'ap'], w: 3, h: 8, icon: 'globe', tone: 'violet' },
   { id: 'types', title: 'Dispositivi per tipologia', views: ['overview', 'ap'], w: 3, h: 4, minH: 2, icon: 'users', tone: 'violet', link: { view: '#devices', label: 'Apri Dispositivi' } },
@@ -58,7 +60,7 @@ export function normalize(view: ViewKind, saved: WidgetPos[] | undefined): Widge
   const seen = new Set<string>()
   return saved.filter(p => allowed.has(p.i) && !seen.has(p.i) && seen.add(p.i)).map(p => {
     const w = Math.min(COLS, Math.max(1, p.w))
-    return { i: p.i, w, h: Math.max(1, p.h), x: Math.min(Math.max(0, p.x), COLS - w), y: Math.max(0, p.y) }
+    return { i: p.i, w, h: p.h === defOf(p.i)?.oldH ? defOf(p.i)!.h : Math.max(1, p.h), x: Math.min(Math.max(0, p.x), COLS - w), y: Math.max(0, p.y) }
   })
 }
 
