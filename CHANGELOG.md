@@ -2,6 +2,10 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) — versioni: [SemVer](https://semver.org/lang/it/).
 
+## [0.33.1] - 2026-09-27
+### Modificato
+- Piano dei canali diviso in due widget, «Canali 2.4 GHz» e «Canali 5 GHz», da disporre e affiancare liberamente.
+
 ## [0.33.0] - 2026-09-27
 ### Aggiunto
 - Consumo per dispositivo con **scaricato e inviato** (esportazione di Insight di OPNsense), come «Clients by usage» di Nebula; passando sul nome si vedono ↓ e ↑.
