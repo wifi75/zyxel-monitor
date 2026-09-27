@@ -33,6 +33,16 @@
 - [ ] Rete ospiti, smart steering, 802.11r dal pannello: solo dopo il distacco da Nebula (un solo capo per la configurazione).
 - [ ] Da verificare sul campo prima di usarli: comando 160 MHz (`ch-width 20/40/80/160`), sintassi 6.x per scrivere gli orari, ripristino backup e prova controllata su un AP reale.
 
+## Dall'analisi del 27/09 (API pronte, schermate da fare)
+- [x] Motivo probabile di ogni distacco nel registro eventi (v0.35.0) e riavvii rapidi degli AP (v0.35.1).
+- [x] Tavolozze di colori, anche per widget (v0.36.x).
+- [ ] V1 mappa dei distacchi per ora (`/api/drops/heatmap`), V2 disponibilità degli AP (`/api/availability`), S4 stato del sistema in Impostazioni (`/api/system`).
+- [ ] V3 distribuzione del segnale per AP, V4 andamento dei client nelle card, V5 modifiche di configurazione segnate sul grafico del traffico.
+- [ ] G1 scala unica dei colori del segnale, G2 bordo di stato e problemi nelle card AP, G3 colori per banda, G5 filtri nella pagina Eventi.
+- [ ] Unificare le cause dei distacchi fra `api.explain` e `diagnosis.analyse`.
+- [ ] Verificare sul campo la tavolozza per widget e l'evento «AP riavviato» al prossimo riavvio reale.
+- [ ] S5 porta Docker 2375 aperta senza protezione su .207.
+
 ## Configurazione centralizzata (verso il distacco da Nebula)
 - [x] Potenza per banda: profilo del sito + personalizzazione per AP, riallineamento automatico (v0.6.0).
 - [x] Backup della running-config di ogni AP (v0.6.0).
