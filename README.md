@@ -13,7 +13,7 @@
 [![Docker](https://img.shields.io/badge/Deploy-Docker-2496ED?logo=docker&logoColor=white)](docker-compose.yml)
 [![Sources](https://img.shields.io/badge/Sources-SNMP%20%7C%20SSH%20%7C%20OPNsense-5A6B7B)](#where-the-data-comes-from)
 [![API](https://img.shields.io/badge/API-77%20endpoints-0A7EA4)](backend/app/api.py)
-[![Tests](https://img.shields.io/badge/Tests-47%20pytest-0A9EDC?logo=pytest&logoColor=white)](backend/tests)
+[![Tests](https://img.shields.io/badge/Tests-49%20pytest-0A9EDC?logo=pytest&logoColor=white)](backend/tests)
 [![Lint](https://img.shields.io/badge/Lint-ruff-D7FF64?logo=ruff&logoColor=black)](ruff.toml)
 [![SemVer](https://img.shields.io/badge/SemVer-2.0.0-blue)](https://semver.org)
 [![Keep a Changelog](https://img.shields.io/badge/Changelog-Keep%20a%20Changelog-E05735)](CHANGELOG.md)
@@ -35,6 +35,7 @@ how much traffic, which channels are crowded, when the Internet line dropped.
 - [What it does](#what-it-does)
 - [Screenshots](#screenshots)
 - [How it works](#how-it-works)
+- [Compared to Nebula](#what-the-panel-covers-compared-to-nebula)
 - [Compatible access points](#compatible-access-points)
 - [Installation with Docker](#installation-with-docker)
 - [Installation on Linux without Docker](#installation-on-a-linux-server-without-docker)
@@ -136,6 +137,48 @@ to test single changes; set the final values in Nebula too.
 Alerts are built from the stored events, read in order of id, so nothing is lost or sent twice across
 restarts. An AP that disappears for a single reading and comes back within the tolerance does not alert.
 Important devices alert after 5 minutes offline and again when they come back.
+
+## What the panel covers compared to Nebula
+
+✅ in the panel · ⚠️ partial · ❌ not available (and why)
+
+**Monitoring**
+
+| Nebula | Panel | Notes |
+|---|---|---|
+| Dashboard, AP status, uptime, firmware | ✅ | plus CPU/memory for SSH APs |
+| Clients: name, band, signal, speed, time connected | ✅ | vendor from MAC, device type, signal history |
+| Clients by usage (download + upload) | ✅ | from OPNsense NetFlow/Insight (daily totals); without OPNsense not available — the AP CLI has no per-client byte counters |
+| Topology | ✅ | network map |
+| Summary report | ✅ | 24 h / 7 / 30 days, weekly on Telegram |
+| Event log | ✅ | per device and per AP, CSV export |
+| Why a device disconnects | ✅ | device *Diagnosis* (not in Nebula) |
+| Channel utilisation, channel plan | ✅ | with history and suggested 1/6/11 |
+| Alerts | ✅ | Telegram, incl. important devices offline |
+| Applications usage (DPI) | ❌ | needs the AP's deep inspection, cloud only |
+| Neighbouring networks (rogue AP) | ⚠️ | command found (`show rogue-ap detection`), reading not implemented yet |
+
+**Configuration** (panel management is off by default; Nebula stays the master)
+
+| Nebula | Panel | Notes |
+|---|---|---|
+| SSID name 2.4/5 GHz, password, security WPA2/WPA3 | ✅ | |
+| VLAN ID | ✅ | |
+| Guest network, schedule, hidden SSID, MAC block, rate limits | ✅ | |
+| Band select (band steering) | ✅ | |
+| Assisted roaming 802.11k/v, 802.11r | ✅ | |
+| Transmit power, channel, channel width per band | ✅ | site-wide and per AP |
+| DCS (automatic channel) on/off | ✅ | *Automatic* channel |
+| Smart steering (weak signal kick-out) | ✅ | threshold in dBm |
+| Allow 802.11ax/ac/n only | ⚠️ | the panel rejects 802.11b-only devices |
+| WLAN rate control 2.4 / 5 GHz | ✅ | minimum rate, on APs that declare it |
+| Load balancing | ✅ | |
+| LED lights, NTP, scheduled reboot | ✅ | |
+| Layer 2 isolation, Intra-BSS blocking, U-APSD | ❌ | commands exist but their syntax is not documented; asking the CLI would risk executing them |
+| DCS interval, client aware, avoid DFS, channel deployment | ❌ | same reason |
+| 802.11d, 6 GHz band, MLO (Wi-Fi 7) | ❌ | not on these APs / not verified |
+| Smart Mesh, Ethernet failover, AP grouping | ❌ | Nebula cloud functions, no CLI equivalent |
+| Firmware upgrade | ❌ | Nebula only; the panel flags different versions |
 
 ## Compatible access points
 

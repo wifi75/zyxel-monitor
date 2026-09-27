@@ -2,6 +2,12 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) — versioni: [SemVer](https://semver.org/lang/it/).
 
+## [0.33.0] - 2026-09-27
+### Aggiunto
+- Consumo per dispositivo con **scaricato e inviato** (esportazione di Insight di OPNsense), come «Clients by usage» di Nebula; passando sul nome si vedono ↓ e ↑.
+- Configurazione: «VLAN della rete Wi-Fi».
+- README: tabella di confronto con Nebula (cosa c'è nel pannello, cosa in parte, cosa no e perché).
+
 ## [0.32.0] - 2026-09-27
 ### Aggiunto
 - Diagnosi del dispositivo (Dispositivi → apri la riga): quante volte si è scollegato, connessione tipica, segnale al momento dei distacchi, soglia di espulsione; cause probabili in parole semplici con il rimedio (espulsione per segnale debole, riconfigurazione dell'AP, AP spento, cambi continui di banda, rimbalzi fra AP, indirizzo MAC privato a rotazione); cronologia con segnale e causa di ogni distacco. 24 ore o 7 giorni.

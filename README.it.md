@@ -13,7 +13,7 @@
 [![Docker](https://img.shields.io/badge/Deploy-Docker-2496ED?logo=docker&logoColor=white)](docker-compose.yml)
 [![Fonti](https://img.shields.io/badge/Fonti-SNMP%20%7C%20SSH%20%7C%20OPNsense-5A6B7B)](#da-dove-arrivano-i-dati)
 [![API](https://img.shields.io/badge/API-77%20endpoint-0A7EA4)](backend/app/api.py)
-[![Test](https://img.shields.io/badge/Test-47%20pytest-0A9EDC?logo=pytest&logoColor=white)](backend/tests)
+[![Test](https://img.shields.io/badge/Test-49%20pytest-0A9EDC?logo=pytest&logoColor=white)](backend/tests)
 [![Lint](https://img.shields.io/badge/Lint-ruff-D7FF64?logo=ruff&logoColor=black)](ruff.toml)
 [![SemVer](https://img.shields.io/badge/SemVer-2.0.0-blue)](https://semver.org/lang/it/)
 [![Keep a Changelog](https://img.shields.io/badge/Changelog-Keep%20a%20Changelog-E05735)](CHANGELOG.md)
@@ -126,6 +126,48 @@ osservare e per provare singole modifiche; i valori definitivi mettili anche in 
 Gli avvisi partono dagli eventi salvati, letti in ordine: nessuno si perde o arriva due volte, anche dopo un
 riavvio. Un AP che sparisce per una sola lettura e torna entro la tolleranza non genera avvisi. I dispositivi
 importanti avvisano dopo 5 minuti scollegati e di nuovo quando tornano.
+
+## Cosa copre il pannello rispetto a Nebula
+
+✅ nel pannello · ⚠️ in parte · ❌ non disponibile (e perché)
+
+**Monitoraggio**
+
+| Nebula | Pannello | Note |
+|---|---|---|
+| Dashboard, stato AP, uptime, firmware | ✅ | più CPU/memoria per gli AP letti via SSH |
+| Client: nome, banda, segnale, velocità, da quanto | ✅ | produttore dal MAC, tipo, storico del segnale |
+| Client per consumo (scaricato + inviato) | ✅ | da NetFlow/Insight di OPNsense (totali giornalieri); senza OPNsense no: la CLI degli AP non ha contatori di byte per client |
+| Topologia | ✅ | mappa della rete |
+| Report | ✅ | 24 ore / 7 / 30 giorni, settimanale su Telegram |
+| Registro eventi | ✅ | per dispositivo e per AP, esportazione CSV |
+| Perché un dispositivo si scollega | ✅ | *Diagnosi* del dispositivo (Nebula non ce l'ha) |
+| Occupazione dei canali, piano dei canali | ✅ | con storico e canali 1/6/11 consigliati |
+| Avvisi | ✅ | Telegram, compresi i dispositivi importanti scollegati |
+| Uso delle applicazioni (DPI) | ❌ | richiede l'analisi del traffico dell'AP, solo nel cloud |
+| Reti dei vicini (rogue AP) | ⚠️ | comando trovato (`show rogue-ap detection`), lettura non ancora fatta |
+
+**Configurazione** (la gestione dal pannello è spenta di default; comanda Nebula)
+
+| Nebula | Pannello | Note |
+|---|---|---|
+| Nome rete 2.4/5 GHz, password, sicurezza WPA2/WPA3 | ✅ | |
+| VLAN ID | ✅ | |
+| Rete ospiti, orari, rete nascosta, blocco MAC, limiti di velocità | ✅ | |
+| Band select (band steering) | ✅ | |
+| Roaming assistito 802.11k/v, 802.11r | ✅ | |
+| Potenza, canale, larghezza per banda | ✅ | per tutto il sito e per singolo AP |
+| DCS (canale automatico) acceso/spento | ✅ | canale *Automatico* |
+| Smart steering (espulsione dei segnali deboli) | ✅ | soglia in dBm |
+| Solo 802.11ax/ac/n | ⚠️ | il pannello rifiuta i dispositivi solo 802.11b |
+| Controllo velocità WLAN 2.4 / 5 GHz | ✅ | velocità minima, sugli AP che la dichiarano |
+| Bilanciamento del carico | ✅ | |
+| LED, NTP, riavvio programmato | ✅ | |
+| Isolamento Layer 2, blocco Intra-BSS, U-APSD | ❌ | i comandi esistono ma la sintassi non è documentata; chiederla alla CLI rischierebbe di eseguirli |
+| Intervallo DCS, client aware, evita DFS, channel deployment | ❌ | stesso motivo |
+| 802.11d, banda 6 GHz, MLO (Wi-Fi 7) | ❌ | non presenti su questi AP / non verificati |
+| Smart Mesh, Ethernet failover, AP grouping | ❌ | funzioni del cloud Nebula, senza equivalente nella CLI |
+| Aggiornamento firmware | ❌ | solo da Nebula; il pannello segnala le versioni diverse |
 
 ## Access point compatibili
 
