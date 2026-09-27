@@ -2,6 +2,10 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) — versioni: [SemVer](https://semver.org/lang/it/).
 
+## [0.33.2] - 2026-09-27
+### Modificato
+- Schede degli AP in panoramica più compatte e widget alto quanto il contenuto: niente più spazio vuoto sotto le schede (una disposizione salvata con la vecchia altezza si adatta da sola).
+
 ## [0.33.1] - 2026-09-27
 ### Modificato
 - Piano dei canali diviso in due widget, «Canali 2.4 GHz» e «Canali 5 GHz», da disporre e affiancare liberamente.
