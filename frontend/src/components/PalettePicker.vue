@@ -13,7 +13,7 @@ const CARD_NAME: Record<string, string> = {
 <template>
   <div class="palette-panel">
     <div class="pp-row">
-      <span class="pp-label small">{{ t('Tavolozza') }}</span>
+      <span class="pp-label small" :title="t('Ogni widget può avere la sua: scegli dal menu nella sua barra del titolo.')">{{ t('Tavolozza') }}</span>
       <div class="pp-list">
         <button v-for="p in PALETTES" :key="p.id" class="pp-item" :class="{ active: look.palette === p.id }"
                 :title="label(p.name)" @click="look.palette = p.id">

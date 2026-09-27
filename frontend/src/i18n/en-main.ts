@@ -161,6 +161,8 @@ addEn({
   'Rosso': 'Red', 'Corallo': 'Coral', 'Oro': 'Gold', 'Lime': 'Lime', 'Smeraldo': 'Emerald', 'Acqua': 'Aqua',
   'Cielo': 'Sky', 'Cobalto': 'Cobalt', 'Indaco': 'Indigo', 'Ametista': 'Amethyst', 'Magenta': 'Magenta',
   'armonia': 'harmony', 'Scegli un colore qualsiasi': 'Pick any colour',
+  'Colori di questo widget': 'Colours of this widget', 'Colori della dashboard': 'Dashboard colours',
+  'Ogni widget può avere la sua: scegli dal menu nella sua barra del titolo.': 'Each widget can have its own: pick it from the menu in its title bar.',
   'Tavolozza': 'Palette', 'Card degli AP': 'AP cards', 'Intensità': 'Intensity',
   'Intensità delle sfumature': 'Gradient intensity', 'Colori predefiniti': 'Default colours',
   'Predefinita': 'Default', 'Vivace': 'Vivid', 'Oceano': 'Ocean', 'Tramonto': 'Sunset', 'Foresta': 'Forest',

@@ -2,6 +2,10 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) — versioni: [SemVer](https://semver.org/lang/it/).
 
+## [0.36.2] - 2026-09-27
+### Aggiunto
+- Tavolozza per singolo widget: in «Personalizza» ogni widget ha nella barra del titolo un menu per scegliere la sua tavolozza; «Colori della dashboard» lo riporta a quella generale.
+
 ## [0.36.1] - 2026-09-27
 ### Aggiunto
 - 32 tavolozze: alle 8 esistenti si aggiungono 12 tinte unite e 12 armonie (Rosso, Corallo, Arancio, Oro, Lime, Smeraldo, Acqua, Cielo, Cobalto, Indaco, Ametista, Magenta).

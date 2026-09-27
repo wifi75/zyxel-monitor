@@ -3,6 +3,7 @@ import { onBeforeUnmount, ref } from 'vue'
 import { download } from '../api'
 import { t } from '../i18n'
 import { defOf } from '../widgets'
+import { PALETTES, look, widgetStyle } from '../palette'
 import Icon from './Icon.vue'
 
 /**
@@ -17,12 +18,24 @@ const close = () => { open.value = false }
 document.addEventListener('click', close)
 onBeforeUnmount(() => document.removeEventListener('click', close))
 const hasMenu = !!(def?.link || def?.csv)
+const paletteLabel = (n: string) => n.endsWith(' armonia') ? `${t(n.slice(0, -8))} · ${t('armonia')}` : t(n)
+function setOwn(v: string) {
+  const w = { ...look.value.widgets }
+  if (v) w[props.id] = v
+  else delete w[props.id]
+  look.value.widgets = w
+}
 </script>
 
 <template>
-  <div class="widget card" :class="def?.tone ? `tone-${def.tone}` : ''">
+  <div class="widget card" :class="def?.tone ? `tone-${def.tone}` : ''" :style="widgetStyle(id)">
     <div v-if="editing" class="widget-bar">
       <span>⠿ {{ t(def?.title ?? '') }}</span>
+      <select class="w-palette" :value="look.widgets[id] ?? ''" :title="t('Colori di questo widget')" @mousedown.stop
+              @change="setOwn(($event.target as HTMLSelectElement).value)">
+        <option value="">{{ t('Colori della dashboard') }}</option>
+        <option v-for="p in PALETTES" :key="p.id" :value="p.id">{{ paletteLabel(p.name) }}</option>
+      </select>
       <button class="ghost small" :title="t('Nascondi')" @click="emit('remove')">×</button>
     </div>
     <span v-if="def?.icon && !editing" class="w-ico"><Icon :name="def.icon" :size="15" /></span>
@@ -42,6 +55,7 @@ const hasMenu = !!(def?.link || def?.csv)
 
 <style scoped>
 .widget { position: relative; }
+.w-palette { font-size: 12px; padding: 1px 4px; max-width: 170px; }
 .w-ico { position: absolute; z-index: 4; top: 12px; left: 14px; width: 26px; height: 26px; display: grid; place-items: center;
   border-radius: var(--radius-s); color: var(--tone, var(--accent)); background: color-mix(in srgb, var(--tone, var(--accent)) 14%, transparent); }
 .widget-body.has-ico > :deep(h2:first-child), .widget-body.has-ico > :deep(.section-head:first-child),

@@ -42,14 +42,15 @@ function generated(): Palette[] {
 export const CARD_TONES = ['good', 'blue', 'teal', 'violet', 'pink', 'amber', 'orange'] as const
 export type CardTone = typeof CARD_TONES[number] | 'custom'
 
-export interface Look { palette: string; card: CardTone; shade: number; custom: string }
+/** widgets: tavolozza propria di singoli widget ({id widget: id tavolozza}); gli altri seguono quella generale */
+export interface Look { palette: string; card: CardTone; shade: number; custom: string; widgets: Record<string, string> }
 const KEY = 'zm-palette'
-const DEFAULT: Look = { palette: 'default', card: 'good', shade: 1, custom: '#0f9d58' }
+const DEFAULT: Look = { palette: 'default', card: 'good', shade: 1, custom: '#0f9d58', widgets: {} }
 
 function initial(): Look {
   try {
     const saved = JSON.parse(localStorage.getItem(KEY) || 'null')
-    if (saved && typeof saved === 'object') return { ...DEFAULT, ...saved }
+    if (saved && typeof saved === 'object') return { ...DEFAULT, ...saved, widgets: { ...(saved.widgets ?? {}) } }
   } catch { /* storage non disponibile */ }
   return { ...DEFAULT }
 }
@@ -58,14 +59,26 @@ export const look = ref<Look>(initial())
 
 function apply() {
   const root = document.documentElement.style
-  const p = PALETTES.find(x => x.id === look.value.palette)
-  VARS.forEach((v, i) => {
-    const c = p?.tones?.[i]
-    if (!c) root.removeProperty(v)
-    else root.setProperty(v, theme.value === 'dark' ? `color-mix(in srgb, ${c} 65%, #fff)` : c)
-  })
+  const vars = toneVars(look.value.palette)
+  VARS.forEach(v => { if (vars[v]) root.setProperty(v, vars[v]); else root.removeProperty(v) })
   root.setProperty('--card-tone', look.value.card === 'custom' ? look.value.custom : `var(--${look.value.card})`)
   root.setProperty('--shade', String(look.value.shade))
+}
+
+/** variabili CSS dei colori di una tavolozza (vuoto = colori del tema) */
+function toneVars(id: string): Record<string, string> {
+  const tones = PALETTES.find(x => x.id === id)?.tones
+  if (!tones) return {}
+  return Object.fromEntries(VARS.map((v, i) =>
+    [v, theme.value === 'dark' ? `color-mix(in srgb, ${tones[i]} 65%, #fff)` : tones[i]]))
+}
+
+/** stile da mettere su un widget con una tavolozza propria */
+export function widgetStyle(id: string): Record<string, string> {
+  const own = look.value.widgets[id]
+  if (!own) return {}
+  if (own === 'default') return Object.fromEntries(VARS.map(v => [v, `var(${v}-base)`]))
+  return toneVars(own)
 }
 
 watch([look, theme], () => {
