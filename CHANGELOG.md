@@ -2,6 +2,10 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) — versioni: [SemVer](https://semver.org/lang/it/).
 
+## [0.35.1] - 2026-09-27
+### Corretto
+- Un AP riavviato in fretta (fra due letture) non compariva negli eventi: ora il riavvio si riconosce dall'uptime ripartito e viene registrato.
+
 ## [0.35.0] - 2026-09-27
 ### Aggiunto
 - Eventi: ogni distacco mostra il motivo probabile (riconfigurazione dell'AP, AP spento, espulsione o segnale debole, cambio di AP, stacco del dispositivo) e i dettagli: segnale con giudizio, da quanto era collegato e su che banda, dopo quanto e dove è tornato. Collegamenti e roaming mostrano il segnale.

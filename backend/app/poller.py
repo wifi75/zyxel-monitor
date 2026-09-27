@@ -61,6 +61,7 @@ async def poll_once() -> None:
     with connect() as db:
         aliases = {row["mac"]: row["name"] for row in db.execute("SELECT mac, name FROM aliases")}
         prev_status = {row["ap"]: row["online"] for row in db.execute("SELECT ap, online FROM ap_status")}
+        prev_uptime = {row["ap"]: row["uptime_s"] for row in db.execute("SELECT ap, uptime_s FROM ap_status")}
         prev_clients = {row["mac"]: dict(row) for row in db.execute("SELECT * FROM clients")}
         # AP eliminati o disattivati dal pannello: spariscono dalla dashboard
         names_now = [ap.name for ap in aps]
@@ -75,6 +76,11 @@ async def poll_once() -> None:
                     "INSERT INTO events(ts, kind, ap, info) VALUES (?,?,?,?)",
                     (now, "ap_up" if r.online else "ap_down", ap.name, r.error),
                 )
+            # riavvio veloce (fra due letture): l'AP risulta sempre online ma il suo uptime è ripartito da zero
+            old_up = prev_uptime.get(ap.name)
+            if r.online and r.uptime_s is not None and old_up and r.uptime_s < old_up:
+                db.execute("INSERT INTO events(ts, kind, ap, info) VALUES (?,?,?,?)",
+                           (now, "ap_up", ap.name, f"AP riavviato (acceso da {r.uptime_s // 60} min)"))
             db.execute(
                 """INSERT INTO ap_status(ap, host, method, online, model, firmware, uptime_s, clients,
                                          radios, error, last_seen, updated, cpu_pct, mem_pct)
