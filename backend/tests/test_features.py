@@ -223,3 +223,24 @@ def test_diagnosis_blames_reconfiguration():
           {"id": 2, "ts": 2000, "kind": "disconnect", "ap": "ZN", "info": None}]
     r = analyse(ev, lambda ts: -55, {"ZN": [1950]}, {}, kickout=-70, siblings=0, hours=24)
     assert any(f["title"] == "Staccato da una riconfigurazione dell'AP" for f in r["findings"])
+
+
+def test_download_and_upload_from_insight_rows():
+    from app.collectors.opnsense import split_traffic
+    rows = [
+        # interfaccia di casa (tanti ingressi da indirizzi privati)
+        {"if": "vtnet0", "direction": "in", "src_addr": "192.168.1.211", "dst_addr": "1.2.3.4", "octets": "400"},
+        {"if": "vtnet0", "direction": "out", "src_addr": "192.168.1.211", "dst_addr": "1.2.3.4", "octets": "3300"},
+        {"if": "vtnet0", "direction": "in", "src_addr": "192.168.1.50", "dst_addr": "1.2.3.4", "octets": "10"},
+        # stessa cosa vista dalla WAN: non va contata una seconda volta
+        {"if": "vlan0.2", "direction": "in", "src_addr": "1.2.3.4", "dst_addr": "192.168.1.211", "octets": "3300"},
+    ]
+    out = split_traffic(rows)
+    assert out["192.168.1.211"] == [3300, 400]
+
+
+def test_vlan_read_and_command():
+    from app.config_items import BY_KEY, RunningConfig
+    cfg = RunningConfig("wlan slot1\n ssid profile 1 SSID1\n!\nwlan-ssid-profile SSID1\n ssid WiFi\n vlan-id 1\n!\n")
+    assert BY_KEY["vlan_id"].read(cfg) == 1
+    assert BY_KEY["vlan_id"].build(20, cfg) == ["wlan-ssid-profile SSID1", "vlan-id 20", "exit"]

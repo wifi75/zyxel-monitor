@@ -382,6 +382,11 @@ ITEMS: list[Item] = [
     Item("rate_up", "rete", "Limite di upload per dispositivo", "int",
          "0 = nessun limite.", unit="kbps", read=lambda c: _rate(c, "uplink"),
          build=lambda v, c: _in_ssid(c, f"uplink-rate-limit {v} kbps")),
+    Item("vlan_id", "rete", "VLAN della rete Wi-Fi", "int",
+         "Numero della VLAN su cui escono i dispositivi Wi-Fi (1 = rete normale). Un numero sbagliato lascia tutti "
+         "senza rete: cambialo solo se la VLAN esiste già su switch e router.",
+         read=lambda c: int(v) if (v := _ssid_value(c, "vlan-id")) and v.isdigit() else None,
+         build=lambda v, c: _in_ssid(c, f"vlan-id {int(v)}")),
     Item("band_steering", "radio", "Band steering", "choice",
          "Spinge i dispositivi compatibili sulla 5 GHz, più veloce. Standard = suggerisce, forzato = insiste.",
          choices=["disable", "standard", "force"],
