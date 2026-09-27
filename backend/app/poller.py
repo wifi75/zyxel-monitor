@@ -263,6 +263,18 @@ INTERNET = "_internet"
 UTIL = "_util:"     # prefisso dei campioni di occupazione del canale ("_util:2.4GHz")
 
 
+def compact() -> None:
+    """Una volta al giorno: il segnale più vecchio di 7 giorni si tiene a un campione l'ora per client,
+    poi si recupera lo spazio (VACUUM). I grafici lunghi restano uguali, il database resta piccolo."""
+    week = int(time.time()) - 7 * 86400
+    with connect() as db:
+        db.execute("""DELETE FROM rssi_samples WHERE ts < ? AND rowid NOT IN (
+                        SELECT MIN(rowid) FROM rssi_samples WHERE ts < ? GROUP BY mac, ap, ts / 3600)""",
+                   (week, week))
+    with connect() as db:
+        db.execute("VACUUM")
+
+
 def prune() -> None:
     cutoff = int(time.time()) - get_settings().retention_days * 86400
     with connect() as db:
@@ -283,7 +295,8 @@ async def run_forever() -> None:
             await policy.enforce()      # configurazione centralizzata: riporta gli AP al valore scelto
             await site_config.enforce() # impostazioni del sito, controllate ogni 15 minuti
             await alerts.check()        # avvisi Telegram sugli eventi appena registrati
-            backup.nightly()            # copia del database, una volta al giorno dopo le 3
+            if backup.nightly():        # copia del database, una volta al giorno dopo le 3
+                compact()               # subito dopo la copia: si compatta il database
             if time.time() - last_prune > 3600:
                 prune()
                 last_prune = time.time()

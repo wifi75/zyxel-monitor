@@ -205,7 +205,7 @@ async def usage_devices(hours: float = 24):
     if not opnsense.enabled():
         return {"available": False, "reason": "opnsense"}
     hit = _usage_cache.get(hours)
-    if hit and time.time() - hit[0] < 300:
+    if hit and time.time() - hit[0] < 1800:     # Insight ha totali giornalieri: inutile riscaricarli spesso
         return hit[1]
     try:
         if not await opnsense.netflow_active():
@@ -255,6 +255,72 @@ async def usage_devices(hours: float = 24):
     if items:   # un risultato vuoto non si tiene in cache: i dati di Insight possono arrivare da un momento all'altro
         _usage_cache[hours] = (time.time(), result)
     return result
+
+
+# ---------- stato del sistema ----------
+@router.get("/system")
+def system_status():
+    """Salute del pannello: ultima lettura di ogni AP, database, ultimo backup."""
+    from pathlib import Path
+
+    from . import backup
+    from .core.config import get_settings
+    from .core.version import APP_VERSION
+    now = int(time.time())
+    step = get_settings().poll_interval
+    with connect() as db:
+        aps = [{"ap": r["ap"], "online": bool(r["online"]), "last_seen": r["last_seen"], "error": r["error"],
+                "stale": bool(r["last_seen"] is None or now - r["last_seen"] > max(600, step * 5))}
+               for r in db.execute("SELECT ap, online, last_seen, error FROM ap_status ORDER BY ap")]
+        counts = {t: db.execute(f"SELECT COUNT(*) FROM {t}").fetchone()[0]
+                  for t in ("events", "samples", "rssi_samples", "dns", "devices")}
+    db_file = Path(get_settings().db_path)
+    status = backup.status()
+    return {"version": APP_VERSION, "now": now, "poll_interval": step, "aps": aps,
+            "db_size": db_file.stat().st_size if db_file.exists() else None, "rows": counts,
+            "last_backup": status["files"][0] if status["files"] else None}
+
+
+# ---------- distacchi per ora del giorno ----------
+@router.get("/drops/heatmap")
+def drops_heatmap(days: float = 7):
+    """Scollegamenti per AP e ora del giorno (0-23): mostra quando e dove la rete dà problemi."""
+    days = max(1.0, min(days, 30.0))
+    since = int(time.time() - days * 86400)
+    import datetime as dt
+    grid: dict[str, list[int]] = defaultdict(lambda: [0] * 24)
+    with connect() as db:
+        for r in db.execute("SELECT ts, ap FROM events WHERE kind = 'disconnect' AND ts >= ?", (since,)):
+            grid[r["ap"] or "?"][dt.datetime.fromtimestamp(r["ts"]).hour] += 1
+    return {"days": days, "aps": {ap: hours for ap, hours in sorted(grid.items())},
+            "max": max((max(h) for h in grid.values()), default=0)}
+
+
+# ---------- disponibilità degli AP nel tempo ----------
+@router.get("/availability")
+def availability(hours: float = 48, slots: int = 96):
+    """Per ogni AP, la quota di letture riuscite in ogni intervallo (1 = sempre online, 0 = mai)."""
+    from .core.config import get_settings
+    hours = max(1.0, min(hours, 24 * 14))
+    slots = max(12, min(slots, 288))
+    now = int(time.time())
+    since = now - int(hours * 3600)
+    width = (now - since) / slots
+    expected = max(1.0, width / max(30, get_settings().poll_interval))
+    with connect() as db:
+        aps = [r["ap"] for r in db.execute("SELECT ap FROM ap_status ORDER BY ap")]
+        first = {r["ap"]: r["t"] for r in db.execute(
+            "SELECT ap, MIN(ts) AS t FROM samples WHERE iface = '_clients' GROUP BY ap")}
+        hits: dict[str, list[int]] = {ap: [0] * slots for ap in aps}
+        for r in db.execute("SELECT ts, ap FROM samples WHERE iface = '_clients' AND ts >= ?", (since,)):
+            if r["ap"] in hits:
+                hits[r["ap"]][min(slots - 1, int((r["ts"] - since) / width))] += 1
+    out = {}
+    for ap in aps:
+        start = first.get(ap) or now
+        out[ap] = [None if since + (i + 1) * width < start else round(min(1.0, n / expected), 2)
+                   for i, n in enumerate(hits[ap])]
+    return {"since": since, "until": now, "slots": slots, "aps": out}
 
 
 # ---------- disposizione della dashboard (per utente) ----------

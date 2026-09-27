@@ -21,16 +21,24 @@ COMMANDS = [
     "show running-config",
 ]
 last_output: dict[str, tuple[float, str]] = {}
+# la running-config è lunga e cambia di rado: si legge ogni CONFIG_EVERY secondi e nel frattempo si riusa
+CONFIG_EVERY = 600
+_config_cache: dict[str, tuple[float, str]] = {}
 
 
-async def _shell(host: str, user: str, password: str, port: int = 22, timeout: float = 30) -> str:
+def _commands(with_config: bool) -> list[str]:
+    return COMMANDS if with_config else [c for c in COMMANDS if c != "show running-config"]
+
+
+async def _shell(host: str, user: str, password: str, port: int = 22, timeout: float = 30,
+                 commands: list[str] | None = None) -> str:
     async with asyncssh.connect(
         host, port=port, username=user, password=password,
         known_hosts=None,            # AP in LAN, chiave che cambia al reset
         connect_timeout=10,
     ) as conn:
         proc = await conn.create_process(term_type="vt100", term_size=(200, 5000))
-        proc.stdin.write("\n".join(COMMANDS) + "\nexit\n")
+        proc.stdin.write("\n".join(commands or COMMANDS) + "\nexit\n")
         chunks: list[str] = []
 
         async def reader():
@@ -275,14 +283,21 @@ async def collect(host: str, user: str, password: str, port: int = 22) -> ApRead
     rej = _rejected.get(host)
     if rej and rej[0] == password and time.monotonic() - rej[1] < RETRY_AFTER:
         return ApReading(online=False, error=REJECTED_MSG)
+    cached = _config_cache.get(host)
+    with_config = not cached or time.time() - cached[0] > CONFIG_EVERY
     try:
-        text = await _shell(host, user, password, port)
+        text = await _shell(host, user, password, port, commands=_commands(with_config))
     except asyncssh.PermissionDenied:
         _rejected[host] = (password, time.monotonic())
         return ApReading(online=False, error=REJECTED_MSG)
     except (OSError, asyncssh.Error, TimeoutError) as exc:
         return ApReading(online=False, error=f"SSH: {exc}")
     _rejected.pop(host, None)
+    marker = "Router> show running-config"
+    if with_config and marker in text:
+        _config_cache[host] = (time.time(), text[text.find(marker):])
+    elif cached:
+        text += "\n" + cached[1]           # i lettori trovano la configurazione come se fosse appena letta
     last_output[host] = (time.time(), text)
 
     model, fw, uptime = parse_version(text)
