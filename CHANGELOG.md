@@ -2,6 +2,15 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) — versioni: [SemVer](https://semver.org/lang/it/).
 
+## [0.34.1] - 2026-09-27
+### Corretto
+- Riallineamento di potenza, canale e larghezza: se l'AP torna sempre al suo valore (es. canale automatico impostato da Nebula) dopo due tentativi il pannello smette e lo segnala, invece di far ripartire la radio ogni pochi minuti.
+### Modificato
+- Lettura SSH più leggera: la configurazione completa degli AP si legge ogni 10 minuti, client e traffico ogni minuto.
+- Consumo per dispositivo tenuto in memoria 30 minuti (Insight ha totali giornalieri).
+- Database compattato ogni notte dopo il backup: segnale più vecchio di 7 giorni ridotto a un campione l'ora.
+- API per lo stato del sistema, i distacchi per ora del giorno e la disponibilità degli AP nel tempo (usate dalle prossime schermate).
+
 ## [0.34.0] - 2026-09-27
 ### Aggiunto
 - Configurazione, con la sintassi della CLI Reference Guide Zyxel: blocco del traffico Intra-BSS, U-APSD, canale automatico (intervallo, non cambiare con client collegati, evita canali DFS, canali 2.4 GHz usati).
