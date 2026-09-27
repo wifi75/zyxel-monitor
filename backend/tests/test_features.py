@@ -202,3 +202,24 @@ def test_realignment_stops_after_repeated_reapply(monkeypatch):
     assert not site_config._conflict("ZN", "band_steering", "Band steering", False)
     assert site_config._conflict("ZN", "band_steering", "Band steering", False)     # terza volta: basta
     assert ("ZN", "band_steering") in site_config.stuck
+
+
+def test_diagnosis_blames_kickout_when_drops_happen_near_threshold():
+    from app.diagnosis import analyse
+    ev, t = [], 1000
+    for i in range(8):
+        ev += [{"id": 2 * i, "ts": t, "kind": "connect", "ap": "ZN", "info": "5GHz"},
+               {"id": 2 * i + 1, "ts": t + 120, "kind": "disconnect", "ap": "ZN", "info": None}]
+        t += 200
+    r = analyse(ev, lambda ts: -71, {}, {}, kickout=-70, siblings=0, hours=24)
+    titles = [f["title"] for f in r["findings"]]
+    assert r["stats"]["drops"] == 8 and r["stats"]["short_sessions"] == 8
+    assert "Staccato dall'AP per segnale debole" in titles
+
+
+def test_diagnosis_blames_reconfiguration():
+    from app.diagnosis import analyse
+    ev = [{"id": 1, "ts": 1000, "kind": "connect", "ap": "ZN", "info": "5GHz"},
+          {"id": 2, "ts": 2000, "kind": "disconnect", "ap": "ZN", "info": None}]
+    r = analyse(ev, lambda ts: -55, {"ZN": [1950]}, {}, kickout=-70, siblings=0, hours=24)
+    assert any(f["title"] == "Staccato da una riconfigurazione dell'AP" for f in r["findings"])

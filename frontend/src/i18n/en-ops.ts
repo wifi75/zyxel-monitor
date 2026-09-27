@@ -22,6 +22,22 @@ addEn({
   'Nebula': 'Nebula',
   'Cloud Zyxel (licenza Pro)': 'Zyxel cloud (Pro license)',
   'Il mio account': 'My account',
+  'Diagnosi di {n}': 'Diagnosis of {n}',
+  'Scollegamenti': 'Disconnections',
+  'Cambi di AP': 'AP changes',
+  'Connessione tipica': 'Typical connection',
+  'Segnale ai distacchi': 'Signal at disconnection',
+  'Soglia di espulsione': 'Kick-out threshold',
+  'spenta': 'off',
+  'Cronologia ({n} eventi)': 'Timeline ({n} events)',
+  'Causa probabile': 'Likely cause',
+  'Collegato': 'Connected',
+  'Scollegato': 'Disconnected',
+  'Cambio AP': 'AP change',
+  'Nuovo': 'New',
+  'segnale debole': 'weak signal',
+  'AP riconfigurato': 'AP reconfigured',
+  'AP spento': 'AP off',
   'Questa modifica non tocca il Wi-Fi: nessun dispositivo si stacca, quindi si applica subito a tutti gli AP senza prova.':
     'This change does not touch Wi-Fi: no device disconnects, so it is applied to all APs at once without a trial.',
   'Applica subito': 'Apply now',
@@ -175,6 +191,9 @@ addEn({
   'Senza dispositivi 802.11b gli AP non devono più rallentare ogni trasmissione per proteggerli: il canale 2.4 GHz si libera. Esclude solo apparecchi di prima del 2003.':
     'Without 802.11b devices the APs no longer slow down every transmission to protect them: the 2.4 GHz channel frees up. Only excludes devices from before 2003.',
   'Velocità minima 2.4 GHz': 'Minimum rate 2.4 GHz',
+  'Velocità minima 5 GHz': 'Minimum rate 5 GHz',
+  'Toglie le velocità più lente sul 5 GHz: i dispositivi lontani occupano meno il canale. Compare dopo Esplora comandi, sugli AP che la hanno.':
+    'Removes the slowest rates on 5 GHz: distant devices take less airtime. Appears after Explore commands, on the APs that support it.',
   'Toglie le velocità più lente (1–5,5 Mbps): i dispositivi vicini occupano meno il canale. Chi ha segnale molto debole potrebbe non collegarsi più. Compare dopo Esplora comandi, sugli AP che la hanno.':
     'Removes the slowest rates (1–5.5 Mbps): nearby devices take less airtime. Devices with a very weak signal may no longer connect. Appears after Explore commands, on the APs that support it.',
 })

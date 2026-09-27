@@ -2,7 +2,7 @@
 import { computed, ref } from 'vue'
 import { api, download, type Device, type Event, type SignalHistory } from '../api'
 import { isPrivateMac, since, time } from '../format'
-import EventsTable from './EventsTable.vue'
+import DeviceDiagnosis from './DeviceDiagnosis.vue'
 import LineChart from './LineChart.vue'
 import { t } from '../i18n'
 import { ask } from '../dialog'
@@ -123,6 +123,7 @@ async function forget(d: Device) {
               <td colspan="11">
                 <div v-if="!history" class="muted small">{{ t('Caricamento…') }}</div>
                 <template v-else>
+                  <DeviceDiagnosis :mac="d.mac" :name="name(d)" />
                   <strong class="small">{{ t('Segnale negli ultimi 7 giorni') }}</strong>
                   <div v-if="hasSignal && history.signal" class="signal-box">
                     <LineChart :ts="history.signal.points.map(p => p.ts)" :format="dbm"
@@ -130,8 +131,6 @@ async function forget(d: Device) {
                                            { label: t('Peggiore'), data: history.signal.points.map(p => p.min), color: '--bad' }]" />
                   </div>
                   <p v-else class="muted small">{{ t('Nessuna lettura del segnale nel periodo.') }}</p>
-                  <strong class="small">{{ t('Collegamenti e roaming') }}</strong>
-                  <EventsTable :events="history.events" show-ap />
                 </template>
               </td>
             </tr>

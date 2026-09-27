@@ -172,6 +172,13 @@ export interface AlertSettings {
   has_token: boolean; chat_id: string; kinds: string[]; weekly: boolean; all_kinds: string[]; enabled: boolean
 }
 export interface AlertForm { token: string; chat_id: string; kinds: string[]; weekly: boolean; clear_token?: boolean }
+export interface DiagnosisEvent { id: number; ts: number; kind: string; ap: string | null; info: string | null; rssi?: number | null; cause?: string }
+export interface Diagnosis {
+  stats: { hours: number; drops: number; roams: number; median_session_min: number | null; short_sessions: number
+    rssi_at_drop: number | null; kickout: number | null; siblings: number }
+  findings: { level: 'ok' | 'warn' | 'bad'; title: string; text: string; fix?: string }[]
+  timeline: DiagnosisEvent[]
+}
 export interface WidgetPos { i: string; x: number; y: number; w: number; h: number }
 export type ViewKind = 'overview' | 'ap'
 export type SavedLayout = Partial<Record<ViewKind, WidgetPos[]>>
@@ -225,6 +232,7 @@ export const api = {
   events: (limit = 200, ap?: string, mac?: string) =>
     req<Event[]>(`/events?limit=${limit}${ap ? `&ap=${encodeURIComponent(ap)}` : ''}${mac ? `&mac=${encodeURIComponent(mac)}` : ''}`),
   channels: () => req<Channels>('/channels'),
+  diagnosis: (mac: string, hours: number) => req<Diagnosis>(`/devices/${encodeURIComponent(mac)}/diagnosis?hours=${hours}`),
   setCritical: (mac: string, critical: boolean) =>
     req(`/devices/${encodeURIComponent(mac)}/critical`, { method: 'PUT', body: JSON.stringify({ critical }) }),
   users: () => req<User[]>('/users'),

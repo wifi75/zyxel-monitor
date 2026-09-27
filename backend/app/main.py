@@ -16,6 +16,7 @@ from .backup import router as backup_router
 from .export_api import router as export_router
 from .users_api import router as users_router
 from .channels import router as channels_router
+from .diagnosis import router as diagnosis_router
 from .core.db import init_db
 from .core.security import ensure_default_user, read_token, role_of
 from .core.store import seed_from_env
@@ -69,6 +70,7 @@ app.include_router(nebula_router)
 app.include_router(policy_router)
 app.include_router(alerts_router)
 app.include_router(channels_router)
+app.include_router(diagnosis_router)
 app.include_router(report_router)
 app.include_router(backup_router)
 app.include_router(export_router)
