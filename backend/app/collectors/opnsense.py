@@ -105,6 +105,63 @@ async def netflow_active() -> bool:
 INSIGHT_TOP = "diagnostics/networkinsight/top/FlowSourceAddrTotals/{since}/{until}/src_addr/octets/%20/200"
 
 
+def fetch_text(path: str, s=None, timeout: float = 60) -> str:
+    """Come fetch, ma per le risposte in testo (CSV di esportazione)."""
+    s = s or get_settings()
+    req = urllib.request.Request(f"{s.opnsense_url.rstrip('/')}/api/{path}")
+    token = b64encode(f"{s.opnsense_key}:{s.opnsense_secret}".encode()).decode()
+    req.add_header("Authorization", f"Basic {token}")
+    ctx = truststore.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+    if not s.opnsense_verify_tls:
+        ctx.check_hostname = False
+        ctx.verify_mode = ssl.CERT_NONE
+    with urllib.request.urlopen(req, timeout=timeout, context=ctx) as resp:
+        return resp.read().decode(errors="replace")
+
+
+def split_traffic(rows: list[dict]) -> dict[str, list[int]]:
+    """{ip di casa: [scaricati, inviati]} dalle righe di Insight (src_addr, dst_addr, if, direction, octets).
+
+    Ogni flusso compare sia sull'interfaccia di casa sia su quella verso Internet: si conta solo quella di casa,
+    riconosciuta come l'interfaccia con più flussi in ingresso da indirizzi privati. Lì un flusso "in" con
+    sorgente il dispositivo è un invio, un flusso "out" con sorgente il dispositivo è uno scaricamento
+    (OPNsense orienta i record così, verificato sul campo il 27/09/2026)."""
+    import ipaddress
+    from collections import Counter
+
+    def private(a: str) -> bool:
+        try:
+            ip = ipaddress.ip_address(a)
+        except ValueError:
+            return False
+        return ip.is_private and not ip.is_multicast and not ip.is_loopback
+
+    score = Counter(r["if"] for r in rows if r.get("direction") == "in" and private(r.get("src_addr", "")))
+    if not score:
+        return {}
+    lan_if = score.most_common(1)[0][0]
+    out: dict[str, list[int]] = {}
+    for r in rows:
+        if r.get("if") != lan_if or not private(r.get("src_addr", "")):
+            continue
+        try:
+            n = int(float(r.get("octets") or 0))
+        except ValueError:
+            continue
+        slot = 1 if r.get("direction") == "in" else 0
+        out.setdefault(r["src_addr"], [0, 0])[slot] += n
+    return out
+
+
+async def traffic_per_address(since: int, until: int) -> dict[str, list[int]]:
+    """Scaricati e inviati per indirizzo di casa (risoluzione giornaliera di Insight)."""
+    import csv
+    import io
+    path = f"diagnostics/networkinsight/export/FlowSourceAddrDetails/{since}/{until}/86400"
+    text = await asyncio.to_thread(fetch_text, path)
+    return split_traffic(list(csv.DictReader(io.StringIO(text))))
+
+
 async def bytes_per_address(since: int, until: int) -> tuple[dict[str, int], dict]:
     """Byte per indirizzo sorgente da Insight (NetFlow con "Capture local"), più un estratto della risposta
     grezza: il formato non è ancora confermato, l'estratto permette di adattare il parsing al caso reale."""

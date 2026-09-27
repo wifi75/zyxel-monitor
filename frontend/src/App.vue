@@ -296,7 +296,8 @@ const roamPairs = computed(() => roaming.value?.pairs ?? [])
 const roamTotal = computed(() => roamPairs.value.reduce((s, p) => s + p.count, 0))
 const roamMax = computed(() => Math.max(1, ...(roaming.value?.devices ?? []).map(d => d.count)))
 const roamBouncing = computed(() => (roaming.value?.devices ?? []).filter(d => d.bouncing).length)
-const usageItems = computed(() => (deviceUsage.value?.items ?? []).map(i => ({ label: i.name, value: i.bytes, title: i.ip })))
+const usageItems = computed(() => (deviceUsage.value?.items ?? []).map(i => ({ label: i.name, value: i.bytes,
+  title: i.down != null ? `${i.ip} · ↓ ${bytes(i.down)} · ↑ ${bytes(i.up ?? 0)}` : i.ip })))
 const usageTypes = computed(() => (deviceUsage.value?.by_type ?? []).map(i => ({ label: i.type, value: i.bytes })))
 
 const periodLabel = computed(() => ({ 1: t('ultima ora'), 6: t('ultime 6 ore'), 24: t('ultime 24 ore'), 168: t('ultimi 7 giorni') } as Record<number, string>)[hours.value])
@@ -624,8 +625,8 @@ const SSH_NA = "La CLI SSH di questo AP non fornisce ancora il dato: in Impostaz
 
           <!-- consumo per dispositivo -->
           <template v-else-if="id === 'usage_devices'">
-            <h2>{{ t('Consumo per dispositivo') }} <span class="muted small">({{ t('dati inviati, {period}', { period: periodLabel }) }})</span></h2>
-            <p v-if="deviceUsage?.available && !deviceUsage.debug" class="muted small">{{ t('NetFlow di OPNsense conta i byte inviati da ogni indirizzo: i download non sono ancora inclusi.') }}</p>
+            <h2>{{ t('Consumo per dispositivo') }} <span class="muted small">({{ deviceUsage?.both_ways ? t('scaricati + inviati, {period}', { period: periodLabel }) : t('dati inviati, {period}', { period: periodLabel }) }})</span></h2>
+            <p v-if="deviceUsage?.available && !deviceUsage.debug && !deviceUsage.both_ways" class="muted small">{{ t('NetFlow di OPNsense conta i byte inviati da ogni indirizzo: i download non sono ancora inclusi.') }}</p>
             <div v-if="deviceUsage?.available && deviceUsage.debug" class="usage-debug">
               <p>
                 {{ t('OPNsense ha risposto con {rows} righe e {addresses} indirizzi, ma nessuno corrisponde ai dispositivi Wi-Fi.', { rows: deviceUsage.debug.rows, addresses: deviceUsage.debug.addresses }) }}

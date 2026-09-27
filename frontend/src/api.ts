@@ -93,7 +93,9 @@ export interface Roaming {
 }
 export interface DeviceUsage {
   available: boolean; reason?: 'opnsense' | 'netflow' | 'error'; message?: string
-  items?: { mac: string | null; ip: string; name: string; device_type: string; bytes: number }[]
+  items?: { mac: string | null; ip: string; name: string; device_type: string; bytes: number; down?: number | null; up?: number | null }[]
+  /** true = scaricati e inviati (esportazione di Insight); false = solo inviati */
+  both_ways?: boolean
   by_type?: { type: string; bytes: number }[]
   debug?: { path: string; rows: number; addresses: number; sample_addresses: string[]; sample: string } | null
 }

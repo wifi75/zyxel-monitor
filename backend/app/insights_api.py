@@ -1,5 +1,6 @@
 """Analisi: dispositivi nuovi, qualità del segnale, roaming, consumo per dispositivo, disposizione dashboard."""
 import asyncio
+import logging
 import ipaddress
 import json
 import time
@@ -16,6 +17,7 @@ from .devices import device_type
 from .oui import vendor
 
 router = APIRouter(prefix="/api", dependencies=[Depends(current_user)])
+log = logging.getLogger("insights")
 
 WEAK_DBM = -75
 
@@ -208,7 +210,16 @@ async def usage_devices(hours: float = 24):
     try:
         if not await opnsense.netflow_active():
             return {"available": False, "reason": "netflow"}
-        per_ip, raw = await opnsense.bytes_per_address(since, int(time.time()))
+        split: dict[str, list[int]] = {}
+        try:
+            split = await opnsense.traffic_per_address(since, int(time.time()))
+        except Exception as exc:        # esportazione non disponibile: si resta ai soli byte inviati
+            log.warning("Insight export non disponibile: %s", exc)
+        if split:
+            per_ip = {ip: d + u for ip, (d, u) in split.items()}
+            raw = {"path": "export", "rows": len(split), "sample": ""}
+        else:
+            per_ip, raw = await opnsense.bytes_per_address(since, int(time.time()))
     except Exception as exc:
         return {"available": False, "reason": "error", "message": str(exc)}
     with connect() as db:
@@ -231,11 +242,12 @@ async def usage_devices(hours: float = 24):
         else:
             label = wired.get(ip) or ip
             kind = "Via cavo"
-        items.append({"mac": mac, "ip": ip, "name": label, "device_type": kind, "bytes": n})
+        down, up = split.get(ip, [None, None])
+        items.append({"mac": mac, "ip": ip, "name": label, "device_type": kind, "bytes": n, "down": down, "up": up})
         by_type[kind] += n
     items.sort(key=lambda i: i["bytes"], reverse=True)
     result = {
-        "available": True, "items": items[:15],
+        "available": True, "items": items[:15], "both_ways": bool(split),
         "by_type": [{"type": k, "bytes": v} for k, v in by_type.most_common()],
         # quando non si riconosce nulla, il pannello mostra cosa ha risposto OPNsense
         "debug": None if items else {**raw, "addresses": len(per_ip), "sample_addresses": sorted(per_ip)[:10]},
