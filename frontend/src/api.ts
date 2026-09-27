@@ -21,6 +21,7 @@ export interface Event {
   id: number; ts: number
   kind: 'connect' | 'disconnect' | 'roam' | 'ap_down' | 'ap_up' | 'new_device' | 'wan_down' | 'wan_up' | 'config'
   mac: string | null; name: string | null; ap: string | null; info: string | null
+  reason?: string; detail?: string
 }
 export interface TrafficPoint { ts: number; down_bps: number | null; up_bps: number | null; clients: number | null }
 export interface Traffic { step: number; series: Record<string, TrafficPoint[]> }

@@ -2,6 +2,10 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) — versioni: [SemVer](https://semver.org/lang/it/).
 
+## [0.35.0] - 2026-09-27
+### Aggiunto
+- Eventi: ogni distacco mostra il motivo probabile (riconfigurazione dell'AP, AP spento, espulsione o segnale debole, cambio di AP, stacco del dispositivo) e i dettagli: segnale con giudizio, da quanto era collegato e su che banda, dopo quanto e dove è tornato. Collegamenti e roaming mostrano il segnale.
+
 ## [0.34.1] - 2026-09-27
 ### Corretto
 - Riallineamento di potenza, canale e larghezza: se l'AP torna sempre al suo valore (es. canale automatico impostato da Nebula) dopo due tentativi il pannello smette e lo segnala, invece di far ripartire la radio ogni pochi minuti.

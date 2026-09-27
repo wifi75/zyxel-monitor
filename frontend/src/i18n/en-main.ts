@@ -157,6 +157,7 @@ addEn({
   'Evento': 'Event',
   'Dispositivo': 'Device',
   'Dettagli': 'Details',
+  'Motivo': 'Reason',
   'Connesso': 'Connected',
   'Disconnesso': 'Disconnected',
   'AP offline': 'AP offline',

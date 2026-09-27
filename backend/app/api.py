@@ -155,8 +155,68 @@ def list_events(limit: int = 200, mac: str | None = None, ap: str | None = None)
         args.append(ap)
     sql = "SELECT * FROM events" + (" WHERE " + " AND ".join(where) if where else "")
     with connect() as db:
-        rows = db.execute(sql + " ORDER BY ts DESC LIMIT ?", (*args, limit)).fetchall()
-    return [dict(r) for r in rows]
+        rows = [dict(r) for r in db.execute(sql + " ORDER BY ts DESC LIMIT ?", (*args, limit))]
+        explain(db, rows)
+    return rows
+
+
+def _ago(s: int) -> str:
+    return f"{s // 3600} h {s % 3600 // 60} min" if s >= 3600 else f"{max(1, s // 60)} min"
+
+
+def explain(db, rows: list[dict]) -> None:
+    """Aggiunge a collegamenti e distacchi il segnale, la durata e il motivo probabile (campo "reason")."""
+    from .diagnosis import CONFIG_WINDOW, NEAR, WEAK_DBM, _kickout
+    kick = _kickout()
+    for e in rows:
+        if e["kind"] not in ("disconnect", "connect", "roam") or not e["mac"]:
+            continue
+        ts, mac, ap = e["ts"], e["mac"], e["ap"]
+        parts = []
+        r = db.execute("SELECT rssi FROM rssi_samples WHERE mac = ? AND ts BETWEEN ? AND ? ORDER BY ts DESC LIMIT 1",
+                       (mac, ts - 300, ts)).fetchone()
+        rssi = r["rssi"] if r else None
+        if rssi is not None:
+            q = "ottimo" if rssi >= -60 else "buono" if rssi >= -67 else "debole" if rssi > WEAK_DBM else "molto debole"
+            parts.append(f"segnale {rssi} dBm ({q})")
+        if e["kind"] != "disconnect":
+            e["detail"] = " · ".join(parts)
+            continue
+        c = db.execute("""SELECT ts, info FROM events WHERE mac = ? AND kind = 'connect' AND ts < ?
+                          ORDER BY ts DESC LIMIT 1""",
+                       (mac, ts)).fetchone()
+        if c:
+            parts.append(f"era collegato da {_ago(ts - c['ts'])}" + (f" in {c['info']}" if c["info"] else ""))
+        back = db.execute("SELECT ts, ap FROM events WHERE mac = ? AND kind = 'connect' AND ts > ? ORDER BY ts LIMIT 1",
+                          (mac, ts)).fetchone()
+        if back:
+            where = "stesso AP" if back["ap"] == ap else back["ap"]
+            parts.append(f"tornato dopo {_ago(back['ts'] - ts)} ({where})")
+        cfg = db.execute("""SELECT info FROM events WHERE kind = 'config' AND (ap = ? OR ap = '' OR ap IS NULL)
+                            AND ts BETWEEN ? AND ? ORDER BY ABS(ts - ?) LIMIT 1""",
+                         (ap, ts - CONFIG_WINDOW, ts + CONFIG_WINDOW, ts)).fetchone()
+        down = db.execute("SELECT 1 FROM events WHERE kind = 'ap_down' AND ap = ? AND ts BETWEEN ? AND ?",
+                          (ap, ts - CONFIG_WINDOW, ts + CONFIG_WINDOW)).fetchone()
+        if down:
+            reason = "AP spento o irraggiungibile"
+        elif cfg:
+            reason = f"Riconfigurazione dell'AP, il Wi-Fi è ripartito ({cfg['info']})"
+        elif rssi is not None and kick is not None and rssi <= kick + NEAR:
+            reason = f"Espulso dall'AP per segnale sotto la soglia ({kick} dBm)"
+        elif rssi is not None and rssi <= WEAK_DBM:
+            reason = "Segnale troppo debole: fuori copertura"
+        elif back and back["ap"] != ap and back["ts"] - ts <= 180:
+            reason = f"Cambio di AP con breve stacco (verso {back['ap']})"
+        elif back and back["ts"] - ts <= 180:
+            reason = ("Stacco breve con segnale al limite: il dispositivo cerca un AP migliore"
+                      if rssi is not None and rssi < -67 else
+                      "Stacco breve con segnale buono: di solito è il dispositivo (risparmio energetico, sospensione)")
+        elif back is None:
+            reason = "Uscito dalla copertura, spento o Wi-Fi disattivato (non ancora tornato)"
+        else:
+            reason = "Uscito dalla copertura o Wi-Fi disattivato"
+        e["reason"] = reason
+        e["detail"] = " · ".join(parts)
 
 
 @router.get("/usage", dependencies=[Depends(current_user)])

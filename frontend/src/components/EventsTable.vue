@@ -21,10 +21,17 @@ const LABEL: Record<Event['kind'], string> = {
           <td><span class="ev" :class="e.kind">{{ t(LABEL[e.kind]) }}</span></td>
           <td>{{ e.name || '—' }}</td>
           <td v-if="showAp">{{ e.ap || '—' }}</td>
-          <td class="muted small">{{ e.info || '' }}</td>
+          <td class="small">
+            <div v-if="e.reason" class="reason">{{ t('Motivo') }}: {{ e.reason }}</div>
+            <span class="muted">{{ [e.info, e.detail].filter(Boolean).join(' · ') }}</span>
+          </td>
         </tr>
         <tr v-if="!events.length"><td :colspan="showAp ? 5 : 4" class="muted">{{ t('Nessun evento registrato.') }}</td></tr>
       </tbody>
     </table>
   </div>
 </template>
+
+<style scoped>
+.reason { font-weight: 600; color: var(--weak); }
+</style>
