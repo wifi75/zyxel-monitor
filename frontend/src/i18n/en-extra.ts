@@ -2,6 +2,11 @@ import { addEn } from './index'
 
 // traduzioni inglesi: chiave = testo italiano esatto usato in t()
 addEn({
+  'Dispositivi via cavo': 'Wired devices',
+  'senza nome': 'unnamed',
+  'Nessun dispositivo via cavo nella rete degli access point.': "No wired devices on the access points' network.",
+  'Sono esclusi gli AP e i dispositivi visti almeno una volta in Wi-Fi.': 'Access points and devices ever seen on Wi-Fi are excluded.',
+
   'Client Wi-Fi e via cavo': 'Wi-Fi and wired clients',
   'Wi-Fi': 'Wi-Fi',
   'Mostra i dispositivi via cavo': 'Show wired devices',

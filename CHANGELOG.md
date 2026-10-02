@@ -2,6 +2,12 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) — versioni: [SemVer](https://semver.org/lang/it/).
 
+## [0.37.2] - 2026-10-02
+### Corretto
+- Client via cavo: si conta solo l'interfaccia di OPNsense su cui stanno gli AP (niente WAN, VLAN, rete dei server), si escludono i dispositivi visti almeno una volta in Wi-Fi e le voci ARP scadute.
+### Modificato
+- Elenco dei dispositivi via cavo sempre visibile, con nome (pannello, DHCP di OPNsense o DNS inverso), IP, produttore e rete.
+
 ## [0.37.1] - 2026-10-02
 ### Modificato
 - Traffico per servizio come ciambella col totale al centro e legenda con percentuali (i primi 6 servizi, il resto in «Altro»); passando su una fetta il centro mostra quella voce.

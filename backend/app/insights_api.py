@@ -289,26 +289,43 @@ async def clients_wired():
     from .core import store
     with connect() as db:
         wifi = {r["mac"] for r in db.execute("SELECT mac FROM clients")}
+        # visti almeno una volta su un AP: un telefono appena uscito resta nella tabella ARP per una ventina di
+        # minuti e non va contato come cablato
+        ever_wifi = {r["mac"] for r in db.execute("SELECT mac FROM devices")}
         names = _labels(db)
     if not opnsense.enabled():
         return {"available": False, "reason": "opnsense", "wireless": len(wifi), "wired": None, "items": []}
     try:
         rows = await opnsense.arp()
+        try:
+            lease_names = {m: h for m, (_ip, h) in (await opnsense.leases()).items() if h}
+        except Exception:               # senza Kea si va avanti coi nomi del pannello e il DNS inverso
+            lease_names = {}
     except Exception as exc:
         return {"available": False, "reason": "error", "message": str(exc), "wireless": len(wifi), "wired": None,
                 "items": []}
     ap_hosts = {a.host for a in store.list_aps()}
+    # OPNsense ha più reti (WAN, VLAN, server): si tiene solo l'interfaccia su cui stanno gli AP
+    ap_intfs = {str(r.get("intf") or "") for r in rows if str(r.get("ip") or "") in ap_hosts} - {""}
     items, seen = [], set()
     for r in rows:
         mac = str(r.get("mac") or "").lower()
         ip = str(r.get("ip") or "")
-        if not mac or mac in seen or mac in wifi or ip in ap_hosts or not _is_lan(ip):
+        if not mac or mac in seen or mac in wifi or mac in ever_wifi or ip in ap_hosts or not _is_lan(ip):
+            continue
+        if ap_intfs and str(r.get("intf") or "") not in ap_intfs:
             continue
         if r.get("permanent") in (True, 1, "1", "true") or "incomplete" in mac:
             continue                       # indirizzi dell'OPNsense stesso, voci non risolte
+        if r.get("expired") in (True, 1, "1", "true"):
+            continue
         seen.add(mac)
-        items.append({"mac": mac, "ip": ip, "name": names.get(mac) or r.get("hostname") or ip,
+        items.append({"mac": mac, "ip": ip, "name": names.get(mac) or lease_names.get(mac) or r.get("hostname"),
                       "vendor": vendor(mac), "intf": r.get("intf_description") or r.get("intf")})
+    # chi non ha un nome nel pannello né nel DHCP: DNS inverso, così ogni riga dice cos'è
+    unnamed = [i for i in items if not i["name"]]
+    for i, host in zip(unnamed, await asyncio.gather(*(names_mod.hostname(i["ip"]) for i in unnamed)), strict=True):
+        i["name"] = host
     items.sort(key=lambda i: tuple(int(p) for p in i["ip"].split(".")) if i["ip"].count(".") == 3 else (999,))
     return {"available": True, "wireless": len(wifi), "wired": len(items), "items": items}
 
