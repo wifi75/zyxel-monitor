@@ -145,7 +145,7 @@ importanti avvisano dopo 5 minuti scollegati e di nuovo quando tornano.
 | Occupazione dei canali, piano dei canali | ✅ | con storico e canali 1/6/11 consigliati |
 | Avvisi | ✅ | Telegram, compresi i dispositivi importanti scollegati |
 | Uso delle applicazioni | ⚠️ | widget *Traffico per servizio*: GB per servizio (YouTube, Netflix…) stimati dagli indirizzi remoti di NetFlow col DNS inverso; senza DPI, le CDN condivise restano col loro nome |
-| Client Wi-Fi e via cavo | ✅ | i cablati dalla tabella ARP di OPNsense |
+| Client Wi-Fi e via cavo | ✅ | i cablati dalla tabella ARP di OPNsense, solo sulla rete degli AP e mai visti in Wi-Fi, con elenco nome/IP/produttore/rete |
 | Potenza PoE | ❌ | dato dello switch PoE gestito da Nebula; senza switch gestito non esiste |
 | Reti dei vicini (rogue AP) | ⚠️ | *Esplora comandi* legge `show rogue-ap detection monitoring`; il widget arriva quando si conosce il formato |
 

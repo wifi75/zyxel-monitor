@@ -156,7 +156,7 @@ Important devices alert after 5 minutes offline and again when they come back.
 | Channel utilisation, channel plan | ✅ | with history and suggested 1/6/11 |
 | Alerts | ✅ | Telegram, incl. important devices offline |
 | Applications usage | ⚠️ | *Traffic by service* widget: GB per service (YouTube, Netflix…) estimated from NetFlow remote addresses via reverse DNS; no DPI, shared CDNs keep their own name |
-| Wireless and wired clients | ✅ | wired ones from the OPNsense ARP table |
+| Wireless and wired clients | ✅ | wired ones from the OPNsense ARP table, only on the APs' network and never seen on Wi-Fi, listed with name/IP/vendor/network |
 | PoE power | ❌ | comes from a Nebula-managed PoE switch; without a managed switch it does not exist |
 | Neighbouring networks (rogue AP) | ⚠️ | *Explore commands* now reads `show rogue-ap detection monitoring`; the widget comes once the output format is known |
 
