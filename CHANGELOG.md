@@ -2,6 +2,11 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) — versioni: [SemVer](https://semver.org/lang/it/).
 
+## [0.37.1] - 2026-10-02
+### Modificato
+- Traffico per servizio come ciambella col totale al centro e legenda con percentuali (i primi 6 servizi, il resto in «Altro»); passando su una fetta il centro mostra quella voce.
+- Client Wi-Fi e via cavo con due numeri grandi e icona, senza riquadri.
+
 ## [0.37.0] - 2026-10-02
 ### Aggiunto
 - Widget «Client Wi-Fi e via cavo»: i dispositivi via cavo dalla tabella ARP di OPNsense (esclusi gli AP e quelli già in Wi-Fi), con elenco e produttore.

@@ -16,11 +16,16 @@ onUnmounted(() => window.clearInterval(timer))
 </script>
 
 <template>
-  <h2>{{ t('Client Wi-Fi e via cavo') }}</h2>
+  <h2>{{ t('Client') }}</h2>
   <div class="wired-kpis">
-    <div><Icon name="wifi" :size="20" /><strong>{{ data?.wireless ?? '—' }}</strong><span class="muted small">{{ t('Wi-Fi') }}</span></div>
-    <button class="ghost" :disabled="!data?.items.length" :title="t('Mostra i dispositivi via cavo')" @click="open = !open">
-      <Icon name="router" :size="20" /><strong>{{ data?.wired ?? '—' }}</strong><span class="muted small">{{ t('Via cavo') }}</span>
+    <div class="kpi-big">
+      <strong>{{ data?.wireless ?? '—' }}</strong>
+      <span class="lbl"><Icon name="wifi" :size="18" /> {{ t('Wi-Fi') }}</span>
+    </div>
+    <button class="kpi-big" :disabled="!data?.items.length" :aria-expanded="open"
+            :title="t('Mostra i dispositivi via cavo')" @click="open = !open">
+      <strong>{{ data?.wired ?? '—' }}</strong>
+      <span class="lbl"><Icon name="router" :size="18" /> {{ t('Via cavo') }}</span>
     </button>
   </div>
   <p v-if="data && !data.available" class="muted small">
@@ -39,9 +44,11 @@ onUnmounted(() => window.clearInterval(timer))
 </template>
 
 <style scoped>
-.wired-kpis { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 8px 0; }
-.wired-kpis > * { display: grid; justify-items: center; gap: 2px; padding: 10px; border: 1px solid var(--border);
-                  border-radius: var(--radius); background: var(--surface-2); min-height: 0; height: auto; }
-.wired-kpis strong { font: 600 26px var(--font-mono); color: var(--text); }
-.wired-kpis .icon { color: var(--accent); }
+.wired-kpis { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 6px 0 4px; }
+.kpi-big { display: grid; justify-items: center; gap: 4px; padding: 6px 4px; border: none; background: transparent;
+           min-height: 0; height: auto; border-radius: var(--radius); }
+button.kpi-big:not(:disabled):hover { background: var(--surface-2); }
+.kpi-big strong { font: 700 34px/1 var(--font-mono); color: var(--text); letter-spacing: -.02em; }
+.lbl { display: inline-flex; align-items: center; gap: 6px; font-size: 15px; color: var(--text); }
+.lbl .icon { color: var(--good); }
 </style>
