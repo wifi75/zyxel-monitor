@@ -12,8 +12,8 @@
 [![Database](https://img.shields.io/badge/DB-SQLite-003B57?logo=sqlite&logoColor=white)](https://www.sqlite.org)
 [![Docker](https://img.shields.io/badge/Deploy-Docker-2496ED?logo=docker&logoColor=white)](docker-compose.yml)
 [![Sources](https://img.shields.io/badge/Sources-SNMP%20%7C%20SSH%20%7C%20OPNsense-5A6B7B)](#where-the-data-comes-from)
-[![API](https://img.shields.io/badge/API-80%20endpoints-0A7EA4)](backend/app/api.py)
-[![Tests](https://img.shields.io/badge/Tests-51%20pytest-0A9EDC?logo=pytest&logoColor=white)](backend/tests)
+[![API](https://img.shields.io/badge/API-82%20endpoints-0A7EA4)](backend/app/api.py)
+[![Tests](https://img.shields.io/badge/Tests-52%20pytest-0A9EDC?logo=pytest&logoColor=white)](backend/tests)
 [![Lint](https://img.shields.io/badge/Lint-ruff-D7FF64?logo=ruff&logoColor=black)](ruff.toml)
 [![SemVer](https://img.shields.io/badge/SemVer-2.0.0-blue)](https://semver.org)
 [![Keep a Changelog](https://img.shields.io/badge/Changelog-Keep%20a%20Changelog-E05735)](CHANGELOG.md)
@@ -155,7 +155,9 @@ Important devices alert after 5 minutes offline and again when they come back.
 | Why a device disconnects | ✅ | device *Diagnosis* (not in Nebula) |
 | Channel utilisation, channel plan | ✅ | with history and suggested 1/6/11 |
 | Alerts | ✅ | Telegram, incl. important devices offline |
-| Applications usage (DPI) | ❌ | needs the AP's deep inspection, cloud only |
+| Applications usage | ⚠️ | *Traffic by service* widget: GB per service (YouTube, Netflix…) estimated from NetFlow remote addresses via reverse DNS; no DPI, shared CDNs keep their own name |
+| Wireless and wired clients | ✅ | wired ones from the OPNsense ARP table |
+| PoE power | ❌ | comes from a Nebula-managed PoE switch; without a managed switch it does not exist |
 | Neighbouring networks (rogue AP) | ⚠️ | *Explore commands* now reads `show rogue-ap detection monitoring`; the widget comes once the output format is known |
 
 **Configuration** (panel management is off by default; Nebula stays the master)

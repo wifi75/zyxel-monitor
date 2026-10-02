@@ -22,6 +22,7 @@
 - [ ] Output CLI di GIARDINO (NWA1123-AC PRO, fw 6.x) per verificare i lettori su quel modello.
 - [x] Client per banda in Panoramica, carico dei canali per AP, produttore dal MAC (v0.25.0).
 - [ ] Classifica traffico per dispositivo se l'SSH dà i byte.
+- [ ] Verificare con OPNsense reale il formato della tabella ARP (widget Client Wi-Fi e via cavo) e la qualità del raggruppamento per servizio (voci «Senza nome» e CDN da arricchire in `services.SERVICES`).
 - [x] Storico dell'occupazione del canale (v0.26.0).
 - [ ] Occupazione del canale anche sugli AP SNMP (oggi solo SSH).
 - [ ] Verificare sul campo `no reject-legacy-station` (sintassi per spegnerlo non ancora provata).
