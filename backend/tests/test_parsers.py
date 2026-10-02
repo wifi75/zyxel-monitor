@@ -271,3 +271,24 @@ def test_psk_old_firmware():
     cfg = ci.RunningConfig("wlan-security-profile SECURITY1\n mode wpa2\n wpa-psk segreta\n!\n"
                            "wlan-ssid-profile SSID1\n ssid WiFi\n security SECURITY1\n!\nwlan slot1\n ssid profile 1 SSID1\n!\n")
     assert ci.BY_KEY["wifi_password"].read(cfg) == "segreta"
+
+
+def test_remote_traffic_and_services():
+    import asyncio
+
+    from app import services
+    from app.collectors.opnsense import remote_traffic
+    rows = [
+        {"if": "lan", "direction": "in", "src_addr": "192.168.1.10", "dst_addr": "142.250.1.1", "octets": "100"},
+        {"if": "lan", "direction": "out", "src_addr": "142.250.1.1", "dst_addr": "192.168.1.10", "octets": "900"},
+        {"if": "wan", "direction": "out", "src_addr": "1.2.3.4", "dst_addr": "142.250.1.1", "octets": "999"},
+    ]
+    assert remote_traffic(rows) == {"142.250.1.1": 1000}
+    assert services.service_of("fra16s52-in-f14.1e100.net") == "Google"
+    assert services.registered("host.esempio.co.uk") == "esempio.co.uk"
+
+    async def fake(ip):
+        return {"1.1.1.1": "x.nflxvideo.net", "2.2.2.2": None}.get(ip)
+    services.reverse = fake
+    out = asyncio.run(services.group({"1.1.1.1": 50, "2.2.2.2": 5}))
+    assert out == [{"name": "Netflix", "bytes": 50}, {"name": "Senza nome", "bytes": 5}]

@@ -257,6 +257,62 @@ async def usage_devices(hours: float = 24):
     return result
 
 
+_apps_cache: dict[float, tuple[float, dict]] = {}
+
+
+@router.get("/usage/apps")
+async def usage_apps(hours: float = 24):
+    """Traffico della casa per servizio (YouTube, Netflix, Microsoft…), dagli indirizzi remoti di NetFlow."""
+    from . import services
+    hours, since = _since(hours)
+    if not opnsense.enabled():
+        return {"available": False, "reason": "opnsense"}
+    hit = _apps_cache.get(hours)
+    if hit and time.time() - hit[0] < 1800:
+        return hit[1]
+    try:
+        if not await opnsense.netflow_active():
+            return {"available": False, "reason": "netflow"}
+        per_remote = opnsense.remote_traffic(await opnsense.insight_rows(since, int(time.time())))
+    except Exception as exc:
+        return {"available": False, "reason": "error", "message": str(exc)}
+    items = await services.group(per_remote)
+    result = {"available": True, "items": items[:12], "total": sum(i["bytes"] for i in items)}
+    if items:
+        _apps_cache[hours] = (time.time(), result)
+    return result
+
+
+@router.get("/clients/wired")
+async def clients_wired():
+    """Dispositivi via cavo: nella tabella ARP di OPNsense ma non collegati a un AP (né AP essi stessi)."""
+    from .core import store
+    with connect() as db:
+        wifi = {r["mac"] for r in db.execute("SELECT mac FROM clients")}
+        names = _labels(db)
+    if not opnsense.enabled():
+        return {"available": False, "reason": "opnsense", "wireless": len(wifi), "wired": None, "items": []}
+    try:
+        rows = await opnsense.arp()
+    except Exception as exc:
+        return {"available": False, "reason": "error", "message": str(exc), "wireless": len(wifi), "wired": None,
+                "items": []}
+    ap_hosts = {a.host for a in store.list_aps()}
+    items, seen = [], set()
+    for r in rows:
+        mac = str(r.get("mac") or "").lower()
+        ip = str(r.get("ip") or "")
+        if not mac or mac in seen or mac in wifi or ip in ap_hosts or not _is_lan(ip):
+            continue
+        if r.get("permanent") in (True, 1, "1", "true") or "incomplete" in mac:
+            continue                       # indirizzi dell'OPNsense stesso, voci non risolte
+        seen.add(mac)
+        items.append({"mac": mac, "ip": ip, "name": names.get(mac) or r.get("hostname") or ip,
+                      "vendor": vendor(mac), "intf": r.get("intf_description") or r.get("intf")})
+    items.sort(key=lambda i: tuple(int(p) for p in i["ip"].split(".")) if i["ip"].count(".") == 3 else (999,))
+    return {"available": True, "wireless": len(wifi), "wired": len(items), "items": items}
+
+
 # ---------- stato del sistema ----------
 @router.get("/system")
 def system_status():

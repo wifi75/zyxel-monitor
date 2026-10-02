@@ -2,6 +2,18 @@ import { addEn } from './index'
 
 // traduzioni inglesi: chiave = testo italiano esatto usato in t()
 addEn({
+  'Client Wi-Fi e via cavo': 'Wi-Fi and wired clients',
+  'Wi-Fi': 'Wi-Fi',
+  'Mostra i dispositivi via cavo': 'Show wired devices',
+  'I dispositivi via cavo arrivano da OPNsense: collegalo in Impostazioni.': 'Wired devices come from OPNsense: connect it in Settings.',
+  'OPNsense non ha dato la tabella ARP: {msg}': 'OPNsense did not return the ARP table: {msg}',
+  'Traffico per servizio': 'Traffic by service',
+  'Insight non ha ancora dati per questo periodo.': 'Insight has no data for this period yet.',
+  'Stima dagli indirizzi remoti: il traffico verso le CDN condivise resta col nome della CDN.': 'Estimate from remote addresses: traffic to shared CDNs stays under the CDN name.',
+  'Arriva da OPNsense: collegalo in Impostazioni.': 'It comes from OPNsense: connect it in Settings.',
+  'Senza nome': 'Unnamed',
+  'Tuya (casa smart)': 'Tuya (smart home)',
+
   'Gestione dal pannello': 'Panel management',
   'Gestione dal pannello accesa': 'Panel management on',
   'Solo monitoraggio': 'Monitoring only',

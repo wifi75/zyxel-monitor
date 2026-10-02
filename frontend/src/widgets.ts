@@ -31,6 +31,8 @@ export const WIDGETS: WidgetDef[] = [
   { id: 'new_devices', title: 'Dispositivi nuovi', views: ['overview'], w: 4, h: 6, icon: 'star', tone: 'pink', link: { view: '#devices', label: 'Apri Dispositivi' }, csv: { path: '/export/devices.csv', name: 'dispositivi.csv' } },
   { id: 'signal', title: 'Qualità del segnale', views: ['overview', 'ap'], w: 4, h: 6, icon: 'activity', tone: 'green' },
   { id: 'roaming', title: 'Roaming', views: ['overview', 'ap'], w: 4, h: 6, icon: 'shuffle', tone: 'teal' },
+  { id: 'wired', title: 'Client Wi-Fi e via cavo', views: ['overview'], w: 3, h: 4, minH: 3, icon: 'users', tone: 'green' },
+  { id: 'apps', title: 'Traffico per servizio', views: ['overview'], w: 4, h: 7, minH: 4, icon: 'globe', tone: 'pink' },
   { id: 'usage_devices', title: 'Consumo per dispositivo', views: ['overview'], w: 6, h: 7, icon: 'chart', tone: 'amber' },
   { id: 'trend', title: 'Andamento', views: ['overview', 'ap'], w: 12, h: 7, minW: 4, minH: 4, icon: 'chart', tone: 'blue', link: { view: '#report', label: 'Apri il report' } },
   { id: 'clients', title: 'Client connessi', views: ['overview', 'ap'], w: 12, h: 10, minW: 4, minH: 4, icon: 'users', tone: 'violet', link: { view: '#devices', label: 'Apri Dispositivi' }, csv: { path: '/export/devices.csv', name: 'dispositivi.csv' } },

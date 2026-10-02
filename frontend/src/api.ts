@@ -100,6 +100,14 @@ export interface DeviceUsage {
   by_type?: { type: string; bytes: number }[]
   debug?: { path: string; rows: number; addresses: number; sample_addresses: string[]; sample: string } | null
 }
+export interface WiredClients {
+  available: boolean; reason?: 'opnsense' | 'error'; message?: string; wireless: number; wired: number | null
+  items: { mac: string; ip: string; name: string; vendor: string | null; intf: string | null }[]
+}
+export interface AppUsage {
+  available: boolean; reason?: 'opnsense' | 'netflow' | 'error'; message?: string
+  items?: { name: string; bytes: number }[]; total?: number
+}
 export interface NebulaStatus { configured: boolean; has_key: boolean; org_id: string; site_id: string }
 export interface NebulaDiscover {
   ok: boolean; pro?: boolean; message: string | null
@@ -272,6 +280,8 @@ export const api = {
   roaming: (hours: number, ap?: string) =>
     req<Roaming>(`/roaming?hours=${hours}${ap ? `&ap=${encodeURIComponent(ap)}` : ''}`),
   usageDevices: (hours: number) => req<DeviceUsage>(`/usage/devices?hours=${hours}`),
+  usageApps: (hours: number) => req<AppUsage>(`/usage/apps?hours=${hours}`),
+  clientsWired: () => req<WiredClients>('/clients/wired'),
   layout: () => req<SavedLayout>('/layout'),
   saveLayout: (l: SavedLayout) => req('/layout', { method: 'PUT', body: JSON.stringify(l) }),
   resetLayout: () => req('/layout', { method: 'DELETE' }),

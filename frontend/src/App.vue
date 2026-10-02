@@ -21,6 +21,8 @@ import type { IconName } from './icons'
 import { settingsSection } from './settingsNav'
 import ChannelPlan from './components/ChannelPlan.vue'
 import FirmwareCard from './components/FirmwareCard.vue'
+import WiredCard from './components/WiredCard.vue'
+import AppsCard from './components/AppsCard.vue'
 import SplitBar from './components/SplitBar.vue'
 import TopologyMap from './components/TopologyMap.vue'
 import ApHeader from './components/ApHeader.vue'
@@ -545,6 +547,10 @@ const SSH_NA = "La CLI SSH di questo AP non fornisce ancora il dato: in Impostaz
           <ChannelPlan v-else-if="id === 'channels_5'" :aps="aps" band="5GHz" />
 
           <FirmwareCard v-else-if="id === 'firmware'" :aps="aps" />
+
+          <WiredCard v-else-if="id === 'wired'" />
+
+          <AppsCard v-else-if="id === 'apps'" :hours="hours" :period-label="periodLabel" />
 
           <template v-else-if="id === 'band'">
             <h2>{{ t('Client per banda') }}</h2>

@@ -153,13 +153,67 @@ def split_traffic(rows: list[dict]) -> dict[str, list[int]]:
     return out
 
 
-async def traffic_per_address(since: int, until: int) -> dict[str, list[int]]:
-    """Scaricati e inviati per indirizzo di casa (risoluzione giornaliera di Insight)."""
+def remote_traffic(rows: list[dict]) -> dict[str, int]:
+    """{ip remoto: byte} scambiati con la casa, dalle stesse righe di Insight. Come in split_traffic si guarda
+    solo l'interfaccia di casa, così ogni flusso conta una volta; l'indirizzo remoto è quello pubblico."""
+    import ipaddress
+    from collections import Counter
+
+    def kind(a: str) -> str:
+        try:
+            ip = ipaddress.ip_address(a)
+        except ValueError:
+            return ""
+        if ip.is_multicast or ip.is_loopback:
+            return ""
+        return "private" if ip.is_private else "public" if ip.is_global else ""
+
+    score = Counter(r["if"] for r in rows if r.get("direction") == "in" and kind(r.get("src_addr", "")) == "private")
+    if not score:
+        return {}
+    lan_if = score.most_common(1)[0][0]
+    out: dict[str, int] = {}
+    for r in rows:
+        if r.get("if") != lan_if:
+            continue
+        src, dst = r.get("src_addr", ""), r.get("dst_addr", "")
+        remote = dst if kind(dst) == "public" else src if kind(src) == "public" else None
+        if not remote:
+            continue
+        try:
+            out[remote] = out.get(remote, 0) + int(float(r.get("octets") or 0))
+        except ValueError:
+            continue
+    return out
+
+
+async def insight_rows(since: int, until: int) -> list[dict]:
+    """Righe del CSV di esportazione di Insight (risoluzione giornaliera)."""
     import csv
     import io
     path = f"diagnostics/networkinsight/export/FlowSourceAddrDetails/{since}/{until}/86400"
     text = await asyncio.to_thread(fetch_text, path)
-    return split_traffic(list(csv.DictReader(io.StringIO(text))))
+    return list(csv.DictReader(io.StringIO(text)))
+
+
+async def traffic_per_address(since: int, until: int) -> dict[str, list[int]]:
+    """Scaricati e inviati per indirizzo di casa (risoluzione giornaliera di Insight)."""
+    return split_traffic(await insight_rows(since, until))
+
+
+async def arp() -> list[dict]:
+    """Tabella ARP di OPNsense: i dispositivi che hanno parlato di recente, anche via cavo.
+    Il nome dell'endpoint è cambiato fra le versioni (get_arp / getArp): si provano entrambi."""
+    last: Exception | None = None
+    for path in ("diagnostics/interface/get_arp", "diagnostics/interface/getArp"):
+        try:
+            d = await asyncio.to_thread(fetch, path)
+        except Exception as exc:
+            last = exc
+            continue
+        rows = d if isinstance(d, list) else (d.get("rows") or d.get("items") or [])
+        return [r for r in rows if isinstance(r, dict)]
+    raise last or RuntimeError("tabella ARP non disponibile")
 
 
 async def bytes_per_address(since: int, until: int) -> tuple[dict[str, int], dict]:

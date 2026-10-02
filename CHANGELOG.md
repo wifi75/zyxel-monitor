@@ -2,6 +2,11 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) — versioni: [SemVer](https://semver.org/lang/it/).
 
+## [0.37.0] - 2026-10-02
+### Aggiunto
+- Widget «Client Wi-Fi e via cavo»: i dispositivi via cavo dalla tabella ARP di OPNsense (esclusi gli AP e quelli già in Wi-Fi), con elenco e produttore.
+- Widget «Traffico per servizio»: GB verso YouTube, Netflix, Google, Microsoft… stimati dagli indirizzi remoti di NetFlow col DNS inverso (senza DPI; le CDN condivise restano col loro nome).
+
 ## [0.36.2] - 2026-09-27
 ### Aggiunto
 - Tavolozza per singolo widget: in «Personalizza» ogni widget ha nella barra del titolo un menu per scegliere la sua tavolozza; «Colori della dashboard» lo riporta a quella generale.
